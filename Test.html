@@ -5,35 +5,36 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Dif • Comparador de registros</title>
 <style>
-  body{margin:0;font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;background:#111418;color:#fff;padding:18px}
-  .wrap{max-width:1400px;margin:0 auto}
-  h1{margin:0 0 12px;font-size:22px;font-weight:700;background:linear-gradient(90deg,#fff,#8C6CFF);
-     -webkit-background-clip:text;-webkit-text-fill-color:transparent}
-  .card{background:#1A1E23;padding:18px;border-radius:10px;border:1px solid #2A2A2A;box-shadow:0 10px 28px rgba(0,0,0,.45)}
-  .row{display:flex;gap:16px;flex-wrap:wrap}
-  .btn{border:none;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}
-  .btn{background:linear-gradient(90deg,#C7F24A,#D4FF4A);color:#111}
-  .btn.sec{background:linear-gradient(90deg,#24364A,#1F3A5F);color:#EAF2FF}
-  .btn:hover{opacity:.9}
-  .action-btn{background:none;border:none;cursor:pointer;padding:4px;border-radius:6px;color:#ccc;margin:0 2px}
-  .action-btn:hover{background:#24364A;color:#fff}
-  .table-wrap{margin-top:20px;max-height:60vh;overflow:auto;border-radius:10px;background:#1E2329;border:1px solid #2A2A2A}
-  table{width:100%;border-collapse:collapse;font-size:14px}
-  th,td{padding:10px 12px;border-bottom:1px solid #2A2A2A;text-align:left;white-space:nowrap}
-  th{position:sticky;top:0;background:#1E2329;color:#ccc;font-weight:600}
-  td.amount{text-align:right;font-family:Consolas,monospace;font-weight:600}
-  td.amount-pos{color:#9EE759}
-  td.amount-neg{color:#EF4444}
-  tr.ignored{opacity:.5;font-style:italic}
-  /* Modal edición */
-  .modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:100}
-  .modal-content{background:#1A1E23;padding:20px;border-radius:12px;width:400px;max-width:90%}
-  .modal-content h2{margin-top:0;font-size:18px}
-  .modal-content label{display:block;margin-top:10px;color:#A8A8A8;font-size:13px}
-  .modal-content input,.modal-content select{width:100%;padding:8px;border-radius:8px;border:1px solid #2A2A2A;background:#1E2329;color:#fff}
-  /* Fullscreen */
-  .fullscreen{position:fixed;top:0;left:0;width:100%;height:100%;background:#111418;z-index:200;display:none;flex-direction:column}
-  .fullscreen .close{align-self:flex-end;margin:10px;color:#fff;cursor:pointer}
+/* estilos base y paleta */
+body{margin:0;font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;background:#111418;color:#fff;padding:18px}
+.wrap{max-width:1400px;margin:0 auto}
+h1{margin:0 0 12px;font-size:22px;font-weight:700;background:linear-gradient(90deg,#fff,#8C6CFF);
+   -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.card{background:#1A1E23;padding:18px;border-radius:10px;border:1px solid #2A2A2A;box-shadow:0 10px 28px rgba(0,0,0,.45)}
+.row{display:flex;gap:16px;flex-wrap:wrap}
+.btn{border:none;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}
+.btn{background:linear-gradient(90deg,#C7F24A,#D4FF4A);color:#111}
+.btn.sec{background:linear-gradient(90deg,#24364A,#1F3A5F);color:#EAF2FF}
+.btn:hover{opacity:.9}
+.action-btn{background:none;border:none;cursor:pointer;padding:4px;border-radius:6px;color:#ccc;margin:0 2px}
+.action-btn:hover{background:#24364A;color:#fff}
+.table-wrap{margin-top:20px;max-height:60vh;overflow:auto;border-radius:10px;background:#1E2329;border:1px solid #2A2A2A}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:10px 12px;border-bottom:1px solid #2A2A2A;text-align:left;white-space:nowrap}
+th{position:sticky;top:0;background:#1E2329;color:#ccc;font-weight:600}
+td.amount{text-align:right;font-family:Consolas,monospace;font-weight:600}
+td.amount-pos{color:#9EE759}
+td.amount-neg{color:#EF4444}
+tr.ignored{opacity:.5;font-style:italic}
+/* Modal edición */
+.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:100}
+.modal-content{background:#1A1E23;padding:20px;border-radius:12px;width:400px;max-width:90%}
+.modal-content h2{margin-top:0;font-size:18px}
+.modal-content label{display:block;margin-top:10px;color:#A8A8A8;font-size:13px}
+.modal-content input,.modal-content select{width:100%;padding:8px;border-radius:8px;border:1px solid #2A2A2A;background:#1E2329;color:#fff}
+/* Fullscreen */
+.fullscreen{position:fixed;top:0;left:0;width:100%;height:100%;background:#111418;z-index:200;display:none;flex-direction:column}
+.fullscreen .close{align-self:flex-end;margin:10px;color:#fff;cursor:pointer}
 </style>
 </head>
 <body>
@@ -104,6 +105,8 @@
 
 <script>
 let pairs=[],manualLinks=new Set(),editTarget=null;
+
+/* Render principal */
 function renderTable(){
   const tbody=document.getElementById('resultsBody');tbody.innerHTML='';
   pairs.forEach(p=>{
@@ -122,7 +125,6 @@ function renderTable(){
   });
   document.getElementById('countTotals').textContent=pairs.length;
   document.getElementById('countPaired').textContent=pairs.filter(p=>p.estado==='OK').length;
-  document.getElementById('countManual').textContent=manualLinks.size;
   document.getElementById('countMissing').textContent=pairs.filter(p=>p.estado!=='OK').length;
 }
 
