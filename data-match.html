@@ -1,0 +1,745 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Dif • Comparador agentes - chunior</title>
+<style>
+  /* === ANIMATIONS === */
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+
+  /* === DARK MINIMALIST NEO-MODERN DASHBOARD PALETTE === */
+  :root {
+    /* Base */
+    --bg: #111418;
+    --panel: #1A1E23;
+    --container: #1E2329;
+    --line: #2A2A2A;
+
+    /* Text */
+    --text: #FFFFFF;
+    --muted: #A8A8A8;
+    --labels: #CCCCCC;
+
+    /* Accents */
+    --lime: #C7F24A;    /* botones / highlight */
+    --lime-2: #D4FF4A;
+    --blue: #24364A;    /* interactivos */
+    --blue-2: #1F3A5F;
+    --violet: #7A5CFF;  /* ayuda / secundarios */
+    --violet-2: #8C6CFF;
+
+    /* Semáforo */
+    --ok: #9EE759;
+    --warn: #F59E0B;
+    --bad: #EF4444;
+
+    /* effects */
+    --glass: rgba(255,255,255,0.04);
+  }
+
+  /* === GENERAL === */
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; font-family: 'Inter', 'Segoe UI', Roboto, Arial, sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    padding: 18px;
+    animation: fadeIn 0.6s ease-out;
+  }
+  .wrap { max-width: 1400px; margin: 0 auto; }
+
+  h1 {
+    margin: 0 0 12px 0; font-size: 22px; font-weight: 700;
+    background: linear-gradient(90deg, #FFFFFF, var(--violet-2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    animation: slideInUp 0.4s ease-out;
+  }
+
+  /* === CARD & LAYOUT === */
+  .card {
+    background: var(--panel);
+    padding: 18px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    box-shadow: 0 10px 28px rgba(0,0,0,0.45);
+    animation: slideInUp 0.5s ease-out;
+  }
+  .row { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+
+  /* === FORMS & BUTTONS === */
+  label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 8px; font-weight: 500; }
+  input[type=file], textarea, select {
+    background: var(--glass);
+    border-radius: 10px;
+    padding: 10px;
+    border: 1px solid var(--line);
+    color: var(--text);
+    width: 100%;
+    transition: border-color .16s, box-shadow .16s, transform .12s;
+  }
+  input[type=file]:hover, textarea:hover, select:hover {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 1px rgba(36,54,74,0.4);
+  }
+  textarea { min-height: 140px; resize: vertical; }
+  .btn {
+    background: linear-gradient(90deg, var(--lime), var(--lime-2));
+    color: #0D1117;
+    border: none; padding: 10px 14px; border-radius: 10px; font-weight: 700; cursor: pointer;
+    transition: transform .12s, box-shadow .16s; box-shadow: 0 8px 18px rgba(199,242,74,.15);
+  }
+  .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(199,242,74,.25); }
+  .btn:active:not(:disabled) { transform: translateY(0); }
+  .btn:disabled { background: #2A2F36; color: #7A7A7A; cursor: not-allowed; opacity: 0.7; box-shadow: none; }
+  .btn.btn-loading { animation: pulse 1.5s infinite ease-in-out; }
+  .small { padding: 8px 10px; font-size: 13px; }
+
+  /* Secondary button */
+  .btn.sec {
+    background: linear-gradient(90deg, var(--blue), var(--blue-2));
+    color: #EAF2FF; box-shadow: 0 8px 18px rgba(36,54,74,.25);
+  }
+
+  /* === FILTERS & SUMMARY === */
+  .filters {
+    display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;
+    margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--line);
+  }
+  .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; flex-grow: 1; }
+  select {
+    -webkit-appearance: none; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23CCCCCC' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 10px center; background-size: 20px;
+  }
+  select option { background: var(--panel); color: var(--text); }
+
+  .summary {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;
+    margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--line);
+  }
+  .summary .badge {
+    text-align: center; padding: 12px; background: var(--container); border-radius: 10px;
+    border: 1px solid var(--line); display: flex; flex-direction: column;
+    align-items: center; justify-content: center; transition: all .2s ease;
+  }
+  .summary .badge strong { font-size: 1.5em; color: var(--text); margin-top: 5px; font-weight: 700; }
+  .summary .badge:hover { transform: translateY(-2px); border-color: var(--blue); }
+  .summary .badge.diff.positive strong { color: var(--ok); }
+  .summary .badge.diff.negative strong { color: var(--bad); }
+  .summary .badge.ok strong { color: var(--ok); }
+  .summary .badge.warn strong { color: var(--warn); }
+  .summary .badge.bad strong { color: var(--bad); }
+
+  /* === RESULTS TABLE === */
+  .table-wrap {
+    margin-top: 20px; max-height: 60vh; overflow: auto;
+    border-radius: 10px; background: var(--container); border: 1px solid var(--line);
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.35);
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; white-space: nowrap; }
+  th {
+    position: sticky; top: 0; background: rgba(30,35,41,0.95);
+    backdrop-filter: blur(6px); z-index: 3; color: var(--labels); font-weight: 600;
+  }
+  tr { transition: background-color .12s ease; }
+  tr:nth-child(even) { background-color: rgba(255,255,255,0.02); }
+  tr:hover td { background-color: rgba(36,54,74,0.18); }
+  td.amount { text-align: right; font-weight: 600; font-family: 'Consolas','Menlo',monospace; }
+  td.amount-pos { color: var(--ok); }
+  td.amount-neg { color: var(--bad); }
+  td.divider { border-left: 2px solid var(--line); }
+  tr.ok td {}
+  tr.miss-a { border-left: 3px solid var(--bad); }
+  tr.miss-b { border-left: 3px solid var(--warn); }
+  tr.ignored { opacity: 0.55; font-style: italic; background: rgba(100,100,100,0.1) !important; }
+
+  /* === MISC === */
+  .notes { margin-top: 10px; color: var(--muted); font-size: 13px; }
+  .action-btn { background: none; border: none; cursor: pointer; padding: 4px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.2s ease; color: var(--labels); }
+  .action-btn:hover { background: rgba(36,54,74,0.25); color: #fff; }
+  .hidden { display: none; }
+  .results-section { animation: slideInUp 0.4s ease-out forwards; }
+
+  /* === RESPONSIVE === */
+  @media (max-width: 920px) { .row, .filters { flex-direction: column; align-items: stretch; } .summary { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 600px) { .summary { grid-template-columns: 1fr; } h1 { font-size: 18px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>DifMerge · Comparador de registros entre fuentes</h1>
+
+  <div class="card">
+    <div class="row">
+      <div style="flex:1;min-width:280px">
+        <label>1. Cargar CSV(s) Fuente A</label>
+        <input id="agentFiles" type="file" accept=".csv" multiple />
+        <div class="notes">Podés seleccionar varios archivos. Renombrá con criterio para identificar la fuente si lo necesitás.</div>
+      </div>
+
+      <div style="flex:1;min-width:300px">
+        <label>2. Pegar texto Fuente B</label>
+        <textarea id="chuniorText" placeholder="Pega aquí las líneas copiadas desde la otra fuente..."></textarea>
+        <div class="notes">Ejemplo: <code>... usuario ... $ 3.000,00 operador</code></div>
+      </div>
+
+      <div style="width:240px">
+        <label>3. Acciones</label>
+        <div class="row" style="flex-direction:column;gap:10px">
+          <button id="processBtn" class="btn">Procesar y comparar</button>
+          <button id="exportBtn" class="btn sec">Exportar CSV</button>
+          <button id="copyExcelBtn" class="btn sec">Copiar para Excel</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="resultsSection" class="hidden">
+      <div class="summary" id="summaryBox">
+        <div class="badge ok">Total Fuente A: <strong id="sumAgentTotal">0.00</strong></div>
+        <div class="badge ok">Total Fuente B: <strong id="sumChuniorTotal">0.00</strong></div>
+        <div class="badge diff">Diferencia Total: <strong id="sumDifference">0.00</strong></div>
+        <div class="badge ok">Ingresos A: <strong id="sumAgentIncome">0.00</strong></div>
+        <div class="badge ok">Ingresos B: <strong id="sumChuniorIncome">0.00</strong></div>
+        <div class="badge diff">Dif. Ingresos: <strong id="sumDiffIncome">0.00</strong></div>
+        <div class="badge bad">Egresos A: <strong id="sumAgentOutcome">0.00</strong></div>
+        <div class="badge bad">Egresos B: <strong id="sumChuniorOutcome">0.00</strong></div>
+        <div class="badge diff">Dif. Egresos: <strong id="sumDiffOutcome">0.00</strong></div>
+        <div class="badge warn">Ajustes administrativos: <strong id="sumAdminTotal">0.00</strong></div>
+      </div>
+
+      <div class="filters">
+        <div class="filter-grid">
+          <div><label>Fecha</label><select id="filterFecha"><option value="__ALL">Todas las fechas</option></select></div>
+          <div><label>Etiqueta A</label><select id="filterAgente"><option value="__ALL">Todas</option></select></div>
+          <div><label>Operador</label><select id="filterOperador"><option value="__ALL">Todos</option></select></div>
+          <div><label>Medio</label><select id="filterBilletera"><option value="__ALL">Todos</option></select></div>
+          <div><label>Turno</label><select id="filterTurno"><option value="__ALL">Todos</option><option value="TM">Mañana (06-14)</option><option value="TT">Tarde (14-22)</option><option value="TN">Noche (22-06)</option></select></div>
+          <div><label>Estado</label><select id="filterEstado"><option value="__ALL">Todos</option><option value="OK">OK</option><option value="MISSING_CHUNIOR">Falta en B</option><option value="MISSING_AGENT">Falta en A</option></select></div>
+          <div><label>Tipo mov.</label><select id="filterMovimiento"><option value="__ALL">Todos</option><option value="INGRESO">Ingresos</option><option value="EGRESO">Egresos</option></select></div>
+        </div>
+        <div class="badge" style="text-align:right">
+          <div>Visibles: <span id="countTotals">0</span></div>
+          <div>Emparejados: <strong id="countPaired" style="color:var(--ok)">0</strong></div>
+          <div>Discrepancias: <strong id="countMissing" style="color:var(--bad)">0</strong></div>
+        </div>
+      </div>
+
+      <div id="tableContainer" class="table-wrap" aria-live="polite">
+        <table id="resultsTable" role="table">
+          <thead>
+            <tr>
+              <th>Etiqueta A</th>
+              <th>Turno</th>
+              <th>Hora A</th>
+              <th>Usuario A</th>
+              <th style="text-align:right">Monto A</th>
+              <th class="divider">Hora B</th>
+              <th>Usuario B</th>
+              <th style="text-align:right">Monto B</th>
+              <th>Operador</th>
+              <th>Medio</th>
+              <th>Estado</th>
+              <th style="width:50px; text-align:center;">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="notes" style="margin-top:12px">
+      • Emparejamiento por usuario normalizado (minúsculas) y monto exacto. Cualquier diferencia marca discrepancia.<br>
+      • Turnos: Mañana 06:00–14:00, Tarde 14:00–22:00, Noche 22:00–06:00.
+    </div>
+  </div>
+</div>
+
+<script>
+/* === Lectura y parsing CSV/Texto === */
+function readFileAsText(file){
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = e => res(String(e.target.result || ''));
+    r.onerror = rej;
+    r.readAsText(file, 'utf-8');
+  });
+}
+function splitLines(text){
+  return text.replace(/^\uFEFF/, '').split(/\r?\n/).filter(l => l.trim() !== '');
+}
+function parseCSVLine(line, delimiter = ','){
+  const out = []; let cur = '', inQuotes=false;
+  for (let i=0;i<line.length;i++){
+    const ch = line[i];
+    if (ch === '"' ) {
+      if (inQuotes && line[i+1] === '"'){ cur += '"'; i++; continue; }
+      inQuotes = !inQuotes; continue;
+    }
+    if (ch === delimiter && !inQuotes){ out.push(cur); cur=''; continue; }
+    cur += ch;
+  }
+  out.push(cur);
+  return out;
+}
+function parseAmountRaw(raw){
+  if(raw === null || raw === undefined) return 0;
+  let s = String(raw).trim();
+  if(!s) return 0;
+  s = s.replace(/[^\d,\.-]/g, '');
+  if (s.includes(',')) {
+    s = s.replace(/\./g, '').replace(',', '.');
+  }
+  const n = parseFloat(s);
+  return isNaN(n) ? 0 : n;
+}
+
+/* Fuente A (CSV) */
+function parseAgentLines(lines, labelA = 'Etiqueta-A'){
+  const rows = []; let startIndex = 0; let format = null;
+  if(lines.length === 0) return rows;
+  if(lines[0].toLowerCase().startsWith('sep=')) startIndex = 1;
+  const headerLine = lines[startIndex];
+  if (headerLine){
+    const headerCols = parseCSVLine(headerLine);
+    if(headerCols[3]?.toLowerCase() === 'cantidad' && headerCols[6]?.toLowerCase() === 'alias del jugador'){
+      format = 'sub';
+    } else if (headerCols[2]?.toLowerCase() === 'cantidad' && headerCols[4]?.toLowerCase() === 'alias'){
+      format = 'main';
+    } else {
+      console.warn(`No se pudo determinar el formato CSV para ${labelA}, se omite archivo.`);
+      return rows;
+    }
+    startIndex++;
+  }
+  for (let i=startIndex; i<lines.length; i++){
+    const line = lines[i];
+    if(!line.trim() || !line.includes(',')) continue;
+    const cols = parseCSVLine(line);
+    if(cols.length < 5) continue;
+
+    const fechaRaw = (cols[0]||'').trim();
+    let montoRaw, usuarioRaw, tipoRaw;
+
+    if(format === 'sub'){
+      montoRaw = cols[3]; usuarioRaw = cols[6]; tipoRaw = cols[1];
+    } else {
+      montoRaw = cols[2]; usuarioRaw = cols[4]; tipoRaw = cols[3];
+    }
+
+    const monto = parseAmountRaw(montoRaw);
+    const usuario = (usuarioRaw || '').toLowerCase().trim();
+    const isAdminCharge = /te cargaron|ajuste/i.test(tipoRaw || '');
+
+    let fechaObj = null;
+    if(fechaRaw){
+      const attempt = new Date(fechaRaw.replace(' ', 'T'));
+      fechaObj = isNaN(attempt.getTime()) ? new Date(fechaRaw) : attempt;
+      if(isNaN(fechaObj.getTime())) fechaObj = null;
+    }
+    rows.push({ origen:'A', etiqueta: labelA, fecha: fechaRaw, fechaObj, monto, usuario, isAdminCharge });
+  }
+  return rows;
+}
+
+/* Fuente B (texto pegado) */
+function parseBLines(lines){
+  const rows = [];
+  for (let raw of lines){
+    if(!raw.trim()) continue;
+    let parts = raw.split(/\t+/).map(p => p.trim()).filter(Boolean);
+    if(parts.length < 2) { parts = raw.split(/\s{2,}/).map(p => p.trim()).filter(Boolean); }
+    if (parts.length > 0 && /^\d{7,}$/.test(parts[0])) { parts.shift(); }
+    if(parts.length >= 2 && /^\d{2}-\d{2}-\d{4}$/.test(parts[0]) && /^\d{2}:\d{2}:\d{2}$/.test(parts[1])){
+      parts[0] = parts[0] + ' ' + parts[1]; parts.splice(1,1);
+    }
+    if(parts.length < 4) { console.warn("Línea no reconocida, se omite:", raw); continue; }
+    let [fechaRaw, operador, medioRaw, montoRaw, usuarioRaw] = parts;
+    let medio = (medioRaw || '').replace(/.*-\s*/,'').trim();
+    if(!medio) medio = (medioRaw || '').trim();
+    const monto = parseAmountRaw(montoRaw);
+    const usuario = (usuarioRaw || '').toLowerCase().trim();
+    let fechaObj = null;
+    if(fechaRaw){
+      const m = fechaRaw.match(/(\d{2})-(\d{2})-(\d{4})\s+(\d{2}:\d{2}:\d{2})/);
+      if(m) fechaObj = new Date(`${m[3]}-${m[2]}-${m[1]}T${m[4]}`);
+      else {
+        const attempt = new Date(fechaRaw.replace(' ', 'T'));
+        if(!isNaN(attempt.getTime())) fechaObj = attempt;
+      }
+    }
+    rows.push({ origen:'B', fecha: fechaRaw, fechaObj, monto, usuario, operador: (operador || '').toLowerCase().trim(), medio: (medio || '').toUpperCase().trim() });
+  }
+  return rows;
+}
+
+/* Turno */
+function getTurnoFromDate(d){
+  if(!d || isNaN(d.getTime())) return '';
+  const h = d.getHours();
+  if(h >= 6 && h < 14) return 'TM';
+  if(h >= 14 && h < 22) return 'TT';
+  return 'TN';
+}
+
+window.__IGNORED_IDS = new Set();
+
+async function processData() {
+  const processBtn = document.getElementById('processBtn');
+  const agentFiles = document.getElementById('agentFiles').files;
+  const bText = document.getElementById('chuniorText').value || '';
+  const resultsBody = document.getElementById('resultsBody');
+  const resultsSection = document.getElementById('resultsSection');
+
+  resultsBody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:20px;">Procesando datos...</td></tr>';
+  resultsSection.classList.remove('hidden','results-section');
+
+  processBtn.disabled = true; processBtn.classList.add('btn-loading'); processBtn.textContent = 'Procesando...';
+  window.__IGNORED_IDS.clear();
+
+  let rowsA = [];
+  try{
+    if(agentFiles && agentFiles.length){
+      for(const f of agentFiles){
+        const txt = await readFileAsText(f);
+        const lines = splitLines(txt);
+        const labelMatch = f.name.match(/(agente|subagente|fuente|a)_?([a-zA-Z0-9]+)/i);
+        const labelA = labelMatch?.[2]?.toLowerCase() || f.name.replace(/\.csv$/i, '');
+        rowsA = rowsA.concat(parseAgentLines(lines, labelA));
+      }
+    }
+  } catch(e){
+    alert('Error leyendo archivos de la Fuente A: ' + (e?.message || e));
+    processBtn.disabled = false; processBtn.classList.remove('btn-loading'); processBtn.textContent = 'Procesar y comparar';
+    return;
+  }
+
+  const rowsB = parseBLines(splitLines(bText));
+
+  rowsA.forEach(r => { r.turno = r.fechaObj ? getTurnoFromDate(r.fechaObj) : ''; r.tipoMovimiento = r.monto < 0 ? 'EGRESO' : 'INGRESO'; });
+  rowsB.forEach(r => { r.turno = r.fechaObj ? getTurnoFromDate(r.fechaObj) : ''; r.tipoMovimiento = r.monto < 0 ? 'EGRESO' : 'INGRESO'; });
+
+  const matchedBIdx = new Set();
+  const pairs = []; let idCounter = 0;
+
+  rowsA.forEach(a => {
+    if (a.isAdminCharge) {
+      pairs.push({ id:`admin-${idCounter++}`, a, b:null, estado:'OK', tipoMovimiento:a.tipoMovimiento });
+    } else {
+      let matchedIndex = -1;
+      for (let j=0;j<rowsB.length;j++){
+        if(matchedBIdx.has(j)) continue;
+        const b = rowsB[j];
+        if(a.usuario && b.usuario && a.usuario === b.usuario && Math.abs(a.monto - b.monto) < 0.01){
+          matchedIndex = j; break;
+        }
+      }
+      if(matchedIndex >= 0){
+        matchedBIdx.add(matchedIndex);
+        pairs.push({ id:`match-${idCounter++}`, a, b:rowsB[matchedIndex], estado:'OK', tipoMovimiento:a.tipoMovimiento });
+      } else {
+        pairs.push({ id:`a-miss-${idCounter++}`, a, b:null, estado:'MISSING_CHUNIOR', tipoMovimiento:a.tipoMovimiento });
+      }
+    }
+  });
+
+  for (let j=0;j<rowsB.length;j++){
+    if(!matchedBIdx.has(j)){
+      pairs.push({ id:`b-miss-${j}`, a:null, b:rowsB[j], estado:'MISSING_AGENT', tipoMovimiento:rowsB[j].tipoMovimiento });
+    }
+  }
+
+  const dates = new Set(), etiquetas = new Set(), operadores = new Set(), medios = new Set();
+  pairs.forEach(p => {
+    const d = p.a?.fechaObj || p.b?.fechaObj;
+    if(d) dates.add(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
+    if(p.a?.etiqueta) etiquetas.add(p.a.etiqueta);
+    if(p.b?.operador) operadores.add(p.b.operador);
+    if(p.b?.medio) medios.add(p.b.medio);
+  });
+
+  const populateSelect = (id, options, defaultLabel) => {
+    const select = document.getElementById(id);
+    select.innerHTML = `<option value="__ALL">${defaultLabel}</option>`;
+    Array.from(options).sort().forEach(o => {
+      const opt = document.createElement('option'); opt.value = o; opt.textContent = String(o).toUpperCase(); select.appendChild(opt);
+    });
+  };
+  populateSelect('filterFecha', dates, 'Todas las fechas');
+  populateSelect('filterAgente', etiquetas, 'Todas');
+  populateSelect('filterOperador', operadores, 'Todos');
+  populateSelect('filterBilletera', medios, 'Todos');
+
+  window.__COMPARE_PAIRS = pairs.sort((x,y)=>{
+    const dx = x.a?.fechaObj || x.b?.fechaObj; const dy = y.a?.fechaObj || y.b?.fechaObj;
+    return (dx?.getTime()||0) - (dy?.getTime()||0);
+  });
+
+  processBtn.textContent = 'Procesar y comparar';
+  processBtn.classList.remove('btn-loading');
+  resultsSection.classList.add('results-section');
+
+  applyFiltersAndRender();
+}
+
+function getFilteredPairs(){
+  const pairs = window.__COMPARE_PAIRS || [];
+  const fechaFilter = document.getElementById('filterFecha').value;
+  const aFilter = document.getElementById('filterAgente').value;
+  const opFilter = document.getElementById('filterOperador').value;
+  const medioFilter = document.getElementById('filterBilletera').value;
+  const turnoFilter = document.getElementById('filterTurno').value;
+  const estadoFilter = document.getElementById('filterEstado').value;
+  const movFilter = document.getElementById('filterMovimiento').value;
+
+  if ([fechaFilter,aFilter,opFilter,medioFilter,turnoFilter,estadoFilter,movFilter].every(f => f === '__ALL')) return pairs;
+
+  return pairs.filter(p=>{
+    const a = p.a, b = p.b;
+    if (fechaFilter !== '__ALL') {
+      const d = a?.fechaObj || b?.fechaObj; if(!d) return false;
+      const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      if(ds !== fechaFilter) return false;
+    }
+    if (aFilter !== '__ALL' && (!a || a.etiqueta !== aFilter)) return false;
+    if (opFilter !== '__ALL' && (!b || b.operador !== opFilter)) return false;
+    if (medioFilter !== '__ALL' && (!b || b.medio !== medioFilter)) return false;
+    if (turnoFilter !== '__ALL' && (a?.turno || b?.turno || '') !== turnoFilter) return false;
+    if (estadoFilter !== '__ALL') {
+      if (a?.isAdminCharge) return estadoFilter === 'OK';
+      return p.estado === estadoFilter;
+    }
+    if (movFilter !== '__ALL' && p.tipoMovimiento !== movFilter) return false;
+    return true;
+  });
+}
+
+function renderTable(filteredPairs){
+  const tbody = document.getElementById('resultsBody'); tbody.innerHTML = '';
+  if (filteredPairs.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:20px;">No hay registros para mostrar.</td></tr>';
+    return;
+  }
+
+  const iconEye = `<svg fill="currentColor" viewBox="0 0 16 16" width="18" height="18"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/></svg>`;
+  const iconEyeSlash = `<svg fill="currentColor" viewBox="0 0 16 16" width="18" height="18"><path d="M13.359 11.238C11.684 12.43 9.73 13.5 8 13.5 3 13.5 0 8 0 8c.737-1.353 2.018-3.058 3.866-4.403l-.97-.97 1.414-1.414 11.314 11.314-1.414 1.414-1.851-1.803z"/><path d="M5.646 6.146a.5.5 0 0 1 .708.708l-1.854 1.853a.5.5 0 1 1-.708-.707L5.646 6.146z"/></svg>`;
+
+  for(const p of filteredPairs){
+    const a = p.a, b = p.b;
+    const isIgnored = window.__IGNORED_IDS.has(p.id);
+    const tr = document.createElement('tr');
+
+    let statusClass = '';
+    if (a?.isAdminCharge) statusClass = 'ok';
+    else if (p.estado === 'OK') statusClass = 'ok';
+    else if (p.estado === 'MISSING_CHUNIOR') statusClass = 'miss-a';
+    else if (p.estado === 'MISSING_AGENT') statusClass = 'miss-b';
+    if(isIgnored) statusClass += ' ignored';
+    tr.className = statusClass;
+
+    const fNum = (num) => num.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    const montoA = a ? fNum(a.monto) : '';
+    const montoB = b ? fNum(b.monto) : '';
+
+    let estadoDisplay = '';
+    if (a?.isAdminCharge) estadoDisplay = '<span style="color:var(--ok);font-weight:700;">✔ AJUSTE</span>';
+    else if (p.estado === 'OK') estadoDisplay = '<span style="color:var(--ok);font-weight:700;">✔ OK</span>';
+    else if (p.estado === 'MISSING_CHUNIOR') estadoDisplay = '<span style="color:var(--bad);font-weight:800;">❌ Falta B</span>';
+    else if (p.estado === 'MISSING_AGENT') estadoDisplay = '<span style="color:var(--warn);font-weight:800;">❌ Falta A</span>';
+
+    let actionCell = '<td style="text-align:center;"></td>';
+    if (p.estado !== 'OK' && !a?.isAdminCharge) {
+      actionCell = `<td style="text-align:center;"><button class="action-btn" data-id="${p.id}" title="${isIgnored ? 'Incluir' : 'Ignorar'}">${isIgnored ? iconEye : iconEyeSlash}</button></td>`;
+    }
+
+    tr.innerHTML = `
+      <td>${escapeHtml(a?.etiqueta?.toUpperCase())}</td>
+      <td>${a?.turno || b?.turno || ''}</td>
+      <td>${formatTime(a?.fechaObj)}</td>
+      <td>${escapeHtml(a?.isAdminCharge ? 'AJUSTE' : a?.usuario)}</td>
+      <td class="amount ${a && a.monto < 0 ? 'amount-neg' : 'amount-pos'}">$ ${montoA}</td>
+      <td class="divider">${formatTime(b?.fechaObj)}</td>
+      <td>${escapeHtml(b?.usuario)}</td>
+      <td class="amount ${b && b.monto < 0 ? 'amount-neg' : 'amount-pos'}">$ ${montoB}</td>
+      <td>${escapeHtml(b?.operador?.toUpperCase())}</td>
+      <td>${escapeHtml(b?.medio)}</td>
+      <td>${estadoDisplay}</td>
+      ${actionCell}
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
+function updateSummary(filteredPairs){
+  let aTotal = 0, bTotal = 0, aIncome = 0, bIncome = 0;
+  let aOutcome = 0, bOutcome = 0, adminTotal = 0;
+  let pairedCount = 0, missingCount = 0;
+
+  const relevant = filteredPairs.filter(p => !window.__IGNORED_IDS.has(p.id));
+
+  relevant.forEach(p => {
+    if (p.a) {
+      if(p.a.isAdminCharge) { adminTotal += p.a.monto; }
+      else {
+        aTotal += p.a.monto;
+        p.a.monto >= 0 ? aIncome += p.a.monto : aOutcome += p.a.monto;
+      }
+    }
+    if (p.b) {
+      bTotal += p.b.monto;
+      p.b.monto >= 0 ? bIncome += p.b.monto : bOutcome += p.b.monto;
+    }
+  });
+
+  filteredPairs.forEach(p => {
+    if (!p.a?.isAdminCharge && p.estado !== 'OK') { missingCount++; }
+    if (!p.a?.isAdminCharge && p.estado === 'OK') { pairedCount++; }
+  });
+
+  const format = (num) => num.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  const setContent = (id, value) => { document.getElementById(id).textContent = format(value); };
+  const setBadgeClass = (id, value) => {
+    const badge = document.getElementById(id).parentElement;
+    badge.classList.remove('positive', 'negative', 'diff');
+    badge.classList.add('diff', value >= 0 ? 'positive' : 'negative');
+  };
+
+  setContent('sumAgentTotal', aTotal);
+  setContent('sumChuniorTotal', bTotal);
+  setContent('sumDifference', aTotal - bTotal);
+  setBadgeClass('sumDifference', aTotal - bTotal);
+  setContent('sumAdminTotal', adminTotal);
+  setContent('sumAgentIncome', aIncome);
+  setContent('sumChuniorIncome', bIncome);
+  setContent('sumDiffIncome', aIncome - bIncome);
+  setBadgeClass('sumDiffIncome', aIncome - bIncome);
+  setContent('sumAgentOutcome', aOutcome);
+  setContent('sumChuniorOutcome', bOutcome);
+  setContent('sumDiffOutcome', aOutcome - bOutcome);
+  setBadgeClass('sumDiffOutcome', aOutcome - bOutcome);
+
+  document.getElementById('countTotals').textContent = `${filteredPairs.length}`;
+  document.getElementById('countPaired').textContent = pairedCount;
+  document.getElementById('countMissing').textContent = missingCount;
+}
+
+function applyFiltersAndRender() {
+  const filteredPairs = getFilteredPairs();
+  renderTable(filteredPairs);
+  updateSummary(filteredPairs);
+  updateButtonStates();
+}
+
+/* helpers */
+function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
+function formatTime(d){
+  if(!d || isNaN(d.getTime())) return '';
+  const pad = (num) => num.toString().padStart(2, '0');
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+function setupActionButtons() {
+  const exportBtn = document.getElementById('exportBtn');
+  const copyBtn = document.getElementById('copyExcelBtn');
+
+  const getExportData = () => {
+    const data = getFilteredPairs().filter(p => !window.__IGNORED_IDS.has(p.id));
+    if (!data.length) { alert('No hay datos (visibles y no ignorados) para exportar.'); return null; }
+    return data;
+  };
+
+  exportBtn.addEventListener('click', () => {
+    const dataToExport = getExportData(); if (!dataToExport) return;
+    const headers = ['ETIQUETA_A','TURNO','HORA_A','USUARIO_A','MONTO_A','HORA_B','USUARIO_B','MONTO_B','OPERADOR','MEDIO','ESTADO','TIPO_MOVIMIENTO'];
+    const rows = [headers.join(',')];
+    for(const p of dataToExport){
+      const a = p.a, b = p.b;
+      const estado = a?.isAdminCharge ? 'AJUSTE' : p.estado;
+      const row = [
+        csvSafe(a?.etiqueta?.toUpperCase()), csvSafe(a?.turno || b?.turno), csvSafe(a?.fechaObj?.toISOString()),
+        csvSafe(a?.isAdminCharge ? 'AJUSTE' : a?.usuario), csvSafe(a?.monto?.toFixed(2)), csvSafe(b?.fechaObj?.toISOString()),
+        csvSafe(b?.usuario), csvSafe(b?.monto?.toFixed(2)), csvSafe(b?.operador?.toUpperCase()),
+        csvSafe(b?.medio), csvSafe(estado), csvSafe(p.tipoMovimiento)
+      ].join(',');
+      rows.push(row);
+    }
+    const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const aEl = document.createElement('a'); aEl.href = url;
+    aEl.download = `comparacion_${(new Date()).toISOString().slice(0,19).replace(/[:T]/g,'-')}.csv`;
+    aEl.click();
+    URL.revokeObjectURL(url);
+  });
+
+  copyBtn.addEventListener('click', async () => {
+    const dataToCopy = getExportData(); if (!dataToCopy) return;
+    const headers = ['ETIQUETA_A','TURNO','HORA_A','USUARIO_A','MONTO_A','HORA_B','USUARIO_B','MONTO_B','OPERADOR','MEDIO','ESTADO','TIPO_MOVIMIENTO'];
+    const lines = [headers.join('\t')];
+    for(const p of dataToCopy){
+      const a = p.a, b = p.b;
+      const estado = a?.isAdminCharge ? 'AJUSTE' : p.estado;
+      const row = [
+        a?.etiqueta?.toUpperCase() || '', a?.turno || b?.turno || '',
+        a?.fechaObj ? formatTime(a.fechaObj) : (a?.fecha || ''),
+        a?.isAdminCharge ? 'AJUSTE' : (a?.usuario || ''),
+        a?.monto ? a.monto.toLocaleString('en-US', {useGrouping: false, minimumFractionDigits: 2}) : '',
+        b?.fechaObj ? formatTime(b.fechaObj) : (b?.fecha || ''),
+        b?.usuario || '',
+        b?.monto ? b.monto.toLocaleString('en-US', {useGrouping: false, minimumFractionDigits: 2}) : '',
+        b?.operador?.toUpperCase() || '', b?.medio || '',
+        estado, p.tipoMovimiento || ''
+      ].join('\t');
+      lines.push(row);
+    }
+    const tsv = lines.join('\n');
+    try{ await navigator.clipboard.writeText(tsv); alert('Copiado al portapapeles como TSV.'); }
+    catch(e){ alert('Error al copiar.'); }
+  });
+
+  function csvSafe(v){
+    if(v === null || v === undefined) return '';
+    let s = String(v).replace(/"/g,'""');
+    if(/[,\\"\n]/.test(s)) s = `"${s}"`;
+    return s;
+  }
+}
+
+function updateButtonStates() {
+  const processBtn = document.getElementById('processBtn');
+  const exportBtn = document.getElementById('exportBtn');
+  const copyBtn = document.getElementById('copyExcelBtn');
+  const agentFilesInput = document.getElementById('agentFiles');
+  const bTextInput = document.getElementById('chuniorText');
+  const hasInput = agentFilesInput.files.length > 0 || bTextInput.value.trim() !== '';
+  const hasResults = window.__COMPARE_PAIRS && getFilteredPairs().length > 0;
+  processBtn.disabled = !hasInput;
+  exportBtn.disabled = !hasResults;
+  copyBtn.disabled = !hasResults;
+}
+
+/* EVENTS */
+document.getElementById('processBtn').addEventListener('click', processData);
+['filterFecha','filterAgente','filterOperador','filterBilletera','filterTurno','filterEstado','filterMovimiento'].forEach(id=>{
+  document.getElementById(id).addEventListener('change', applyFiltersAndRender);
+});
+document.getElementById('agentFiles').addEventListener('change', updateButtonStates);
+document.getElementById('chuniorText').addEventListener('input', updateButtonStates);
+document.getElementById('resultsBody').addEventListener('click', (e) => {
+  const button = e.target.closest('.action-btn');
+  if (button && button.dataset.id) {
+    const id = button.dataset.id;
+    if (window.__IGNORED_IDS.has(id)) { window.__IGNORED_IDS.delete(id); }
+    else { window.__IGNORED_IDS.add(id); }
+    applyFiltersAndRender();
+  }
+});
+document.addEventListener('DOMContentLoaded', () => {
+  setupActionButtons();
+  updateButtonStates();
+});
+</script>
+</body>
+</html>
