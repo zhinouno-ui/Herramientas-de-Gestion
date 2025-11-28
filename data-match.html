@@ -176,15 +176,15 @@
   <div class="card">
     <div class="row">
       <div style="flex:1;min-width:280px">
-        <label>1. Cargar CSV(s) Fuente A</label>
+        <label>1. Cargar CSV(s) extraido de agentes/sub-agentes</label>
         <input id="agentFiles" type="file" accept=".csv" multiple />
-        <div class="notes">Podés seleccionar varios archivos. Renombrá con criterio para identificar la fuente si lo necesitás.</div>
+        <div class="notes">Podés seleccionar varios archivos. Renombrá con criterio para identificar la fuente si lo necesitás. ej: pc1,pc2 etc.</div>
       </div>
 
       <div style="flex:1;min-width:300px">
-        <label>2. Pegar texto Fuente B</label>
-        <textarea id="chuniorText" placeholder="Pega aquí las líneas copiadas desde la otra fuente..."></textarea>
-        <div class="notes">Ejemplo: <code>... usuario ... $ 3.000,00 operador</code></div>
+        <label>2. Pegar texto desde chunior</label>
+        <textarea id="chuniorText" placeholder="Pega aquí las líneas copiadas desde chunior..."></textarea>
+        <div class="notes">extrae los datos de chunior solo copiando y pegando empenzando por el codigo de movimiento y terminando en el usuario</code></div>
       </div>
 
       <div style="width:240px">
@@ -199,26 +199,26 @@
 
     <div id="resultsSection" class="hidden">
       <div class="summary" id="summaryBox">
-        <div class="badge ok">Total Fuente A: <strong id="sumAgentTotal">0.00</strong></div>
-        <div class="badge ok">Total Fuente B: <strong id="sumChuniorTotal">0.00</strong></div>
+        <div class="badge ok">Total Agente: <strong id="sumAgentTotal">0.00</strong></div>
+        <div class="badge ok">Total Chunior: <strong id="sumChuniorTotal">0.00</strong></div>
         <div class="badge diff">Diferencia Total: <strong id="sumDifference">0.00</strong></div>
-        <div class="badge ok">Ingresos A: <strong id="sumAgentIncome">0.00</strong></div>
-        <div class="badge ok">Ingresos B: <strong id="sumChuniorIncome">0.00</strong></div>
+        <div class="badge ok">Ingresos Agente: <strong id="sumAgentIncome">0.00</strong></div>
+        <div class="badge ok">Ingresos Chunior: <strong id="sumChuniorIncome">0.00</strong></div>
         <div class="badge diff">Dif. Ingresos: <strong id="sumDiffIncome">0.00</strong></div>
-        <div class="badge bad">Egresos A: <strong id="sumAgentOutcome">0.00</strong></div>
-        <div class="badge bad">Egresos B: <strong id="sumChuniorOutcome">0.00</strong></div>
+        <div class="badge bad">Egresos Agente: <strong id="sumAgentOutcome">0.00</strong></div>
+        <div class="badge bad">Egresos Chunior: <strong id="sumChuniorOutcome">0.00</strong></div>
         <div class="badge diff">Dif. Egresos: <strong id="sumDiffOutcome">0.00</strong></div>
-        <div class="badge warn">Ajustes administrativos: <strong id="sumAdminTotal">0.00</strong></div>
+        <div class="badge warn">Cargas Administrativas: <strong id="sumAdminTotal">0.00</strong></div>
       </div>
 
       <div class="filters">
         <div class="filter-grid">
           <div><label>Fecha</label><select id="filterFecha"><option value="__ALL">Todas las fechas</option></select></div>
-          <div><label>Etiqueta A</label><select id="filterAgente"><option value="__ALL">Todas</option></select></div>
+          <div><label>Agente/Pc</label><select id="filterAgente"><option value="__ALL">Todas</option></select></div>
           <div><label>Operador</label><select id="filterOperador"><option value="__ALL">Todos</option></select></div>
-          <div><label>Medio</label><select id="filterBilletera"><option value="__ALL">Todos</option></select></div>
+          <div><label>Billetera</label><select id="filterBilletera"><option value="__ALL">Todos</option></select></div>
           <div><label>Turno</label><select id="filterTurno"><option value="__ALL">Todos</option><option value="TM">Mañana (06-14)</option><option value="TT">Tarde (14-22)</option><option value="TN">Noche (22-06)</option></select></div>
-          <div><label>Estado</label><select id="filterEstado"><option value="__ALL">Todos</option><option value="OK">OK</option><option value="MISSING_CHUNIOR">Falta en B</option><option value="MISSING_AGENT">Falta en A</option></select></div>
+          <div><label>Estado</label><select id="filterEstado"><option value="__ALL">Todos</option><option value="OK">OK</option><option value="MISSING_CHUNIOR">Falta en Chunior</option><option value="MISSING_AGENT">Falta en Agente</option></select></div>
           <div><label>Tipo mov.</label><select id="filterMovimiento"><option value="__ALL">Todos</option><option value="INGRESO">Ingresos</option><option value="EGRESO">Egresos</option></select></div>
         </div>
         <div class="badge" style="text-align:right">
@@ -232,16 +232,16 @@
         <table id="resultsTable" role="table">
           <thead>
             <tr>
-              <th>Etiqueta A</th>
+              <th>Agente/SubAgente</th>
               <th>Turno</th>
-              <th>Hora A</th>
-              <th>Usuario A</th>
-              <th style="text-align:right">Monto A</th>
-              <th class="divider">Hora B</th>
-              <th>Usuario B</th>
-              <th style="text-align:right">Monto B</th>
+              <th>Fech/hora Agnt</th>
+              <th>Usuario agent</th>
+              <th style="text-align:right">Monto Agentes</th>
+              <th class="divider">Fech/hora Chun</th>
+              <th>Usuario Chun</th>
+              <th style="text-align:right">Monto Chun</th>
               <th>Operador</th>
-              <th>Medio</th>
+              <th>Billetera</th>
               <th>Estado</th>
               <th style="width:50px; text-align:center;">Acción</th>
             </tr>
@@ -252,8 +252,8 @@
     </div>
 
     <div class="notes" style="margin-top:12px">
-      • Emparejamiento por usuario normalizado (minúsculas) y monto exacto. Cualquier diferencia marca discrepancia.<br>
-      • Turnos: Mañana 06:00–14:00, Tarde 14:00–22:00, Noche 22:00–06:00.
+      • Emparejamiento por usuario y monto exacto. Cualquier diferencia marca discrepancia. corroborar, editar u ocultar si es necesario<br>
+      • Sugerimos filtrar por fecha y turno para realizar un mejor seguimiento debido a que erroneamente agentes asigna horarios discrepantes a ciertas cargas.
     </div>
   </div>
 </div>
