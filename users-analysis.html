@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Recuperacion De Usuario</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#0b0f17;
+      --card:#131a24;
+      --accent:#9aff5c;
+      --accent-soft:#c8ff9b;
+      --muted:#9aa5b7;
+      --border:#1c2533;
+    }
+    *{box-sizing:border-box;font-family:Inter,Roboto,Arial}
+    body{
+      margin:0;
+      padding:26px;
+      min-height:100vh;
+      background:var(--bg);
+      color:white;
+    }
+    h1{
+      margin:0 0 15px 0;
+      font-size:22px;
+      font-weight:600;
+    }
+    .card{
+      background:var(--card);
+      padding:22px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      box-shadow:0 0 20px #0004;
+      margin-bottom:20px;
+    }
+    .section-title{
+      font-size:14px;
+      font-weight:700;
+      margin-bottom:8px;
+      color:var(--accent-soft);
+    }
+    .boxgroup{
+      display:flex;
+      gap:20px;
+      flex-wrap:wrap;
+    }
+    .box{
+      flex:1;
+      background:#0f141d;
+      padding:14px;
+      border-radius:12px;
+      border:1px solid #1b2230;
+      min-width:260px;
+    }
+    input[type=file]{
+      width:100%;
+      padding:12px;
+      background:#0d131d;
+      border:1px dashed #2a3647;
+      border-radius:10px;
+      color:var(--muted);
+      cursor:pointer;
+    }
+    .sliderWrap{margin-top:12px;}
+    .sliderLabel{font-size:13px;color:var(--muted);margin-bottom:6px;}
+    .slider{
+      width:160px;
+      height:38px;
+      background:#0d131d;
+      border-radius:40px;
+      padding:4px;
+      position:relative;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      cursor:pointer;
+      border:1px solid #1b2230;
+    }
+    .slider span{
+      flex:1;
+      text-align:center;
+      font-size:12px;
+      color:var(--muted);
+      z-index:2;
+    }
+    .knob{
+      position:absolute;
+      width:70px;
+      height:30px;
+      background:linear-gradient(180deg,var(--accent),var(--accent-soft));
+      border-radius:40px;
+      top:4px;
+      left:4px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#121715;
+      font-weight:700;
+      transition:left .22s cubic-bezier(.2,.9,.3,1);
+    }
+
+    .options{
+      margin-top:16px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    label.inline{
+      font-size:13px;
+      color:var(--muted);
+      display:flex;
+      gap:6px;
+      align-items:center;
+    }
+    input[type=number]{
+      width:120px;
+      padding:8px;
+      background:#0d131d;
+      border-radius:8px;
+      border:1px solid #1c2533;
+      color:white;
+    }
+    .btn-main{
+      width:100%;
+      padding:14px;
+      font-size:16px;
+      font-weight:700;
+      background:var(--accent);
+      border:none;
+      border-radius:10px;
+      margin-top:22px;
+      cursor:pointer;
+      color:#121715;
+    }
+    .btn-small{
+      padding:8px 14px;
+      font-size:13px;
+      font-weight:700;
+      background:#c7ffe6;
+      color:#021d16;
+      border:none;
+      border-radius:8px;
+      cursor:pointer;
+    }
+
+    .summary{
+      margin-top:18px;
+      padding:12px;
+      border-radius:10px;
+      background:#0d131d;
+      border:1px solid #1c2533;
+      color:var(--muted);
+      font-size:14px;
+    }
+
+    table{
+      width:100%;
+      margin-top:14px;
+      border-collapse:collapse;
+      background:#0d131d;
+      border-radius:12px;
+      overflow:hidden;
+      border:1px solid #1c2533;
+    }
+    th,td{
+      padding:10px;
+      border-bottom:1px solid #1c2533;
+      font-size:13px;
+    }
+    th{
+      background:#16202c;
+      font-weight:700;
+      color:var(--accent-soft);
+    }
+    tr:hover td{
+      background:#141c27;
+    }
+
+    .toast{
+      position:fixed;
+      right:20px;
+      bottom:20px;
+      background:#16202c;
+      padding:12px 16px;
+      border-radius:10px;
+      opacity:0;
+      transform:translateY(20px);
+      pointer-events:none;
+      transition:.25s;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      border:1px solid #2a3647;
+    }
+    .toast.show{
+      opacity:1;
+      transform:translateY(0);
+      pointer-events:auto;
+    }
+    .spinner{
+      width:16px;height:16px;border-radius:50%;
+      border:2px solid #44546a;border-top-color:var(--accent);
+      animation:spin 1s linear infinite;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+  </style>
+</head>
+<body>
+
+<h1>Dif • Recuperacion De Usuario</h1>
+
+<div class="card">
+
+  <div class="section-title">Archivos CSV</div>
+  <div class="boxgroup">
+
+    <div class="box">
+      <div class="section-title">Mes anterior (CSV)</div>
+      <input type="file" id="filePrev" accept=".csv">
+    </div>
+
+    <div class="box">
+      <div class="section-title">Mes actual (CSV)</div>
+      <input type="file" id="fileCurr" accept=".csv">
+    </div>
+
+    <div class="box" style="max-width:260px">
+      <div class="sliderLabel">Formato CSV</div>
+      <div class="sliderWrap">
+        <div class="slider" id="originSlider" role="switch" aria-checked="false" tabindex="0">
+          <span id="labelmastr" data-val="0"></span>
+          <span id="labelagente" data-val="1"></span>
+          <div class="knob" id="knob">mastr</div>
+        </div>
+      </div>
+
+      <div class="options">
+        <label class="inline"><input type="checkbox" id="onlySingle"> Sólo usuarios con 1 carga</label>
+        <label class="inline">Límite filas</label>
+        <input type="number" id="maxRows" value="0" min="0">
+      </div>
+    </div>
+  </div>
+
+  <button id="processBtn" class="btn-main">Procesar Comparación</button>
+  <button id="toggleSort" class="btn-small" style="margin-top:12px">Orden: Monto</button>
+
+  <div id="summary" class="summary" style="margin-top:18px;">
+    <strong id="summaryCount">Sin procesar</strong>
+    <div class="muted">Usuarios únicos mes anterior: —</div>
+    <div style="margin-top:6px">Formato activo: <span id="formatBadge" style="color:var(--accent-soft)">mastr</span></div>
+  </div>
+
+  <div id="results"></div>
+
+</div>
+
+<div id="toast" class="toast">
+  <div class="spinner"></div>
+  <div id="toastText">Procesando...</div>
+</div>
+
+
+<script>
+/* UI behavior + parsing for two CSV formats: mastr (0) and agente (1) */
+
+/* Slider logic */
+const slider = document.getElementById('originSlider');
+const knob = document.getElementById('knob');
+const labelmastr = document.getElementById('labelmastr');
+const labelagente = document.getElementById('labelagente');
+const formatBadge = document.getElementById('formatBadge');
+
+let origin = 0; // 0 = mastr, 1 = agente
+
+function updateKnobPosition() {
+  const sliderRect = slider.getBoundingClientRect();
+  const knobRect = knob.getBoundingClientRect();
+
+  // Padding real del slider (el que definimos en CSS)
+  const padding = 4;
+
+  // La posición máxima es: (ancho del slider) - (ancho del knob) - (padding doble)
+  const maxLeft = sliderRect.width - knobRect.width - (padding * 2);
+
+  if (origin === 0) {
+    knob.style.left = padding + 'px';
+    knob.textContent = 'mastr';
+  } else {
+    knob.style.left = maxLeft + 'px';
+    knob.textContent = 'agente';
+  }
+
+  slider.setAttribute('aria-checked', origin === 1 ? 'true' : 'false');
+  formatBadge.textContent = origin === 0 ? 'mastr' : 'agente';
+}
+
+// toggle handlers
+function toggleOrigin() {
+  origin = origin === 0 ? 1 : 0;
+  updateKnobPosition();
+}
+slider.addEventListener('click', (e) => {
+  // avoid toggling if user clicks over label text (we handle label clicks separately)
+  if (e.target === labelmastr || e.target === labelagente) return;
+  toggleOrigin();
+});
+slider.addEventListener('keydown', (e) => {
+  if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); toggleOrigin(); }
+});
+labelmastr.addEventListener('click', ()=>{ origin = 0; updateKnobPosition(); });
+labelagente.addEventListener('click', ()=>{ origin = 1; updateKnobPosition(); });
+
+// keep knob responsive on resize
+window.addEventListener('resize', updateKnobPosition);
+updateKnobPosition();
+
+/* Toast helpers */
+const toast = document.getElementById('toast');
+const toastText = document.getElementById('toastText');
+let toastTimer = null;
+function showToast(text, duration=2200) {
+  if (toastTimer) { clearTimeout(toastTimer); toastTimer = null; }
+  toastText.textContent = text;
+  toast.classList.add('show');
+  toastTimer = setTimeout(()=>{ toast.classList.remove('show'); toastTimer = null; }, duration);
+}
+
+/* CSV reading and parsing (robust for quoted fields) */
+function readCSV(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const text = String(e.target.result || '');
+      // split preserving quoted newlines not necessary here: we assume one record per line
+      const lines = text.split(/\r?\n/).map(l => l.replace(/\uFEFF/g,'')).filter(l => l.trim() !== '' );
+      const filtered = lines.filter(l => !l.startsWith('sep='));
+      // if first line looks like header (contains Fecha, Tipo, Alias...) skip it
+      if (filtered.length > 0 && /[Ff]echa|[Tt]ipo|Alias|Cantidad/.test(filtered[0])) {
+        resolve(filtered.slice(1));
+      } else {
+        resolve(filtered);
+      }
+    };
+    reader.onerror = reject;
+    reader.readAsText(file, 'utf-8');
+  });
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let cur = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i+1] === '"') { cur += '"'; i++; }
+      else inQuotes = !inQuotes;
+      continue;
+    }
+    if (ch === ',' && !inQuotes) { result.push(cur); cur = ''; continue; }
+    cur += ch;
+  }
+  result.push(cur);
+  return result;
+}
+
+/* Parser for 'mastr' format
+   Expected columns: Fecha (0), Cantidad (3), Alias agente (5), Alias jugador (6)
+*/
+function parseRowsmastr(lines) {
+  return lines.map(line => {
+    if (!line || !line.trim()) return null;
+    const cols = parseCSVLine(line);
+    const fecha = (cols[0]||'').trim();
+    let montoRaw = (cols[3] !== undefined ? cols[3] : '');
+    montoRaw = String(montoRaw).replace(/\s+/g,'').replace(/[^0-9\.\-]/g,'') || '0';
+    const monto = parseFloat(montoRaw) || 0;
+    let usuario = (cols[6] || cols[5] || '').trim();
+    usuario = usuario ? usuario.toLowerCase().trim() : '';
+    let fechaObj = null;
+    if (fecha) {
+      fechaObj = new Date(fecha.replace(' ', 'T'));
+      if (isNaN(fechaObj.getTime())) fechaObj = new Date(fecha);
+    }
+    return { fecha, fechaObj, monto, usuario };
+  }).filter(r => r && r.usuario);
+}
+
+/* Parser for 'agente' format
+   Usaremos Fecha=0, Cantidad=2, Alias=4
+*/
+function parseRowsagente(lines) {
+  return lines.map(line => {
+    if (!line || !line.trim()) return null;
+    const cols = parseCSVLine(line);
+    const fecha = (cols[0]||'').trim();
+    let montoRaw = (cols[2] !== undefined ? cols[2] : '');
+    montoRaw = String(montoRaw).replace(/\s+/g,'').replace(/[^0-9\.\-]/g,'') || '0';
+    const monto = parseFloat(montoRaw) || 0;
+    let usuario = (cols[4] || cols[3] || '').trim();
+    usuario = usuario ? usuario.toLowerCase().trim() : '';
+    let fechaObj = null;
+    if (fecha) {
+      fechaObj = new Date(fecha.replace(' ', 'T'));
+      if (isNaN(fechaObj.getTime())) fechaObj = new Date(fecha);
+    }
+    return { fecha, fechaObj, monto, usuario };
+  }).filter(r => r && r.usuario);
+}
+
+/* Estado compartido para re-render / copiado */
+let lastDroppedUsers = [];
+let lastTurnos = { TM: [], TT: [], TN: [] };
+let lastLimited = { TM: [], TT: [], TN: [] };
+let lastPrevStats = { totalCargas: 0, totalMonto: 0, uniquePrev: 0 };
+
+/* Sort mode: 'monto' (default) or 'operaciones' (apariciones) */
+let sortMode = 'monto';
+const toggleSortBtn = document.getElementById('toggleSort');
+toggleSortBtn.addEventListener('click', () => {
+  sortMode = sortMode === 'monto' ? 'operaciones' : 'monto';
+  toggleSortBtn.textContent = sortMode === 'monto' ? 'Orden: Monto' : 'Orden: Operaciones';
+  // re-render using lastDroppedUsers
+  if (lastDroppedUsers && lastDroppedUsers.length) {
+    computeTurnosFromDroppedAndRender(lastDroppedUsers);
+  } else {
+    showToast('Procesá archivos primero', 1200);
+  }
+});
+
+/* Main processing flow */
+document.getElementById('processBtn').addEventListener('click', async () => {
+  const prevFile = document.getElementById('filePrev').files[0];
+  const currFile = document.getElementById('fileCurr').files[0];
+  if (!prevFile || !currFile) return showToast('Cargá ambos archivos CSV primero', 2500);
+
+  showToast('Filtrando y comparando…', 8000);
+
+  try {
+    const [prevLines, currLines] = await Promise.all([ readCSV(prevFile), readCSV(currFile) ]);
+
+    // choose parser by slider
+    const parser = origin === 0 ? parseRowsmastr : parseRowsagente;
+
+    const prev = parser(prevLines);
+    const curr = parser(currLines);
+
+    // contar apariciones en prev
+    const prevCount = {};
+    prev.forEach(r => {
+      if (!r.usuario) return;
+      prevCount[r.usuario] = (prevCount[r.usuario] || 0) + 1;
+    });
+
+    const currentUsers = new Set(curr.map(r => r.usuario));
+
+    // agrupar prev por usuario: contar apariciones, sumar montos y tomar la fecha más reciente
+    const prevMap = {};
+    prev.forEach(r => {
+      if (!r.usuario) return;
+      const u = r.usuario;
+      if (!prevMap[u]) prevMap[u] = { usuario: u, count: 0, totalMonto: 0, lastFecha: r.fecha, lastFechaObj: r.fechaObj };
+      prevMap[u].count += 1;
+      prevMap[u].totalMonto += (r.monto || 0);
+
+      // actualizar fecha más reciente
+      const curTime = (r.fechaObj && !isNaN(r.fechaObj.getTime())) ? r.fechaObj.getTime() : (r.fecha ? Date.parse(r.fecha) : NaN);
+      const prevTime = (prevMap[u].lastFechaObj && !isNaN(prevMap[u].lastFechaObj.getTime())) ? prevMap[u].lastFechaObj.getTime() : (prevMap[u].lastFecha ? Date.parse(prevMap[u].lastFecha) : NaN);
+      if (!isNaN(curTime) && (isNaN(prevTime) || curTime > prevTime)) {
+        prevMap[u].lastFecha = r.fecha;
+        prevMap[u].lastFechaObj = r.fechaObj;
+      }
+    });
+
+    // construir lista agregada de usuarios que "dejaron de cargar"
+    let droppedUsers = Object.keys(prevMap)
+      .filter(u => !currentUsers.has(u))
+      .map(u => {
+        const it = prevMap[u];
+        return { fecha: it.lastFecha, fechaObj: it.lastFechaObj, monto: it.totalMonto, usuario: it.usuario, apariciones: it.count };
+      });
+
+    if (document.getElementById('onlySingle').checked) {
+      droppedUsers = droppedUsers.filter(u => u.apariciones === 1);
+    }
+
+    // guardar stats y estado global
+    lastDroppedUsers = droppedUsers;
+    lastPrevStats.totalCargas = prev.length;
+    lastPrevStats.totalMonto = prev.reduce((a, b) => a + (b.monto || 0), 0);
+    lastPrevStats.uniquePrev = Object.keys(prevMap).length;
+
+    // computar turnos y render
+    computeTurnosFromDroppedAndRender(droppedUsers);
+
+    showToast('Listo — resultados actualizados', 1800);
+
+  } catch (err) {
+    console.error(err);
+    showToast('Error procesando archivos', 3200);
+    alert('Error procesando archivos: ' + (err && err.message ? err.message : err));
+  }
+});
+
+/* compute turnos from droppedUsers (applies sortMode and maxRows), then render */
+function computeTurnosFromDroppedAndRender(droppedUsers) {
+  const turnos = { TM: [], TT: [], TN: [] };
+
+  droppedUsers.forEach(r => {
+    let hora = NaN;
+    if (r.fechaObj && !isNaN(r.fechaObj.getTime())) hora = r.fechaObj.getHours();
+    if (isNaN(hora) && r.fecha) {
+      const m = r.fecha.match(/(\d{2}):(\d{2}):(\d{2})$/);
+      if (m) hora = parseInt(m[1], 10);
+    }
+    if (isNaN(hora)) turnos.TN.push(r);
+    else if (hora >= 6 && hora < 14) turnos.TM.push(r);
+    else if (hora >= 14 && hora < 22) turnos.TT.push(r);
+    else turnos.TN.push(r);
+  });
+
+  // ordenar según sortMode
+  const comparator = (a, b) => {
+    if (sortMode === 'operaciones') {
+      return (b.apariciones || 0) - (a.apariciones || 0);
+    }
+    // default: monto
+    return (b.monto || 0) - (a.monto || 0);
+  };
+  Object.keys(turnos).forEach(k => turnos[k].sort(comparator));
+
+  // aplicar límite por turno
+  const maxRows = parseInt(document.getElementById('maxRows').value, 10) || 0;
+  const limited = {};
+  Object.keys(turnos).forEach(k => {
+    limited[k] = (maxRows > 0) ? turnos[k].slice(0, maxRows) : turnos[k].slice();
+  });
+
+  // guardar en global para copiar luego
+  lastTurnos = turnos;
+  lastLimited = limited;
+
+  // render UI
+  renderResults(limited, turnos);
+}
+
+/* render results using limited (what is displayed) and full turnos (for counts) */
+function renderResults(limited, turnos) {
+  // resumen
+  document.getElementById('summaryCount').textContent = `${lastPrevStats.totalCargas} registros · $${lastPrevStats.totalMonto.toLocaleString()}`;
+  document.getElementById('summary').querySelector('.muted').textContent = `Usuarios únicos mes anterior: ${lastPrevStats.uniquePrev}`;
+
+  // construir HTML por turno, incluyendo botón copiar por turno
+  let html = '';
+  for (const turno of ['TM', 'TT', 'TN']) {
+    const datos = limited[turno] || [];
+    const totalDetected = (turnos[turno] || []).length;
+    html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px">`;
+    html += `<h3 style="margin:0">Turno ${turno} <span style="font-weight:600;color:var(--muted);font-size:13px">(${totalDetected} detectados, mostrando ${datos.length})</span></h3>`;
+    html += `<div><button class="small-btn copy-turn-btn" data-turn="${turno}">Copiar ${turno}</button></div>`;
+    html += `</div>`;
+
+    if (!datos.length) { html += `<div class="muted">Sin usuarios que dejaron de cargar en este turno.</div>`; continue; }
+    html += `<table><thead><tr><th>Fecha</th><th>Usuario</th><th>Monto</th><th>Apariciones mes anterior</th></tr></thead><tbody>`;
+    datos.forEach(r => {
+      html += `<tr><td>${escapeHtml(r.fecha)}</td><td>${escapeHtml(r.usuario)}</td><td>$${(r.monto || 0).toFixed(2)}</td><td>${r.apariciones || 1}</td></tr>`;
+    });
+    html += `</tbody></table>`;
+  }
+  document.getElementById('results').innerHTML = html;
+
+  // attach copy handlers to copy-turn-btn
+  document.querySelectorAll('.copy-turn-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const turn = btn.getAttribute('data-turn');
+      copyUsersOfTurn(turn);
+    });
+  });
+}
+
+/* Copiar usuarios de un turno (usa lastLimited) en formato con guiones */
+async function copyUsersOfTurn(turn) {
+  const list = (lastLimited && lastLimited[turn]) ? lastLimited[turn] : [];
+  if (!list || list.length === 0) { showToast(`No hay usuarios en ${turn}`, 1400); return; }
+  const lines = list.map(r => `- ${r.usuario}`);
+  const text = lines.join('\n');
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(text);
+    else {
+      const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    }
+    showToast(`Usuarios ${turn} copiados`);
+  } catch (e) {
+    console.error(e);
+    showToast('Error al copiar');
+  }
+}
+
+/* utilities */
+function escapeHtml(s) {
+  if (!s && s !== 0) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+}
+</script>
+</body>
+</html>
