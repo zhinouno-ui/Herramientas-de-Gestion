@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Toolboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#0b0f17;
+      --card:#131a24;
+      --accent:#9aff5c;
+      --accent-soft:#c8ff9b;
+      --muted:#9aa5b7;
+      --border:#1c2533;
+    }
+    *{box-sizing:border-box;font-family:Inter,Roboto,Arial}
+    body{
+      margin:0;
+      padding:40px 20px;
+      background:var(--bg);
+      color:white;
+      min-height:100vh;
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;
+    }
+
+    h1{
+      text-align:center;
+      margin-bottom:35px;
+      font-size:26px;
+      color:var(--accent);
+      font-weight:700;
+      text-shadow:0 0 8px #9aff5c55;
+    }
+
+    .container{
+      display:flex;
+      flex-wrap:wrap;
+      gap:26px;
+      max-width:900px;
+      width:100%;
+      justify-content:center;
+    }
+
+    .card{
+      background:var(--card);
+      width:320px;
+      border-radius:16px;
+      padding:24px;
+      border:1px solid var(--border);
+      box-shadow:0 0 18px #0006;
+      transition:.25s;
+      cursor:pointer;
+      text-align:center;
+    }
+    .card:hover{
+      transform:translateY(-5px);
+      box-shadow:0 0 25px #0009;
+      border-color:var(--accent-soft);
+    }
+
+    .icon{
+      font-size:42px;
+      margin-bottom:14px;
+      color:var(--accent-soft);
+      text-shadow:0 0 6px #9aff5c55;
+    }
+
+    .title{
+      font-size:18px;
+      font-weight:700;
+      margin-bottom:8px;
+    }
+
+    .desc{
+      font-size:14px;
+      color:var(--muted);
+      margin-bottom:18px;
+    }
+
+    a.btn{
+      background:var(--accent);
+      color:#0d130f;
+      padding:10px 16px;
+      display:inline-block;
+      border-radius:10px;
+      font-weight:700;
+      text-decoration:none;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div style="width:100%;max-width:900px;">
+    <h1>Panel de Herramientas</h1>
+
+    <div class="container">
+
+      <!-- CARD 1 -->
+      <div class="card" onclick="location.href='data-match.html'">
+        <div class="icon">📊</div>
+        <div class="title">Comparador Agente – Chunior</div>
+        <div class="desc">Cruza dos archivos CSV para detectar diferencias de carga.</div>
+        <a class="btn" href="data-match.html">Ingresar</a>
+      </div>
+
+      <!-- CARD 2 -->
+      <div class="card" onclick="location.href='users-analysis.html'">
+        <div class="icon">🔍</div>
+        <div class="title">Recuperación de Usuarios</div>
+        <div class="desc">Analiza diferencias entre meses y detecta quién dejó de cargar.</div>
+        <a class="btn" href="users-analysis.html">Ingresar</a>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>
