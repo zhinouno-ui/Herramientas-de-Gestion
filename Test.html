@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Dif • Comparador de registros</title>
+<style>
+  body{margin:0;font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;background:#111418;color:#fff;padding:18px}
+  .wrap{max-width:1400px;margin:0 auto}
+  h1{margin:0 0 12px;font-size:22px;font-weight:700;background:linear-gradient(90deg,#fff,#8C6CFF);
+     -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .card{background:#1A1E23;padding:18px;border-radius:10px;border:1px solid #2A2A2A;box-shadow:0 10px 28px rgba(0,0,0,.45)}
+  .row{display:flex;gap:16px;flex-wrap:wrap}
+  .btn{border:none;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}
+  .btn{background:linear-gradient(90deg,#C7F24A,#D4FF4A);color:#111}
+  .btn.sec{background:linear-gradient(90deg,#24364A,#1F3A5F);color:#EAF2FF}
+  .btn:hover{opacity:.9}
+  .action-btn{background:none;border:none;cursor:pointer;padding:4px;border-radius:6px;color:#ccc;margin:0 2px}
+  .action-btn:hover{background:#24364A;color:#fff}
+  .table-wrap{margin-top:20px;max-height:60vh;overflow:auto;border-radius:10px;background:#1E2329;border:1px solid #2A2A2A}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{padding:10px 12px;border-bottom:1px solid #2A2A2A;text-align:left;white-space:nowrap}
+  th{position:sticky;top:0;background:#1E2329;color:#ccc;font-weight:600}
+  td.amount{text-align:right;font-family:Consolas,monospace;font-weight:600}
+  td.amount-pos{color:#9EE759}
+  td.amount-neg{color:#EF4444}
+  tr.ignored{opacity:.5;font-style:italic}
+  /* Modal edición */
+  .modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:100}
+  .modal-content{background:#1A1E23;padding:20px;border-radius:12px;width:400px;max-width:90%}
+  .modal-content h2{margin-top:0;font-size:18px}
+  .modal-content label{display:block;margin-top:10px;color:#A8A8A8;font-size:13px}
+  .modal-content input,.modal-content select{width:100%;padding:8px;border-radius:8px;border:1px solid #2A2A2A;background:#1E2329;color:#fff}
+  /* Fullscreen */
+  .fullscreen{position:fixed;top:0;left:0;width:100%;height:100%;background:#111418;z-index:200;display:none;flex-direction:column}
+  .fullscreen .close{align-self:flex-end;margin:10px;color:#fff;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Dif • Comparador de registros</h1>
+  <div class="card">
+    <div class="row">
+      <div style="flex:1;min-width:280px">
+        <label>Cargar CSV(s) Fuente A</label>
+        <input id="agentFiles" type="file" accept=".csv" multiple />
+      </div>
+      <div style="flex:1;min-width:300px">
+        <label>Pegar texto Fuente B</label>
+        <textarea id="chuniorText" placeholder="Pega aquí las líneas..."></textarea>
+      </div>
+      <div style="width:240px">
+        <label>Acciones</label>
+        <div class="row" style="flex-direction:column;gap:10px">
+          <button id="processBtn" class="btn">Procesar y comparar</button>
+          <button id="exportBtn" class="btn sec">Exportar CSV</button>
+          <button id="copyExcelBtn" class="btn sec">Copiar Excel</button>
+        </div>
+      </div>
+    </div>
+    <div id="resultsSection" style="margin-top:20px">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Fuente A</th><th>Turno</th><th>Hora A</th><th>Usuario A</th><th>Monto A</th>
+              <th>Hora B</th><th>Usuario B</th><th>Monto B</th><th>Operador</th><th>Medio</th><th>Estado</th><th>Acción</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:10px;color:#A8A8A8;font-size:13px">
+        Visibles: <span id="countTotals">0</span> · Emparejados: <span id="countPaired">0</span> · Manuales: <span id="countManual">0</span> · Discrepancias: <span id="countMissing">0</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal edición -->
+<div id="editModal" class="modal">
+  <div class="modal-content">
+    <h2>Editar movimiento</h2>
+    <label>Usuario</label><input type="text" id="editUsuario">
+    <label>Monto</label><input type="number" id="editMonto" step="0.01">
+    <label>Billetera</label><select id="editBilletera"></select>
+    <div style="margin-top:15px;display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn" id="saveEdit">Guardar</button>
+      <button class="btn sec" id="cancelEdit">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Fullscreen -->
+<div id="fullscreen" class="fullscreen">
+  <div class="close">✖</div>
+  <div style="flex:1;overflow:auto;padding:20px">
+    <table style="width:100%;border-collapse:collapse;color:#fff">
+      <thead><tr><th>Fuente A</th><th>Usuario</th><th>Monto</th><th>Fuente B</th><th>Usuario</th><th>Monto</th></tr></thead>
+      <tbody id="fsBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+let pairs=[],manualLinks=new Set(),editTarget=null;
+function renderTable(){
+  const tbody=document.getElementById('resultsBody');tbody.innerHTML='';
+  pairs.forEach(p=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td>${p.aUser||''}</td><td>${p.turno||''}</td><td>${p.aHora||''}</td>
+      <td>${p.aUser||''}</td><td class="amount">${p.aMonto||''}</td>
+      <td>${p.bHora||''}</td><td>${p.bUser||''}</td><td class="amount">${p.bMonto||''}</td>
+      <td>${p.operador||''}</td><td>${p.medio||''}</td><td>${p.estado||''}</td>
+      <td>
+        <button class="action-btn edit-btn" data-id="${p.id}">✏️</button>
+        <button class="action-btn link-btn" data-id="${p.id}">🔗</button>
+        <button class="action-btn hide-btn" data-id="${p.id}">${p.hidden?'👁️':'🙈'}</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('countTotals').textContent=pairs.length;
+  document.getElementById('countPaired').textContent=pairs.filter(p=>p.estado==='OK').length;
+  document.getElementById('countManual').textContent=manualLinks.size;
+  document.getElementById('countMissing').textContent=pairs.filter(p=>p.estado!=='OK').length;
+}
+
+/* === Eventos de acción en la tabla === */
+document.getElementById('resultsBody').addEventListener('click',e=>{
+  const btn=e.target.closest('button');if(!btn)return;
+  const id=btn.dataset.id;const p=pairs.find(x=>x.id===id);
+  if(btn.classList.contains('edit-btn')){editTarget=p;openEditModal(p);}
+  if(btn.classList.contains('link-btn')){manualLinks.add(id);p.estado='MANUAL';renderTable();}
+  if(btn.classList.contains('hide-btn')){p.hidden=!p.hidden;renderTable();}
+});
+
+/* === Modal edición === */
+function openEditModal(p){
+  document.getElementById('editUsuario').value=p.aUser||p.bUser||'';
+  document.getElementById('editMonto').value=p.aMonto||p.bMonto||0;
+  const billeteraSel=document.getElementById('editBilletera');
+  billeteraSel.innerHTML='';
+  const opts=[p.medio||'','MercadoPago','Prex','Otro'].filter(Boolean);
+  opts.forEach(o=>{
+    const opt=document.createElement('option');opt.value=o;opt.textContent=o;billeteraSel.appendChild(opt);
+  });
+  document.getElementById('editModal').style.display='flex';
+}
+document.getElementById('saveEdit').onclick=()=>{
+  if(!editTarget)return;
+  editTarget.aUser=document.getElementById('editUsuario').value;
+  editTarget.aMonto=parseFloat(document.getElementById('editMonto').value)||0;
+  editTarget.medio=document.getElementById('editBilletera').value;
+  document.getElementById('editModal').style.display='none';
+  renderTable();
+};
+document.getElementById('cancelEdit').onclick=()=>{document.getElementById('editModal').style.display='none';};
+
+/* === Fullscreen === */
+const fs=document.getElementById('fullscreen');
+document.getElementById('resultsSection').addEventListener('dblclick',()=>{fs.style.display='flex';renderFullscreen();});
+fs.querySelector('.close').onclick=()=>{fs.style.display='none';};
+function renderFullscreen(){
+  const fsBody=document.getElementById('fsBody');fsBody.innerHTML='';
+  pairs.forEach(p=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${p.aUser||''}</td><td>${p.aUser||''}</td><td>${p.aMonto||''}</td>
+                  <td>${p.bUser||''}</td><td>${p.bUser||''}</td><td>${p.bMonto||''}</td>`;
+    fsBody.appendChild(tr);
+  });
+}
+
+/* === Inicialización dummy === */
+pairs=[
+  {id:'1',aUser:'juan',aHora:'10:00',aMonto:200,bUser:'juan',bHora:'10:01',bMonto:200,operador:'op1',medio:'MP',estado:'OK'},
+  {id:'2',aUser:'maria',aHora:'11:00',aMonto:300,bUser:'maría',bHora:'11:02',bMonto:300,operador:'op2',medio:'Prex',estado:'MISSING_AGENT'}
+];
+renderTable();
+</script>
+</body>
+</html>
