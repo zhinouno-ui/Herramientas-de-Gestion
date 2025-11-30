@@ -473,15 +473,11 @@
         const [isProcessing, setIsProcessing] = useState(false);
         const [ignoredIds, setIgnoredIds] = useState(new Set());
         const [tableFullscreen, setTableFullscreen] = useState(false);
-        
-        // Modal State
         const [editModalOpen, setEditModalOpen] = useState(false);
         const [editingPair, setEditingPair] = useState(null);
         
         const [linkModalOpen, setLinkModalOpen] = useState(false);
         const [linkingBasePair, setLinkingBasePair] = useState(null);
-
- // Filtrá por tipo
 const egresos = filteredPairs
   .filter(p => p.tipoMovimiento === "EGRESO" && !ignoredIds.has(p.id));
 const ingresos = filteredPairs
@@ -585,6 +581,8 @@ XLSX.utils.sheet_add_aoa(ws, allRows, { origin: "A1" });
 ws['!cols'] = [ { wch: 18 },{ wch: 22 },{ wch: 18 },{ wch: 22 },{ wch: 18 },{ wch: 14 } ];
 XLSX.utils.book_append_sheet(wb, ws, "Resumen");
 XLSX.writeFile(wb, `Resumen_${new Date().toISOString().slice(0,10)}.xlsx`);
+
+
 
           return { aTotal, bTotal, aIncome, bIncome, aOutcome, bOutcome, adminTotal, pairedCount, missingCount, totalVisible: filteredPairs.length };
         }, [filteredPairs, ignoredIds]);
