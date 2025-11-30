@@ -481,159 +481,110 @@
         const [linkModalOpen, setLinkModalOpen] = useState(false);
         const [linkingBasePair, setLinkingBasePair] = useState(null);
 
-        // Filters
-        const [filters, setFilters] = useState({
-          fecha: '__ALL',
-          agente: '__ALL',
-          operador: '__ALL',
-          billetera: '__ALL',
-          turno: '__ALL',
-          estado: '__ALL',
-          movimiento: '__ALL'
-        });
+ // Filtrá por tipo
+const egresos = filteredPairs
+  .filter(p => p.tipoMovimiento === "EGRESO" && !ignoredIds.has(p.id));
+const ingresos = filteredPairs
+  .filter(p => p.tipoMovimiento === "INGRESO" && !ignoredIds.has(p.id));
 
-        // Listen for ESC to exit focus mode
-        useEffect(() => {
-          const handleKeyDown = (e) => {
-            if (e.key === 'Escape' && tableFullscreen) {
-              setTableFullscreen(false);
-            }
-          };
-          window.addEventListener('keydown', handleKeyDown);
-          return () => window.removeEventListener('keydown', handleKeyDown);
-        }, [tableFullscreen]);
+// UNIFICACIÓN por usuario
+function buildAlignedRows(list) {
+  // Usar pares ya cruzados por lógica previa
+  return list.map(p => {
+    const estado =
+      p.estado === "OK" || p.estado === "MANUAL" ? "OK"
+      : (p.estado === "MISSING_AGENT" ? "FALTA AGENTE" 
+      : (p.estado === "MISSING_CHUNIOR" ? "FALTA CHUNIOR" : ""));
+    return [
+      { v: p.a?.monto ?? "", t: "n" }, // Columna monto agente
+      { v: p.a?.usuario ?? "", t: "s" }, // Columna usuario agente
+      { v: p.b?.monto ?? "", t: "n" }, // Columna monto chunior
+      { v: p.b?.usuario ?? "", t: "s" }, // Columna usuario chunior
+      { v: (p.a?.monto ?? 0) - (p.b?.monto ?? 0), t: "n" }, // Diferencia
+      { v: estado, t: "s" }
+    ];
+  });
+}
 
-        // Processing Logic
-        const processData = async () => {
-          setIsProcessing(true);
-          setIgnoredIds(new Set());
-          
-          await new Promise(r => setTimeout(r, 100));
+// TOTALES
+const totalEgresosAgente = egresos.reduce((s,p) => s+(p.a?.monto??0),0);
+const totalEgresosChunior = egresos.reduce((s,p) => s+(p.b?.monto??0),0);
+const difEgresos = totalEgresosAgente - totalEgresosChunior;
 
-          let rowsA = [];
-          
-          try {
-            if (agentFiles && agentFiles.length) {
-              for (let i = 0; i < agentFiles.length; i++) {
-                const f = agentFiles[i];
-                const text = await f.text();
-                const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/).filter(l => l.trim() !== '');
-                const labelMatch = f.name.match(/(agente|subagente|fuente|a)_?([a-zA-Z0-9]+)/i);
-                const labelA = labelMatch?.[2]?.toLowerCase() || f.name.replace(/\.csv$/i, '');
-                
-                rowsA = rowsA.concat(parseAgentLines(lines, labelA));
-              }
-            }
-          } catch (e) {
-            alert('Error leyendo archivos de Agente: ' + e.message);
-            setIsProcessing(false);
-            return;
-          }
+const totalIngresosAgente = ingresos.reduce((s,p) => s+(p.a?.monto??0),0);
+const totalIngresosChunior = ingresos.reduce((s,p) => s+(p.b?.monto??0),0);
+const difIngresos = totalIngresosAgente - totalIngresosChunior;
 
-          const rowsB = parseBLines(chuniorText.split(/\r?\n/).filter(l => l.trim() !== ''));
+// HEADER PRINCIPAL Y TOTALES
+const egresosHeaderRow = [
+  { v: "EGRESOS", t:"s", s: { font:{bold:true}, fill:{fgColor:{rgb:"87CEEB"}}}},
+  { v: "", t:"s" },
+  { v: "", t:"s" },
+  { v: "", t:"s" }, 
+  { v: "", t:"s" },
+  { v: "", t:"s" }
+];
+const egresosTotalRow = [
+  { v: "TOTAL AGENTE", t:"s", s:{ font:{bold:true}}},
+  { v: totalEgresosAgente, t:"n", s:{ numFmt:"$ #,##0.00"}},
+  { v: "TOTAL CHUNIOR", t:"s", s:{ font:{bold:true}}},
+  { v: totalEgresosChunior, t:"n", s:{ numFmt:"$ #,##0.00"}},
+  { v: difEgresos, t:"n", s:{ numFmt:"$ #,##0.00", font:{bold:true}, fill:{fgColor:{rgb:"A9FFAA"}} }},
+  { v: "", t:"s" }
+];
+const egresosSubHeaderRow = [
+  { v:"MONTO AGENTE", t:"s" },
+  { v:"USUARIO AGENTE", t:"s" },
+  { v:"MONTO CHUNIOR", t:"s" },
+  { v:"USUARIO CHUNIOR", t:"s" },
+  { v:"DIFERENCIA", t:"s" },
+  { v:"ESTADO", t:"s" }
+];
+const egresosDataRows = buildAlignedRows(egresos);
 
-          // Augment data
-          rowsA.forEach(r => { 
-            r.turno = r.fechaObj ? getTurnoFromDate(r.fechaObj) : ''; 
-            r.tipoMovimiento = r.monto < 0 ? 'EGRESO' : 'INGRESO'; 
-          });
-          rowsB.forEach(r => { 
-            r.turno = r.fechaObj ? getTurnoFromDate(r.fechaObj) : ''; 
-            r.tipoMovimiento = r.monto < 0 ? 'EGRESO' : 'INGRESO'; 
-          });
 
-          const newPairs = [];
-          const matchedBIdx = new Set();
-          let idCounter = 0;
+// Y lo mismo para ingresos
+const ingresosHeaderRow = [
+  { v: "INGRESOS", t:"s", s: { font:{bold:true}, fill:{fgColor:{rgb:"FFEB99"}}}},
+  { v: "", t:"s" },{ v: "", t:"s" },{ v: "", t:"s" },{ v: "", t:"s" },{ v: "", t:"s" }
+];
+const ingresosTotalRow = [
+  { v: "TOTAL AGENTE", t:"s", s:{ font:{bold:true}}},
+  { v: totalIngresosAgente, t:"n", s:{ numFmt:"$ #,##0.00"}},
+  { v: "TOTAL CHUNIOR", t:"s", s:{ font:{bold:true}}},
+  { v: totalIngresosChunior, t:"n", s:{ numFmt:"$ #,##0.00"}},
+  { v: difIngresos, t:"n", s:{ numFmt:"$ #,##0.00", font:{bold:true}, fill:{fgColor:{rgb:"A9FFAA"}} }},
+  { v: "", t:"s" }
+];
+const ingresosSubHeaderRow = [
+  { v:"MONTO AGENTE", t:"s" },
+  { v:"USUARIO AGENTE", t:"s" },
+  { v:"MONTO CHUNIOR", t:"s" },
+  { v:"USUARIO CHUNIOR", t:"s" },
+  { v:"DIFERENCIA", t:"s" },
+  { v:"ESTADO", t:"s" }
+];
+const ingresosDataRows = buildAlignedRows(ingresos);
 
-          // Match A to B
-          rowsA.forEach(a => {
-            if (a.isAdminCharge) {
-              newPairs.push({ id: `admin-${idCounter++}`, a, b: null, estado: 'OK', tipoMovimiento: a.tipoMovimiento });
-            } else {
-              let matchedIndex = -1;
-              for (let j = 0; j < rowsB.length; j++) {
-                if (matchedBIdx.has(j)) continue;
-                const b = rowsB[j];
-                if (a.usuario === b.usuario && Math.abs(a.monto - b.monto) < 0.01) {
-                  matchedIndex = j;
-                  break;
-                }
-              }
+// FINAL: Unís todos los rows
+const allRows = [
+  egresosHeaderRow,
+  egresosTotalRow,
+  egresosSubHeaderRow,
+  ...egresosDataRows,
+  [], // Fila vacía
+  ingresosHeaderRow,
+  ingresosTotalRow,
+  ingresosSubHeaderRow,
+  ...ingresosDataRows,
+];
 
-              if (matchedIndex >= 0) {
-                matchedBIdx.add(matchedIndex);
-                newPairs.push({ id: `match-${idCounter++}`, a, b: rowsB[matchedIndex], estado: 'OK', tipoMovimiento: a.tipoMovimiento });
-              } else {
-                newPairs.push({ id: `a-miss-${idCounter++}`, a, b: null, estado: 'MISSING_CHUNIOR', tipoMovimiento: a.tipoMovimiento });
-              }
-            }
-          });
-
-          // Remaining B
-          for (let j = 0; j < rowsB.length; j++) {
-            if (!matchedBIdx.has(j)) {
-              newPairs.push({ id: `b-miss-${j}`, a: null, b: rowsB[j], estado: 'MISSING_AGENT', tipoMovimiento: rowsB[j].tipoMovimiento });
-            }
-          }
-
-          newPairs.sort((x, y) => {
-            const dx = x.a?.fechaObj || x.b?.fechaObj; 
-            const dy = y.a?.fechaObj || y.b?.fechaObj;
-            return (dx?.getTime() || 0) - (dy?.getTime() || 0);
-          });
-
-          setPairs(newPairs);
-          setIsProcessing(false);
-        };
-
-        const filteredPairs = useMemo(() => {
-          return pairs.filter(p => {
-            const a = p.a;
-            const b = p.b;
-
-            if (filters.fecha !== '__ALL') {
-              const d = a?.fechaObj || b?.fechaObj;
-              if (!d || formatDateStr(d) !== filters.fecha) return false;
-            }
-            if (filters.agente !== '__ALL' && (!a || a.etiqueta !== filters.agente)) return false;
-            if (filters.operador !== '__ALL' && (!b || b.operador !== filters.operador)) return false;
-            if (filters.billetera !== '__ALL' && (!b || b.medio !== filters.billetera)) return false;
-            if (filters.turno !== '__ALL' && (a?.turno || b?.turno || '') !== filters.turno) return false;
-            if (filters.estado !== '__ALL') {
-              if (a?.isAdminCharge) return filters.estado === 'OK';
-              return p.estado === filters.estado;
-            }
-             
-            if (filters.movimiento !== '__ALL' && p.tipoMovimiento !== filters.movimiento) return false;
-
-            return true;
-          });
-        }, [pairs, filters]);
-
-        const summary = useMemo(() => {
-          const visible = filteredPairs.filter(p => !ignoredIds.has(p.id));
-          let aTotal = 0, bTotal = 0, aIncome = 0, bIncome = 0, aOutcome = 0, bOutcome = 0, adminTotal = 0;
-          let pairedCount = 0, missingCount = 0;
-
-          visible.forEach(p => {
-            if (p.a) {
-              if (p.a.isAdminCharge) { adminTotal += p.a.monto; }
-              else {
-                aTotal += p.a.monto;
-                p.a.monto >= 0 ? aIncome += p.a.monto : aOutcome += p.a.monto;
-              }
-            }
-            if (p.b) {
-              bTotal += p.b.monto;
-              p.b.monto >= 0 ? bIncome += p.b.monto : bOutcome += p.b.monto;
-            }
-            
-            if (!p.a?.isAdminCharge) {
-              if (p.estado === 'OK' || p.estado === 'MANUAL') pairedCount++;
-              else missingCount++;
-            }
-          });
+const wb = XLSX.utils.book_new();
+const ws = XLSX.utils.aoa_to_sheet([]);
+XLSX.utils.sheet_add_aoa(ws, allRows, { origin: "A1" });
+ws['!cols'] = [ { wch: 18 },{ wch: 22 },{ wch: 18 },{ wch: 22 },{ wch: 18 },{ wch: 14 } ];
+XLSX.utils.book_append_sheet(wb, ws, "Resumen");
+XLSX.writeFile(wb, `Resumen_${new Date().toISOString().slice(0,10)}.xlsx`);
 
           return { aTotal, bTotal, aIncome, bIncome, aOutcome, bOutcome, adminTotal, pairedCount, missingCount, totalVisible: filteredPairs.length };
         }, [filteredPairs, ignoredIds]);
