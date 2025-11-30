@@ -775,58 +775,123 @@
   // --- FUNCIÓN PARA EXPORTAR XLSX PROFESIONAL ---
   const exportToExcel = () => {
     const headerStyle = {
-      font: { bold: true, color: { rgb: "FFFFFF" } },
-      fill: { fgColor: { rgb: "24364A" } },
-      alignment: { horizontal: "center", vertical: "center" },
-      border: { bottom: { style: "medium", color: { rgb: "C7F24A" } } }
-    };
-    const currencyStyle = { numFmt: "$ #,##0.00" };
-    const dateStyle = { numFmt: "dd/mm/yyyy hh:mm:ss" };
-    const errorStyle = { font: { color: { rgb: "EF4444" }, bold: true } };
-    const okStyle = { font: { color: { rgb: "9EE759" }, bold: true } };
+      const egresosHeader = { font: { bold: true }, fill: { fgColor: { rgb: "87CEEB" } } }; // celeste
+  const ingresosHeader = { font: { bold: true }, fill: { fgColor: { rgb: "FFEB99" } } }; // amarillo
+  const diferenciaHeader = { font: { bold: true }, fill: { fgColor: { rgb: "A9FFAA" } } }; // verde claro
+  const agentStyle = { fill: { fgColor: { rgb: "00FF00" } }, font: { bold: true } }; // verde
+  const chuniorStyle = { fill: { fgColor: { rgb: "ADD8E6" } }, font: { bold: true } }; // celeste claro
+  const totalStyleAgente = { font: { bold: true }, fill: { fgColor: { rgb: "F0C674" } } }; // amarillo naranja
+  const totalStyleChunior = { font: { bold: true }, fill: { fgColor: { rgb: "5DADE2" } } }; // azul claro
+  const moneyStyle = { numFmt: "$ #,##0.00" };
 
-    const dataToExport = filteredPairs
-      .filter(p => !ignoredIds.has(p.id))
-      .map(p => {
-        const a = p.a || {}, b = p.b || {};
-        let estadoLabel = p.estado;
-        if (a.isAdminCharge) estadoLabel = "AJUSTE";
-        else if (p.estado === 'MISSING_AGENT') estadoLabel = "FALTA A";
-        else if (p.estado === 'MISSING_CHUNIOR') estadoLabel = "FALTA B";
-        return [
-          { v: a.etiqueta?.toUpperCase() || '', t: 's' },
-          { v: a.turno || b.turno || '', t: 's' },
-          { v: a.fechaObj || '', t: a.fechaObj ? 'd' : 's', s: dateStyle },
-          { v: a.isAdminCharge ? 'AJUSTE' : (a.usuario || ''), t: 's' },
-          { v: a.monto || 0, t: 'n', s: currencyStyle },
-          { v: b.fechaObj || '', t: b.fechaObj ? 'd' : 's', s: dateStyle },
-          { v: b.usuario || '', t: 's' },
-          { v: b.monto || 0, t: 'n', s: currencyStyle },
-          { v: b.operador?.toUpperCase() || '', t: 's' },
-          { v: b.medio || '', t: 's' },
-          { v: estadoLabel, t: 's', s: (estadoLabel === 'OK' || estadoLabel === 'AJUSTE' || estadoLabel === 'MANUAL') ? okStyle : errorStyle },
-          { v: p.tipoMovimiento, t: 's' }
-        ];
-      });
+     // --- BLOQUE: TÍTULOS Y TOTALES ---
+  const mainTitleRow = [
+    { v: "EGRESOS", t: "s", s: egresosHeader },
+    { v: "", t: "s", s: egresosHeader },
+    { v: "INGRESOS", t: "s", s: ingresosHeader },
+    { v: "", t: "s", s: ingresosHeader },
+    { v: "DIFERENCIA", t: "s", s: diferenciaHeader },
+  ];
+  const totalEgresosAgente = summary.aOutcome || 0;
+  const totalEgresosChunior = summary.bOutcome || 0;
+  const totalIngresosAgente = summary.aIncome || 0;
+  const totalIngresosChunior = summary.bIncome || 0;
+  const diferenciaEgresos = totalEgresosAgente - totalEgresosChunior;
+  const diferenciaIngresos = totalIngresosAgente - totalIngresosChunior;
+  const totalsRowEgresos = [
+    { v: "TOTAL AGENTE", t: "s", s: totalStyleAgente },
+    { v: totalEgresosAgente, t: "n", s: moneyStyle },
+    { v: "TOTAL CHUNIOR", t: "s", s: totalStyleChunior },
+    { v: totalEgresosChunior, t: "n", s: moneyStyle },
+    { v: diferenciaEgresos, t: "n", s: moneyStyle },
+  ];
+  const totalsRowIngresos = [
+    { v: "TOTAL AGENTE", t: "s", s: totalStyleAgente },
+    { v: totalIngresosAgente, t: "n", s: moneyStyle },
+    { v: "TOTAL CHUNIOR", t: "s", s: totalStyleChunior },
+    { v: totalIngresosChunior, t: "n", s: moneyStyle },
+    { v: diferenciaIngresos, t: "n", s: moneyStyle },
+  ];
 
-    const headers = [
-      "AGENTE/SUB", "TURNO", "FECHA A", "USUARIO A", "MONTO A",
-      "FECHA B", "USUARIO B", "MONTO B", "OPERADOR", "BILLETERA",
-      "ESTADO", "TIPO"
-    ].map(h => ({ v: h, t: 's', s: headerStyle }));
+  // --- BLOQUE: SUBTÍTULOS DE CATEGORÍA ---
+  const subtituloEgresos = [
+    { v: "RETIROS AGENTE", t: "s", s: agentStyle },
+    { v: "RETIROS CHUNIOR", t: "s", s: chuniorStyle },
+    { v: "", t: "s" }, { v: "", t: "s" }, { v: "", t: "s" }
+  ];
+  const subtituloIngresos = [
+    { v: "DEPOSITOS", t: "s", s: agentStyle },
+    { v: "DEPOSITOS CHUNIOR", t: "s", s: chuniorStyle },
+    { v: "", t: "s" }, { v: "", t: "s" }, { v: "", t: "s" }
+  ];
 
-    const allData = [headers, ...dataToExport];
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet([]);
-    XLSX.utils.sheet_add_aoa(ws, allData, { origin: "A1" });
-    ws['!cols'] = [
-      { wch: 15 }, { wch: 8 }, { wch: 20 }, { wch: 20 }, { wch: 15 },
-      { wch: 20 }, { wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 15 },
-      { wch: 15 }, { wch: 10 },
-    ];
-    XLSX.utils.book_append_sheet(wb, ws, "Comparacion");
-    XLSX.writeFile(wb, `Reporte_Conciliacion_${new Date().toISOString().slice(0,10)}.xlsx`);
-  };
+  // --- BLOQUE: DETALLE Egresos/Ingresos ---
+  const egresosAgenteRows = filteredPairs
+    .filter(p => p.tipoMovimiento === "EGRESO" && p.a && !ignoredIds.has(p.id))
+    .map(p => [
+      { v: p.a.monto, t: "n", s: moneyStyle },
+      { v: p.a.usuario, t: "s" },
+      { v: "", t: "s" }, { v: "", t: "s" }, { v: "", t: "s" }
+    ]);
+  const egresosChuniorRows = filteredPairs
+    .filter(p => p.tipoMovimiento === "EGRESO" && p.b && !ignoredIds.has(p.id))
+    .map((p, i) => [
+      { v: "", t: "s" },
+      { v: "", t: "s" },
+      { v: p.b.monto, t: "n", s: moneyStyle },
+      { v: p.b.usuario, t: "s" },
+      { v: "", t: "s" }
+    ]);
+  const ingresosAgenteRows = filteredPairs
+    .filter(p => p.tipoMovimiento === "INGRESO" && p.a && !ignoredIds.has(p.id))
+    .map(p => [
+      { v: p.a.monto, t: "n", s: moneyStyle },
+      { v: p.a.usuario, t: "s" },
+      { v: "", t: "s" }, { v: "", t: "s" }, { v: "", t: "s" }
+    ]);
+  const ingresosChuniorRows = filteredPairs
+    .filter(p => p.tipoMovimiento === "INGRESO" && p.b && !ignoredIds.has(p.id))
+    .map((p, i) => [
+      { v: "", t: "s" },
+      { v: "", t: "s" },
+      { v: p.b.monto, t: "n", s: moneyStyle },
+      { v: p.b.usuario, t: "s" },
+      { v: "", t: "s" }
+    ]);
+
+  // --- DIFERENCIAS Y FALTANTES ---
+  const diferenciasRows = filteredPairs
+    .filter(p => (p.estado === "MISSING_AGENT" || p.estado === "MISSING_CHUNIOR") && !ignoredIds.has(p.id))
+    .map(p => [
+      { v: "", t: "s" }, { v: "", t: "s" }, { v: "", t: "s" }, { v: "", t: "s" },
+      { v: p.a ? `Falta en Chunior: ${p.a.usuario}` : `Falta en Agente: ${p.b.usuario}`, t: "s", s: diferenciaHeader }
+    ]);
+
+  // --- UNÍS TODOS LOS BLOQUES ---
+  const allRows = [
+    mainTitleRow,
+    totalsRowEgresos,
+    subtituloEgresos,
+    ...egresosAgenteRows,
+    ...egresosChuniorRows,
+    [],
+    totalsRowIngresos,
+    subtituloIngresos,
+    ...ingresosAgenteRows,
+    ...ingresosChuniorRows,
+    [],
+    [["", "", "", "", "FALTAS"]],
+    ...diferenciasRows
+  ];
+
+  // --- EXPORTA EL XLSX ---
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet([]);
+  XLSX.utils.sheet_add_aoa(ws, allRows, { origin: "A1" });
+  ws['!cols'] = [ { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 30 } ];
+  XLSX.utils.book_append_sheet(wb, ws, "RESUMEN");
+  XLSX.writeFile(wb, `Resumen_${new Date().toISOString().slice(0,10)}.xlsx`);
+};
          
         return (
           <div className="min-h-screen p-4 md:p-6 pb-20 max-w-[1600px] mx-auto animate-fade-in relative">
