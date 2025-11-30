@@ -349,7 +349,9 @@
                   <input className={inputClass} value={formData.bBilletera} onChange={e => setFormData({...formData, bBilletera: e.target.value})} />
                 </div>
               </div>
-
+                   <button onClick={downloadCSV} disabled={pairs.length === 0} className="flex-1 bg-[#24364A] hover:bg-[#1F3A5F] text-[#EAF2FF] py-2 rounded-lg text-sm font-medium transition-colors flex justify-center items-center gap-2 disabled:opacity-50">
+                      <Download size={16} /> CSV
+                    </button>
               <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-[#2A2A2A]">
                 <button onClick={onClose} className="px-4 py-2 rounded-lg bg-[#2A2F36] text-[#A8A8A8] hover:text-white transition-colors">Cancelar</button>
                 <button onClick={handleSave} className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#C7F24A] to-[#D4FF4A] text-[#0D1117] font-bold shadow-lg shadow-[#C7F24A]/20 hover:translate-y-[-2px] transition-transform">Guardar</button>
