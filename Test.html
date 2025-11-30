@@ -466,147 +466,136 @@
 
       /* --- APP COMPONENT --- */
 
-      function App() {
-        const [agentFiles, setAgentFiles] = useState(null);
-        const [chuniorText, setChuniorText] = useState('');
-        const [pairs, setPairs] = useState([]);
-        const [isProcessing, setIsProcessing] = useState(false);
-        const [ignoredIds, setIgnoredIds] = useState(new Set());
-        const [tableFullscreen, setTableFullscreen] = useState(false);
-        const [editModalOpen, setEditModalOpen] = useState(false);
-        const [editingPair, setEditingPair] = useState(null);
-        
-        const [linkModalOpen, setLinkModalOpen] = useState(false);
-        const [linkingBasePair, setLinkingBasePair] = useState(null);
-const egresos = filteredPairs
-  .filter(p => p.tipoMovimiento === "EGRESO" && !ignoredIds.has(p.id));
-const ingresos = filteredPairs
-  .filter(p => p.tipoMovimiento === "INGRESO" && !ignoredIds.has(p.id));
+ function App() {
+  const [agentFiles, setAgentFiles] = useState(null);
+  const [chuniorText, setChuniorText] = useState('');
+  const [pairs, setPairs] = useState([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [ignoredIds, setIgnoredIds] = useState(new Set());
+  const [tableFullscreen, setTableFullscreen] = useState(false);
 
-// UNIFICACIÓN por usuario
-function buildAlignedRows(list) {
-  // Usar pares ya cruzados por lógica previa
-  return list.map(p => {
-    const estado =
-      p.estado === "OK" || p.estado === "MANUAL" ? "OK"
-      : (p.estado === "MISSING_AGENT" ? "FALTA AGENTE" 
-      : (p.estado === "MISSING_CHUNIOR" ? "FALTA CHUNIOR" : ""));
-    return [
-      { v: p.a?.monto ?? "", t: "n" }, // Columna monto agente
-      { v: p.a?.usuario ?? "", t: "s" }, // Columna usuario agente
-      { v: p.b?.monto ?? "", t: "n" }, // Columna monto chunior
-      { v: p.b?.usuario ?? "", t: "s" }, // Columna usuario chunior
-      { v: (p.a?.monto ?? 0) - (p.b?.monto ?? 0), t: "n" }, // Diferencia
-      { v: estado, t: "s" }
-    ];
+  // Modal State
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingPair, setEditingPair] = useState(null);
+  const [linkModalOpen, setLinkModalOpen] = useState(false);
+  const [linkingBasePair, setLinkingBasePair] = useState(null);
+
+  // Filters
+  const [filters, setFilters] = useState({
+    fecha: '__ALL',
+    agente: '__ALL',
+    operador: '__ALL',
+    billetera: '__ALL',
+    turno: '__ALL',
+    estado: '__ALL',
+    movimiento: '__ALL'
   });
-}
 
-// TOTALES
-const totalEgresosAgente = egresos.reduce((s,p) => s+(p.a?.monto??0),0);
-const totalEgresosChunior = egresos.reduce((s,p) => s+(p.b?.monto??0),0);
-const difEgresos = totalEgresosAgente - totalEgresosChunior;
+  // Esc para salir fullscreen tabla
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && tableFullscreen) {
+        setTableFullscreen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [tableFullscreen]);
 
-const totalIngresosAgente = ingresos.reduce((s,p) => s+(p.a?.monto??0),0);
-const totalIngresosChunior = ingresos.reduce((s,p) => s+(p.b?.monto??0),0);
-const difIngresos = totalIngresosAgente - totalIngresosChunior;
+  // Filtrado y summary (no muestro toda la lógica para no hacer kilombo, pero vos dejá la que ya tenés)
+  // ...
 
-// HEADER PRINCIPAL Y TOTALES
-const egresosHeaderRow = [
-  { v: "EGRESOS", t:"s", s: { font:{bold:true}, fill:{fgColor:{rgb:"87CEEB"}}}},
-  { v: "", t:"s" },
-  { v: "", t:"s" },
-  { v: "", t:"s" }, 
-  { v: "", t:"s" },
-  { v: "", t:"s" }
-];
-const egresosTotalRow = [
-  { v: "TOTAL AGENTE", t:"s", s:{ font:{bold:true}}},
-  { v: totalEgresosAgente, t:"n", s:{ numFmt:"$ #,##0.00"}},
-  { v: "TOTAL CHUNIOR", t:"s", s:{ font:{bold:true}}},
-  { v: totalEgresosChunior, t:"n", s:{ numFmt:"$ #,##0.00"}},
-  { v: difEgresos, t:"n", s:{ numFmt:"$ #,##0.00", font:{bold:true}, fill:{fgColor:{rgb:"A9FFAA"}} }},
-  { v: "", t:"s" }
-];
-const egresosSubHeaderRow = [
-  { v:"MONTO AGENTE", t:"s" },
-  { v:"USUARIO AGENTE", t:"s" },
-  { v:"MONTO CHUNIOR", t:"s" },
-  { v:"USUARIO CHUNIOR", t:"s" },
-  { v:"DIFERENCIA", t:"s" },
-  { v:"ESTADO", t:"s" }
-];
-const egresosDataRows = buildAlignedRows(egresos);
-
-
-// Y lo mismo para ingresos
-const ingresosHeaderRow = [
-  { v: "INGRESOS", t:"s", s: { font:{bold:true}, fill:{fgColor:{rgb:"FFEB99"}}}},
-  { v: "", t:"s" },{ v: "", t:"s" },{ v: "", t:"s" },{ v: "", t:"s" },{ v: "", t:"s" }
-];
-const ingresosTotalRow = [
-  { v: "TOTAL AGENTE", t:"s", s:{ font:{bold:true}}},
-  { v: totalIngresosAgente, t:"n", s:{ numFmt:"$ #,##0.00"}},
-  { v: "TOTAL CHUNIOR", t:"s", s:{ font:{bold:true}}},
-  { v: totalIngresosChunior, t:"n", s:{ numFmt:"$ #,##0.00"}},
-  { v: difIngresos, t:"n", s:{ numFmt:"$ #,##0.00", font:{bold:true}, fill:{fgColor:{rgb:"A9FFAA"}} }},
-  { v: "", t:"s" }
-];
-const ingresosSubHeaderRow = [
-  { v:"MONTO AGENTE", t:"s" },
-  { v:"USUARIO AGENTE", t:"s" },
-  { v:"MONTO CHUNIOR", t:"s" },
-  { v:"USUARIO CHUNIOR", t:"s" },
-  { v:"DIFERENCIA", t:"s" },
-  { v:"ESTADO", t:"s" }
-];
-const ingresosDataRows = buildAlignedRows(ingresos);
-
-// FINAL: Unís todos los rows
-const allRows = [
-  egresosHeaderRow,
-  egresosTotalRow,
-  egresosSubHeaderRow,
-  ...egresosDataRows,
-  [], // Fila vacía
-  ingresosHeaderRow,
-  ingresosTotalRow,
-  ingresosSubHeaderRow,
-  ...ingresosDataRows,
-];
-
-const wb = XLSX.utils.book_new();
-const ws = XLSX.utils.aoa_to_sheet([]);
-XLSX.utils.sheet_add_aoa(ws, allRows, { origin: "A1" });
-ws['!cols'] = [ { wch: 18 },{ wch: 22 },{ wch: 18 },{ wch: 22 },{ wch: 18 },{ wch: 14 } ];
-XLSX.utils.book_append_sheet(wb, ws, "Resumen");
-XLSX.writeFile(wb, `Resumen_${new Date().toISOString().slice(0,10)}.xlsx`);
-
-
-
-          return { aTotal, bTotal, aIncome, bIncome, aOutcome, bOutcome, adminTotal, pairedCount, missingCount, totalVisible: filteredPairs.length };
-        }, [filteredPairs, ignoredIds]);
-
-        const filterOptions = useMemo(() => {
-          // Cascading Logic: Options depend on the *current filtered list*, allowing re-selection of the field itself.
-          
-          const getOptions = (field, itemAccessor) => {
-             const relevantPairs = pairs.filter(p => {
-                const a = p.a; const b = p.b;
-                // Check all filters except 'field'
-                if (field !== 'fecha' && filters.fecha !== '__ALL') { const d = a?.fechaObj || b?.fechaObj; if (!d || formatDateStr(d) !== filters.fecha) return false; }
-                if (field !== 'agente' && filters.agente !== '__ALL' && (!a || a.etiqueta !== filters.agente)) return false;
-                if (field !== 'operador' && filters.operador !== '__ALL' && (!b || b.operador !== filters.operador)) return false;
-                if (field !== 'billetera' && filters.billetera !== '__ALL' && (!b || b.medio !== filters.billetera)) return false;
-                if (field !== 'turno' && filters.turno !== '__ALL' && (a?.turno || b?.turno || '') !== filters.turno) return false;
-                if (field !== 'estado' && filters.estado !== '__ALL') { 
-                    if (a?.isAdminCharge) { if (filters.estado !== 'OK') return false; }
-                    else if (p.estado !== filters.estado) return false;
-                }
-                if (field !== 'movimiento' && filters.movimiento !== '__ALL' && p.tipoMovimiento !== filters.movimiento) return false;
-                return true;
-             });
-             
+  // FUNCION EXPORTAR XLSX ALINEADO
+  const exportToExcel = () => {
+    // FILTRADO por tipo
+    const egresos = pairs.filter(p => p.tipoMovimiento === "EGRESO" && !ignoredIds.has(p.id));
+    const ingresos = pairs.filter(p => p.tipoMovimiento === "INGRESO" && !ignoredIds.has(p.id));
+    // Creación de filas alineadas por usuario
+    function buildAlignedRows(list) {
+      return list.map(p => {
+        const estado =
+          p.estado === "OK" || p.estado === "MANUAL" ? "OK"
+          : (p.estado === "MISSING_AGENT" ? "FALTA AGENTE"
+          : (p.estado === "MISSING_CHUNIOR" ? "FALTA CHUNIOR" : ""));
+        return [
+          { v: p.a?.monto ?? "", t: "n" },
+          { v: p.a?.usuario ?? "", t: "s" },
+          { v: p.b?.monto ?? "", t: "n" },
+          { v: p.b?.usuario ?? "", t: "s" },
+          { v: (p.a?.monto ?? 0) - (p.b?.monto ?? 0), t: "n" },
+          { v: estado, t: "s" }
+        ];
+      });
+    }
+    // TOTALES
+    const totalEgresosAgente = egresos.reduce((s,p) => s+(p.a?.monto??0),0);
+    const totalEgresosChunior = egresos.reduce((s,p) => s+(p.b?.monto??0),0);
+    const difEgresos = totalEgresosAgente - totalEgresosChunior;
+    const totalIngresosAgente = ingresos.reduce((s,p) => s+(p.a?.monto??0),0);
+    const totalIngresosChunior = ingresos.reduce((s,p) => s+(p.b?.monto??0),0);
+    const difIngresos = totalIngresosAgente - totalIngresosChunior;
+    // HEADER Y TOTALES
+    const egresosHeaderRow = [
+      { v: "EGRESOS", t:"s", s: { font:{bold:true}, fill:{fgColor:{rgb:"87CEEB"}}}},
+      { v: "", t:"s" },{ v: "", t:"s" },{ v: "", t:"s" },{ v: "", t:"s" },{ v: "", t:"s" }
+    ];
+    const egresosTotalRow = [
+      { v: "TOTAL AGENTE", t:"s", s:{ font:{bold:true}}},
+      { v: totalEgresosAgente, t:"n", s:{ numFmt:"$ #,##0.00"}},
+      { v: "TOTAL CHUNIOR", t:"s", s:{ font:{bold:true}}},
+      { v: totalEgresosChunior, t:"n", s:{ numFmt:"$ #,##0.00"}},
+      { v: difEgresos, t:"n", s:{ numFmt:"$ #,##0.00", font:{bold:true}, fill:{fgColor:{rgb:"A9FFAA"}} }},
+      { v: "", t:"s" }
+    ];
+    const egresosSubHeaderRow = [
+      { v:"MONTO AGENTE", t:"s" },
+      { v:"USUARIO AGENTE", t:"s" },
+      { v:"MONTO CHUNIOR", t:"s" },
+      { v:"USUARIO CHUNIOR", t:"s" },
+      { v:"DIFERENCIA", t:"s" },
+      { v:"ESTADO", t:"s" }
+    ];
+    const egresosDataRows = buildAlignedRows(egresos);
+    // INGRESOS igual
+    const ingresosHeaderRow = [
+      { v: "INGRESOS", t:"s", s: { font:{bold:true}, fill:{fgColor:{rgb:"FFEB99"}}}},
+      { v: "", t:"s" },{ v: "", t:"s" },{ v: "", t:"s" },{ v: "", t:"s" },{ v: "", t:"s" }
+    ];
+    const ingresosTotalRow = [
+      { v: "TOTAL AGENTE", t:"s", s:{ font:{bold:true}}},
+      { v: totalIngresosAgente, t:"n", s:{ numFmt:"$ #,##0.00"}},
+      { v: "TOTAL CHUNIOR", t:"s", s:{ font:{bold:true}}},
+      { v: totalIngresosChunior, t:"n", s:{ numFmt:"$ #,##0.00"}},
+      { v: difIngresos, t:"n", s:{ numFmt:"$ #,##0.00", font:{bold:true}, fill:{fgColor:{rgb:"A9FFAA"}} }},
+      { v: "", t:"s" }
+    ];
+    const ingresosSubHeaderRow = [
+      { v:"MONTO AGENTE", t:"s" },
+      { v:"USUARIO AGENTE", t:"s" },
+      { v:"MONTO CHUNIOR", t:"s" },
+      { v:"USUARIO CHUNIOR", t:"s" },
+      { v:"DIFERENCIA", t:"s" },
+      { v:"ESTADO", t:"s" }
+    ];
+    const ingresosDataRows = buildAlignedRows(ingresos);
+    const allRows = [
+      egresosHeaderRow,
+      egresosTotalRow,
+      egresosSubHeaderRow,
+      ...egresosDataRows,
+      [],
+      ingresosHeaderRow,
+      ingresosTotalRow,
+      ingresosSubHeaderRow,
+      ...ingresosDataRows,
+    ];
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([]);
+    XLSX.utils.sheet_add_aoa(ws, allRows, { origin: "A1" });
+    ws['!cols'] = [ { wch: 18 },{ wch: 22 },{ wch: 18 },{ wch: 22 },{ wch: 18 },{ wch: 14 } ];
+    XLSX.utils.book_append_sheet(wb, ws, "Resumen");
+    XLSX.writeFile(wb, `Resumen_${new Date().toISOString().slice(0,10)}.xlsx`);
+  };
              const set = new Set();
              relevantPairs.forEach(p => {
                const val = itemAccessor(p);
