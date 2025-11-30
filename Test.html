@@ -603,14 +603,30 @@
              });
              return set;
           };
+const filtros = useMemo(() => {
 
-          return {
-            dates: getOptions('fecha', p => { const d = p.a?.fechaObj || p.b?.fechaObj; return d ? formatDateStr(d) : null; }),
-            etiquetas: getOptions('agente', p => p.a?.etiqueta),
-            operadores: getOptions('operador', p => p.b?.operador),
-            medios: getOptions('billetera', p => p.b?.medio),
-          };
-        }, [pairs, filters]);
+  const getoptions = (label, itemAccessor) => {
+    const relevantPairs = pairs.filter(p => itemAccessor(p));
+    const set = new Set();
+    relevantPairs.forEach(p => {
+      const val = itemAccessor(p);
+      if (val) set.add(val);
+    });
+    return set;
+  };
+
+  return {
+    dates: getoptions('fecha', p => {
+      const d = p.a?.fechaObj || p.b?.fechaObj;
+      return d ? formatDateStr(d) : null;
+    }),
+
+    etiquetas: getoptions('agente', p => p.a?.etiqueta || p.b?.etiqueta),
+
+    operadores: getoptions('operador', p => p.a?.operador || p.b?.operador)
+  };
+
+}, [pairs]);
 
         const handleToggleIgnore = (id) => {
           const newSet = new Set(ignoredIds);
