@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -64,10 +65,10 @@
     <div id="root"></div>
 
     <script type="text/babel" data-type="module">
-      import React, { useState, useEffect, useMemo } from 'react';
+      import React, { useState, useEffect, useMemo, useCallback } from 'react';
       import { createRoot } from 'react-dom/client';
       import { 
-        Eye, EyeOff, Edit2, Link as LinkIcon, Download, Copy, Maximize2, Minimize2 
+        Eye, EyeOff, Edit2, Link as LinkIcon, Download, Copy, Maximize2, Minimize2, UploadCloud, FileText 
       } from 'lucide-react';
 
       /* --- UTILS --- */
@@ -245,7 +246,89 @@
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       };
 
-      /* --- COMPONENTS: MODALS --- */
+      /* --- COMPONENTS --- */
+
+      const DragDropZone = ({ onFilesSelected, files }) => {
+        const [isDragging, setIsDragging] = useState(false);
+
+        const handleDragOver = (e) => {
+          e.preventDefault();
+          setIsDragging(true);
+        };
+
+        const handleDragLeave = () => {
+          setIsDragging(false);
+        };
+
+        const handleDrop = (e) => {
+          e.preventDefault();
+          setIsDragging(false);
+          if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            onFilesSelected(e.dataTransfer.files);
+          }
+        };
+
+        return (
+          <div 
+            className={`relative group border-2 border-dashed rounded-xl p-6 transition-all cursor-pointer flex flex-col items-center justify-center text-center
+              ${isDragging ? 'border-[#C7F24A] bg-[#C7F24A]/10' : 'border-[#2A2A2A] bg-[#1E2329]/50 hover:border-[#24364A] hover:bg-[#1E2329]'}`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={() => document.getElementById('fileInput').click()}
+          >
+            <input 
+              id="fileInput"
+              type="file" 
+              multiple 
+              accept=".csv"
+              onChange={(e) => onFilesSelected(e.target.files)}
+              className="hidden"
+            />
+            <div className={`mb-3 p-3 rounded-full ${isDragging ? 'bg-[#C7F24A] text-black' : 'bg-[#24364A] text-[#A8A8A8] group-hover:text-white group-hover:bg-[#1F3A5F]'}`}>
+              <UploadCloud size={24} />
+            </div>
+            
+            {files && files.length > 0 ? (
+              <div className="w-full">
+                <p className="text-[#C7F24A] font-bold text-sm mb-1">{files.length} archivo(s) seleccionado(s)</p>
+                <div className="text-xs text-[#777] max-h-[40px] overflow-hidden text-ellipsis whitespace-nowrap">
+                  {Array.from(files).map(f => f.name).join(', ')}
+                </div>
+              </div>
+            ) : (
+              <>
+                <p className="text-[#A8A8A8] text-sm font-medium">Arrastra tus CSVs aquí</p>
+                <p className="text-xs text-[#555] mt-1">o haz click para explorar</p>
+              </>
+            )}
+          </div>
+        );
+      };
+
+      const ConciliationProgress = ({ summary }) => {
+        if (!summary || summary.totalVisible === 0) return null;
+        
+        const total = summary.totalVisible;
+        const ok = summary.pairedCount;
+        const err = summary.missingCount;
+        
+        const okPercent = (ok / total) * 100;
+        const errPercent = (err / total) * 100;
+
+        return (
+          <div className="mb-6 animate-fade-in">
+            <div className="flex justify-between text-xs mb-2 uppercase font-bold tracking-wide">
+              <span className="text-[#9EE759]">Conciliado: {ok} ({okPercent.toFixed(1)}%)</span>
+              <span className="text-[#EF4444]">Discrepancias: {err} ({errPercent.toFixed(1)}%)</span>
+            </div>
+            <div className="h-3 w-full bg-[#111418] rounded-full overflow-hidden flex border border-[#2A2A2A]">
+              <div style={{ width: `${okPercent}%` }} className="h-full bg-gradient-to-r from-[#9EE759] to-[#7A5CFF] transition-all duration-500"></div>
+              <div style={{ width: `${errPercent}%` }} className="h-full bg-[#EF4444] transition-all duration-500"></div>
+            </div>
+          </div>
+        );
+      };
 
       const EditModal = ({ isOpen, pair, onClose, onSave }) => {
         const [formData, setFormData] = useState({
@@ -712,25 +795,25 @@
 
         const totalMissing = pairs.filter(p => (p.estado === 'MISSING_AGENT' || p.estado === 'MISSING_CHUNIOR') && !ignoredIds.has(p.id)).length;
 
+        /* --- EXPORT FUNCTION V3: Stylized & Corrected --- */
         const handleExportExcel = () => {
           if (!window.XLSX) {
             alert("Librería XLSX no cargada.");
             return;
           }
 
-          // 1. Prepare Data Buckets
+          // 1. Filter Data
           const activePairs = filteredPairs.filter(p => !ignoredIds.has(p.id));
           
-          // Split pairs
           const egresos = activePairs.filter(p => p.tipoMovimiento === 'EGRESO');
           const ingresos = activePairs.filter(p => p.tipoMovimiento === 'INGRESO');
           
-          // Create specific difference list (orphans)
-          const diffs = activePairs.filter(p => 
-            !p.a?.isAdminCharge && 
-            (p.estado === 'MISSING_CHUNIOR' || p.estado === 'MISSING_AGENT')
+          // 2. Identify Errors separately
+          const errors = activePairs.filter(p => 
+            !p.a?.isAdminCharge && (p.estado === 'MISSING_CHUNIOR' || p.estado === 'MISSING_AGENT')
           ).map(p => {
             const isAgentMiss = p.estado === 'MISSING_AGENT';
+            // Ref is the side that HAS data
             const ref = isAgentMiss ? p.b : p.a;
             return {
               monto: ref?.monto || 0,
@@ -740,7 +823,7 @@
             };
           });
 
-          // Calculations
+          // 3. Calculate Totals (Correctly summing A and B separately)
           const sumA = (arr) => arr.reduce((acc, p) => acc + (p.a?.monto || 0), 0);
           const sumB = (arr) => arr.reduce((acc, p) => acc + (p.b?.monto || 0), 0);
           
@@ -749,156 +832,208 @@
           const totInA = sumA(ingresos);
           const totInB = sumB(ingresos);
           
-          const diffEg = totEgA - totEgB;
-          const diffIn = totInA - totInB;
-          const totalDiff = (totEgA + totInA) - (totEgB + totInB);
-
-          // --- STYLES DEFINITION ---
-          const palette = {
-            headerBg: "44546A", // Dark Slate Blue
-            headerTx: "FFFFFF",
-            subHeaderBg: "E7E6E6", // Light Grey
-            subHeaderTx: "000000",
-            bgEg: "DDEBF7", // Light Blue
-            bgIn: "E2EFDA", // Light Green
-            bgDiff: "FCE4D6", // Light Orange
-            border: "BFBFBF"
+          // 4. Differences
+          const diffEg = totEgA - totEgB; 
+          const diffIn = totInA - totInB; 
+          
+          // --- STYLES ---
+          const colors = {
+            gold: "FFC000",
+            blue: "5B9BD5",
+            green: "C6E0B4",
+            redBg: "FFC7CE",
+            redTx: "9C0006",
+            border: "000000",
+            headerTx: "000000"
           };
 
-          const borderStyle = { style: 'thin', color: { rgb: palette.border } };
+          const borderStyle = { style: 'thin', color: { rgb: colors.border } };
           const borders = { top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle };
           const center = { horizontal: "center", vertical: "center" };
 
-          const styles = {
-            headerEg:   { font: { bold: true, color: { rgb: palette.headerTx }, sz: 14 }, fill: { fgColor: { rgb: "2F75B5" } }, alignment: center, border: borders },
-            headerIn:   { font: { bold: true, color: { rgb: palette.headerTx }, sz: 14 }, fill: { fgColor: { rgb: "548235" } }, alignment: center, border: borders },
-            headerDiff: { font: { bold: true, color: { rgb: palette.headerTx }, sz: 14 }, fill: { fgColor: { rgb: "C00000" } }, alignment: center, border: borders },
-            label:      { font: { bold: true, color: { rgb: "000000" } }, fill: { fgColor: { rgb: palette.subHeaderBg } }, alignment: center, border: borders },
-            valTotal:   { font: { bold: true, sz: 12 }, numFmt: "$ #,##0.00", alignment: center, border: borders, fill: { fgColor: { rgb: "FFFFFF" } } },
-            valDiff:    { font: { bold: true, color: { rgb: "FF0000" }, sz: 12 }, numFmt: "$ #,##0.00", alignment: center, border: borders, fill: { fgColor: { rgb: "FFFFFF" } } },
-            colEg:      { font: { bold: true }, fill: { fgColor: { rgb: palette.bgEg } }, alignment: center, border: borders },
-            colIn:      { font: { bold: true }, fill: { fgColor: { rgb: palette.bgIn } }, alignment: center, border: borders },
-            colDiff:    { font: { bold: true }, fill: { fgColor: { rgb: palette.bgDiff } }, alignment: center, border: borders },
+          const s = {
+            // Headers
+            headEg: { font: { bold: true, sz: 12 }, fill: { fgColor: { rgb: "E7E6E6" } }, alignment: center, border: borders },
+            headIn: { font: { bold: true, sz: 12 }, fill: { fgColor: { rgb: "E7E6E6" } }, alignment: center, border: borders },
+            
+            // SubHeaders (Total Agent / Chunior)
+            subAg: { font: { bold: true }, fill: { fgColor: { rgb: colors.gold } }, alignment: center, border: borders },
+            subCh: { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: colors.blue } }, alignment: center, border: borders },
+            
+            // Values
+            valMoney: { numFmt: "$ #,##0.00", alignment: center, border: borders, font: { bold: true } },
+            valDiff:  { numFmt: "$ #,##0.00", alignment: center, border: borders, font: { bold: true, color: { rgb: "FF0000" } } },
+            
+            // Labels for Diff Section
+            labelDiff: { font: { bold: true }, fill: { fgColor: { rgb: "D9D9D9" } }, alignment: center, border: borders },
+
+            // Columns
+            colAg: { font: { bold: true }, fill: { fgColor: { rgb: colors.gold } }, alignment: center, border: borders },
+            colCh: { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: colors.blue } }, alignment: center, border: borders },
+            
+            // Data Cells
             cellMoney:  { numFmt: "$ #,##0.00", border: borders, alignment: { horizontal: "right" } },
             cellText:   { border: borders, alignment: { horizontal: "left" } },
-            cellErr:    { font: { color: { rgb: "9C0006" } }, fill: { fgColor: { rgb: "FFC7CE" } }, border: borders, alignment: center },
-            cellErrTxt: { font: { color: { rgb: "9C0006" } }, fill: { fgColor: { rgb: "FFC7CE" } }, border: borders, alignment: { horizontal: "left" } },
+            
+            // Error Table
+            errHead: { font: { bold: true, color: { rgb: colors.redTx } }, fill: { fgColor: { rgb: colors.redBg } }, alignment: center, border: borders },
+            errCell: { font: { color: { rgb: colors.redTx } }, fill: { fgColor: { rgb: colors.redBg } }, border: borders, alignment: center }
           };
 
           const ws_data = [];
 
+          // Row 0: Main Headers
           ws_data.push([
-            { v: "EGRESOS", s: styles.headerEg }, null, null, null,
-            { v: "INGRESOS", s: styles.headerIn }, null, null, null,
-            { v: "DIFERENCIAS", s: styles.headerDiff }, null, null
+            { v: "EGRESOS", s: s.headEg }, null, null, null, 
+            null, // Spacer
+            { v: "INGRESOS", s: s.headIn }, null, null, null
           ]);
 
+          // Row 1: Sub Headers (Agent / Chunior)
           ws_data.push([
-            { v: "TOTAL AGENTE", s: styles.label }, null, 
-            { v: "TOTAL CHUNIOR", s: styles.label }, null,
-            { v: "TOTAL AGENTE", s: styles.label }, null,
-            { v: "TOTAL CHUNIOR", s: styles.label }, null,
-            { v: "NETO TOTAL", s: styles.label }, null, null
+            { v: "TOTAL AGENTE", s: s.subAg }, null, 
+            { v: "TOTAL CHUNIOR", s: s.subCh }, null,
+            null,
+            { v: "TOTAL AGENTE", s: s.subAg }, null, 
+            { v: "TOTAL CHUNIOR", s: s.subCh }, null
           ]);
 
+          // Row 2: Totals
           ws_data.push([
-            { v: totEgA, s: styles.valTotal }, null, 
-            { v: totEgB, s: styles.valTotal }, null,
-            { v: totInA, s: styles.valTotal }, null, 
-            { v: totInB, s: styles.valTotal }, null,
-            { v: totalDiff, s: styles.valDiff }, null, null
+            { v: totEgA, s: s.valMoney }, null, 
+            { v: totEgB, s: s.valMoney }, null,
+            null,
+            { v: totInA, s: s.valMoney }, null, 
+            { v: totInB, s: s.valMoney }, null
           ]);
 
+          // Row 3: Differences
           ws_data.push([
-            { v: "DIF. EGRESOS", s: styles.label }, { v: diffEg, s: styles.valDiff }, 
+            { v: "DIF. EGRESOS:", s: s.labelDiff }, { v: diffEg, s: s.valDiff },
             null, null,
-            { v: "DIF. INGRESOS", s: styles.label }, { v: diffIn, s: styles.valDiff },
-            null, null,
-            { v: diffs.length + " ERRORES", s: styles.valDiff }, null, null
+            null,
+            { v: "DIF. INGRESOS:", s: s.labelDiff }, { v: diffIn, s: s.valDiff },
+            null, null
           ]);
 
-          ws_data.push([null]);
+          ws_data.push([null]); // Spacer Row
 
+          // Row 5: Data Columns Headers
           ws_data.push([
-            { v: "Monto Ag", s: styles.colEg }, { v: "Usuario Ag", s: styles.colEg },
-            { v: "Monto Ch", s: styles.colEg }, { v: "Usuario Ch", s: styles.colEg },
-            { v: "Monto Ag", s: styles.colIn }, { v: "Usuario Ag", s: styles.colIn },
-            { v: "Monto Ch", s: styles.colIn }, { v: "Usuario Ch", s: styles.colIn },
-            { v: "Monto", s: styles.colDiff }, { v: "Usuario", s: styles.colDiff }, { v: "Detalle", s: styles.colDiff }
+            { v: "RETIROS AGENTE", s: s.colAg }, { v: "Usuario", s: s.colAg },
+            { v: "RETIROS CHUNIOR", s: s.colCh }, { v: "Usuario", s: s.colCh },
+            null,
+            { v: "DEPOSITOS AGENTE", s: s.colAg }, { v: "Usuario", s: s.colAg },
+            { v: "DEPOSITOS CHUNIOR", s: s.colCh }, { v: "Usuario", s: s.colCh }
           ]);
 
-          const maxRows = Math.max(egresos.length, ingresos.length, diffs.length);
+          // Rows 6+: Data
+          const maxRows = Math.max(egresos.length, ingresos.length);
           
           for(let i=0; i<maxRows; i++) {
             const row = [];
             const eg = egresos[i];
             const inG = ingresos[i];
-            const df = diffs[i];
 
+            // Egresos (Left)
             if(eg) {
-                row.push({ v: eg.a?.monto || "", s: styles.cellMoney });
-                row.push({ v: eg.a?.usuario || "", s: styles.cellText });
-                row.push({ v: eg.b?.monto || "", s: styles.cellMoney });
-                row.push({ v: eg.b?.usuario || "", s: styles.cellText });
+                row.push({ v: eg.a?.monto || "", s: s.cellMoney });
+                row.push({ v: eg.a?.usuario || "", s: s.cellText });
+                row.push({ v: eg.b?.monto || "", s: s.cellMoney });
+                row.push({ v: eg.b?.usuario || "", s: s.cellText });
             } else {
                 row.push(null, null, null, null);
             }
 
+            row.push(null); // Spacer
+
+            // Ingresos (Right)
             if(inG) {
-                row.push({ v: inG.a?.monto || "", s: styles.cellMoney });
-                row.push({ v: inG.a?.usuario || "", s: styles.cellText });
-                row.push({ v: inG.b?.monto || "", s: styles.cellMoney });
-                row.push({ v: inG.b?.usuario || "", s: styles.cellText });
+                row.push({ v: inG.a?.monto || "", s: s.cellMoney });
+                row.push({ v: inG.a?.usuario || "", s: s.cellText });
+                row.push({ v: inG.b?.monto || "", s: s.cellMoney });
+                row.push({ v: inG.b?.usuario || "", s: s.cellText });
             } else {
                 row.push(null, null, null, null);
-            }
-
-            if(df) {
-                row.push({ v: df.monto, s: styles.cellErr });
-                row.push({ v: df.usuario, s: styles.cellErrTxt });
-                row.push({ v: df.detalle, s: styles.cellErrTxt });
-            } else {
-                row.push(null, null, null);
             }
             
             ws_data.push(row);
           }
 
+          // ERROR SECTION (Bottom)
+          if(errors.length > 0) {
+            ws_data.push([null]); 
+            ws_data.push([null]); // Double space
+            
+            // Error Header
+            ws_data.push([
+                { v: "DISCREPANCIAS / ERRORES", s: s.errHead }, null, null, null
+            ]);
+            
+            // Error Columns
+            ws_data.push([
+                { v: "DETALLE", s: s.errHead }, 
+                { v: "USUARIO", s: s.errHead }, 
+                { v: "MONTO", s: s.errHead },
+                { v: "TIPO", s: s.errHead }
+            ]);
+
+            errors.forEach(err => {
+                ws_data.push([
+                    { v: err.detalle, s: s.errCell },
+                    { v: err.usuario, s: s.errCell },
+                    { v: err.monto, s: { ...s.errCell, numFmt: "$ #,##0.00" } },
+                    { v: err.tipo, s: s.errCell }
+                ]);
+            });
+          }
+
+          // Construct Sheet
           const ws = XLSX.utils.aoa_to_sheet([]);
           
+          // Column Widths
           ws['!cols'] = [
-            { wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 20 },
-            { wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 20 },
-            { wch: 15 }, { wch: 20 }, { wch: 25 }
+            { wch: 18 }, { wch: 15 }, { wch: 18 }, { wch: 15 }, // Eg columns
+            { wch: 5 }, // Spacer
+            { wch: 18 }, { wch: 15 }, { wch: 18 }, { wch: 15 }  // In columns
           ];
 
+          // Merges
           ws['!merges'] = [
+            // Header Egresos
             { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } },
-            { s: { r: 0, c: 4 }, e: { r: 0, c: 7 } },
-            { s: { r: 0, c: 8 }, e: { r: 0, c: 10 } },
-            { s: { r: 1, c: 0 }, e: { r: 1, c: 1 } },
-            { s: { r: 1, c: 2 }, e: { r: 1, c: 3 } },
-            { s: { r: 1, c: 4 }, e: { r: 1, c: 5 } },
-            { s: { r: 1, c: 6 }, e: { r: 1, c: 7 } },
-            { s: { r: 1, c: 8 }, e: { r: 1, c: 10 } },
-            { s: { r: 2, c: 0 }, e: { r: 2, c: 1 } },
-            { s: { r: 2, c: 2 }, e: { r: 2, c: 3 } },
-            { s: { r: 2, c: 4 }, e: { r: 2, c: 5 } },
-            { s: { r: 2, c: 6 }, e: { r: 2, c: 7 } },
-            { s: { r: 2, c: 8 }, e: { r: 2, c: 10 } },
-            { s: { r: 3, c: 2 }, e: { r: 3, c: 3 } },
-            { s: { r: 3, c: 6 }, e: { r: 3, c: 7 } },
-            { s: { r: 3, c: 8 }, e: { r: 3, c: 10 } },
-          ];
+            // Header Ingresos
+            { s: { r: 0, c: 5 }, e: { r: 0, c: 8 } },
+            
+            { s: { r: 1, c: 0 }, e: { r: 1, c: 1 } }, // Total Agente Label
+            { s: { r: 1, c: 2 }, e: { r: 1, c: 3 } }, // Total Chunior Label
+            { s: { r: 1, c: 5 }, e: { r: 1, c: 6 } }, // Total Agente Label
+            { s: { r: 1, c: 7 }, e: { r: 1, c: 8 } }, // Total Chunior Label
 
-          ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: ws_data.length - 1, c: 10 } });
+            { s: { r: 2, c: 0 }, e: { r: 2, c: 1 } }, // Total Agente Val
+            { s: { r: 2, c: 2 }, e: { r: 2, c: 3 } }, // Total Chunior Val
+            { s: { r: 2, c: 5 }, e: { r: 2, c: 6 } }, // Total Agente Val
+            { s: { r: 2, c: 7 }, e: { r: 2, c: 8 } }, // Total Chunior Val
+          ];
+          
+          if(errors.length > 0) {
+             const startRow = ws_data.findIndex(r => r && r[0] && r[0].v === "DISCREPANCIAS / ERRORES");
+             if(startRow > -1) {
+                 ws['!merges'].push({ s: { r: startRow, c: 0 }, e: { r: startRow, c: 3 } });
+             }
+          }
+
+          // Populate cells with styles
+          ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: ws_data.length, c: 8 } });
+          
           ws_data.forEach((r, rIdx) => {
+            if(!r) return;
             r.forEach((c, cIdx) => {
               const cellRef = XLSX.utils.encode_cell({ r: rIdx, c: cIdx });
-              if (c !== null) {
-                if (c && typeof c === 'object' && 'v' in c) {
+              if (c !== null && c !== undefined) {
+                if (typeof c === 'object' && 'v' in c) {
                    ws[cellRef] = { t: typeof c.v === 'number' ? 'n' : 's', v: c.v, s: c.s, z: c.s?.numFmt };
-                } else if (c) {
+                } else {
                    ws[cellRef] = { v: c };
                 }
               }
@@ -906,8 +1041,8 @@
           });
 
           const wb = XLSX.utils.book_new();
-          XLSX.utils.book_append_sheet(wb, ws, "Reporte");
-          XLSX.writeFile(wb, `Reporte_Conciliacion_${new Date().toISOString().slice(0,10)}.xlsx`);
+          XLSX.utils.book_append_sheet(wb, ws, "Conciliacion");
+          XLSX.writeFile(wb, `Conciliacion_${new Date().toISOString().slice(0,10)}.xlsx`);
         };
 
         const copyToClipboard = () => {
@@ -947,18 +1082,14 @@
 
             <div className="bg-[#1A1E23] rounded-xl border border-[#2A2A2A] shadow-2xl p-6 mb-6 animate-slide-up">
               <div className="flex flex-col lg:flex-row gap-6">
+                
+                {/* DRAG & DROP ZONE (Replacing simple input) */}
                 <div className="flex-1 min-w-[280px]">
                   <label className="block text-[#A8A8A8] text-sm font-medium mb-2">1. Cargar CSV(s) extraido de agentes/sub-agentes</label>
-                  <div className="relative group">
-                    <input 
-                      type="file" 
-                      multiple 
-                      accept=".csv"
-                      onChange={(e) => setAgentFiles(e.target.files)}
-                      className="w-full bg-[#1E2329]/50 border border-[#2A2A2A] rounded-lg p-3 text-sm text-[#CCCCCC] file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-[#24364A] file:text-white hover:file:bg-[#1F3A5F] transition-all cursor-pointer hover:border-[#24364A]"
-                    />
-                  </div>
-                  <p className="text-xs text-[#555] mt-2">Podés seleccionar varios archivos. Renombrá con criterio (ej: pc1, pc2).</p>
+                  <DragDropZone 
+                    files={agentFiles} 
+                    onFilesSelected={setAgentFiles} 
+                  />
                 </div>
 
                 <div className="flex-1 min-w-[300px]">
@@ -1004,6 +1135,9 @@
                     <Maximize2 size={20} />
                   </button>
                 )}
+
+                {/* --- NEW VISUAL PROGRESS BAR --- */}
+                {tableFullscreen ? null : <ConciliationProgress summary={summary} />}
 
                 {/* Summary Section */}
                 {tableFullscreen ? (
@@ -1197,3 +1331,4 @@
   
 
 </body></html>
+  
