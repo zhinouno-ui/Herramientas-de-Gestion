@@ -1,13 +1,17 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dif • Comparador Agentes</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    
     <!-- Babel for JSX transformation -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
+    <!-- XLSX-JS-STYLE for styling Excel export -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
       
@@ -49,14 +53,14 @@
     <script type="importmap">
     {
       "imports": {
-        "react": "https://aistudiocdn.com/react@^19.2.0",
-        "react-dom/client": "https://aistudiocdn.com/react-dom@^19.2.0/client",
-        "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0"
+        "react": "https://esm.sh/react@18.2.0",
+        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+        "lucide-react": "https://esm.sh/lucide-react@0.303.0"
       }
     }
     </script>
-  </head>
-  <body>
+</head>
+<body>
     <div id="root"></div>
 
     <script type="text/babel" data-type="module">
@@ -267,10 +271,8 @@
         const handleSave = () => {
           const updated = { ...pair };
           
-          // Lógica para actualizar o crear Agente (A)
           if (formData.aUser || parseFloat(formData.aMonto) !== 0) {
             if (!updated.a) {
-              // Si no existía A, lo creamos
               updated.a = {
                 origen: 'A',
                 etiqueta: 'MANUAL',
@@ -284,10 +286,8 @@
             updated.a.monto = parseFloat(formData.aMonto);
           }
 
-          // Lógica para actualizar o crear Chunior (B)
           if (formData.bUser || parseFloat(formData.bMonto) !== 0 || formData.bBilletera) {
             if (!updated.b) {
-              // Si no existía B, lo creamos
               updated.b = {
                 origen: 'B',
                 operador: 'MANUAL',
@@ -301,10 +301,8 @@
             updated.b.medio = formData.bBilletera;
           }
 
-          // Si ahora tenemos ambos lados, cambiamos estado a MANUAL (emparejado)
           if (updated.a && updated.b) {
             updated.estado = 'MANUAL';
-            // Recalculamos tipoMovimiento si es necesario, basado en A
             updated.tipoMovimiento = updated.a.monto < 0 ? 'EGRESO' : 'INGRESO';
           }
 
@@ -714,33 +712,202 @@
 
         const totalMissing = pairs.filter(p => (p.estado === 'MISSING_AGENT' || p.estado === 'MISSING_CHUNIOR') && !ignoredIds.has(p.id)).length;
 
-        const downloadCSV = () => {
-          const headers = ['ETIQUETA_A','TURNO','HORA_A','USUARIO_A','MONTO_A','HORA_B','USUARIO_B','MONTO_B','OPERADOR','MEDIO','ESTADO','TIPO_MOVIMIENTO'];
-          const rows = filteredPairs.filter(p => !ignoredIds.has(p.id)).map(p => {
-             const a = p.a; const b = p.b;
-             return [
-               a?.etiqueta?.toUpperCase() || '',
-               a?.turno || b?.turno || '',
-               a?.fechaObj?.toISOString() || '',
-               a?.isAdminCharge ? 'AJUSTE' : (a?.usuario || ''),
-               a?.monto?.toFixed(2) || '',
-               b?.fechaObj?.toISOString() || '',
-               b?.usuario || '',
-               b?.monto?.toFixed(2) || '',
-               b?.operador?.toUpperCase() || '',
-               b?.medio || '',
-               a?.isAdminCharge ? 'AJUSTE' : p.estado,
-               p.tipoMovimiento
-             ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
-          });
+        const handleExportExcel = () => {
+          if (!window.XLSX) {
+            alert("Librería XLSX no cargada.");
+            return;
+          }
+
+          // 1. Prepare Data Buckets
+          const activePairs = filteredPairs.filter(p => !ignoredIds.has(p.id));
           
-          const csvContent = [headers.join(','), ...rows].join('\n');
-          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `comparacion_${new Date().toISOString().slice(0,10)}.csv`;
-          link.click();
+          // Split pairs
+          const egresos = activePairs.filter(p => p.tipoMovimiento === 'EGRESO');
+          const ingresos = activePairs.filter(p => p.tipoMovimiento === 'INGRESO');
+          
+          // Create specific difference list (orphans)
+          const diffs = activePairs.filter(p => 
+            !p.a?.isAdminCharge && 
+            (p.estado === 'MISSING_CHUNIOR' || p.estado === 'MISSING_AGENT')
+          ).map(p => {
+            const isAgentMiss = p.estado === 'MISSING_AGENT';
+            const ref = isAgentMiss ? p.b : p.a;
+            return {
+              monto: ref?.monto || 0,
+              usuario: ref?.usuario || '?',
+              detalle: isAgentMiss ? 'FALTA EN AGENTE' : 'FALTA EN CHUNIOR',
+              tipo: p.tipoMovimiento
+            };
+          });
+
+          // Calculations
+          const sumA = (arr) => arr.reduce((acc, p) => acc + (p.a?.monto || 0), 0);
+          const sumB = (arr) => arr.reduce((acc, p) => acc + (p.b?.monto || 0), 0);
+          
+          const totEgA = sumA(egresos);
+          const totEgB = sumB(egresos);
+          const totInA = sumA(ingresos);
+          const totInB = sumB(ingresos);
+          
+          const diffEg = totEgA - totEgB;
+          const diffIn = totInA - totInB;
+          const totalDiff = (totEgA + totInA) - (totEgB + totInB);
+
+          // --- STYLES DEFINITION ---
+          const palette = {
+            headerBg: "44546A", // Dark Slate Blue
+            headerTx: "FFFFFF",
+            subHeaderBg: "E7E6E6", // Light Grey
+            subHeaderTx: "000000",
+            bgEg: "DDEBF7", // Light Blue
+            bgIn: "E2EFDA", // Light Green
+            bgDiff: "FCE4D6", // Light Orange
+            border: "BFBFBF"
+          };
+
+          const borderStyle = { style: 'thin', color: { rgb: palette.border } };
+          const borders = { top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle };
+          const center = { horizontal: "center", vertical: "center" };
+
+          const styles = {
+            headerEg:   { font: { bold: true, color: { rgb: palette.headerTx }, sz: 14 }, fill: { fgColor: { rgb: "2F75B5" } }, alignment: center, border: borders },
+            headerIn:   { font: { bold: true, color: { rgb: palette.headerTx }, sz: 14 }, fill: { fgColor: { rgb: "548235" } }, alignment: center, border: borders },
+            headerDiff: { font: { bold: true, color: { rgb: palette.headerTx }, sz: 14 }, fill: { fgColor: { rgb: "C00000" } }, alignment: center, border: borders },
+            label:      { font: { bold: true, color: { rgb: "000000" } }, fill: { fgColor: { rgb: palette.subHeaderBg } }, alignment: center, border: borders },
+            valTotal:   { font: { bold: true, sz: 12 }, numFmt: "$ #,##0.00", alignment: center, border: borders, fill: { fgColor: { rgb: "FFFFFF" } } },
+            valDiff:    { font: { bold: true, color: { rgb: "FF0000" }, sz: 12 }, numFmt: "$ #,##0.00", alignment: center, border: borders, fill: { fgColor: { rgb: "FFFFFF" } } },
+            colEg:      { font: { bold: true }, fill: { fgColor: { rgb: palette.bgEg } }, alignment: center, border: borders },
+            colIn:      { font: { bold: true }, fill: { fgColor: { rgb: palette.bgIn } }, alignment: center, border: borders },
+            colDiff:    { font: { bold: true }, fill: { fgColor: { rgb: palette.bgDiff } }, alignment: center, border: borders },
+            cellMoney:  { numFmt: "$ #,##0.00", border: borders, alignment: { horizontal: "right" } },
+            cellText:   { border: borders, alignment: { horizontal: "left" } },
+            cellErr:    { font: { color: { rgb: "9C0006" } }, fill: { fgColor: { rgb: "FFC7CE" } }, border: borders, alignment: center },
+            cellErrTxt: { font: { color: { rgb: "9C0006" } }, fill: { fgColor: { rgb: "FFC7CE" } }, border: borders, alignment: { horizontal: "left" } },
+          };
+
+          const ws_data = [];
+
+          ws_data.push([
+            { v: "EGRESOS", s: styles.headerEg }, null, null, null,
+            { v: "INGRESOS", s: styles.headerIn }, null, null, null,
+            { v: "DIFERENCIAS", s: styles.headerDiff }, null, null
+          ]);
+
+          ws_data.push([
+            { v: "TOTAL AGENTE", s: styles.label }, null, 
+            { v: "TOTAL CHUNIOR", s: styles.label }, null,
+            { v: "TOTAL AGENTE", s: styles.label }, null,
+            { v: "TOTAL CHUNIOR", s: styles.label }, null,
+            { v: "NETO TOTAL", s: styles.label }, null, null
+          ]);
+
+          ws_data.push([
+            { v: totEgA, s: styles.valTotal }, null, 
+            { v: totEgB, s: styles.valTotal }, null,
+            { v: totInA, s: styles.valTotal }, null, 
+            { v: totInB, s: styles.valTotal }, null,
+            { v: totalDiff, s: styles.valDiff }, null, null
+          ]);
+
+          ws_data.push([
+            { v: "DIF. EGRESOS", s: styles.label }, { v: diffEg, s: styles.valDiff }, 
+            null, null,
+            { v: "DIF. INGRESOS", s: styles.label }, { v: diffIn, s: styles.valDiff },
+            null, null,
+            { v: diffs.length + " ERRORES", s: styles.valDiff }, null, null
+          ]);
+
+          ws_data.push([null]);
+
+          ws_data.push([
+            { v: "Monto Ag", s: styles.colEg }, { v: "Usuario Ag", s: styles.colEg },
+            { v: "Monto Ch", s: styles.colEg }, { v: "Usuario Ch", s: styles.colEg },
+            { v: "Monto Ag", s: styles.colIn }, { v: "Usuario Ag", s: styles.colIn },
+            { v: "Monto Ch", s: styles.colIn }, { v: "Usuario Ch", s: styles.colIn },
+            { v: "Monto", s: styles.colDiff }, { v: "Usuario", s: styles.colDiff }, { v: "Detalle", s: styles.colDiff }
+          ]);
+
+          const maxRows = Math.max(egresos.length, ingresos.length, diffs.length);
+          
+          for(let i=0; i<maxRows; i++) {
+            const row = [];
+            const eg = egresos[i];
+            const inG = ingresos[i];
+            const df = diffs[i];
+
+            if(eg) {
+                row.push({ v: eg.a?.monto || "", s: styles.cellMoney });
+                row.push({ v: eg.a?.usuario || "", s: styles.cellText });
+                row.push({ v: eg.b?.monto || "", s: styles.cellMoney });
+                row.push({ v: eg.b?.usuario || "", s: styles.cellText });
+            } else {
+                row.push(null, null, null, null);
+            }
+
+            if(inG) {
+                row.push({ v: inG.a?.monto || "", s: styles.cellMoney });
+                row.push({ v: inG.a?.usuario || "", s: styles.cellText });
+                row.push({ v: inG.b?.monto || "", s: styles.cellMoney });
+                row.push({ v: inG.b?.usuario || "", s: styles.cellText });
+            } else {
+                row.push(null, null, null, null);
+            }
+
+            if(df) {
+                row.push({ v: df.monto, s: styles.cellErr });
+                row.push({ v: df.usuario, s: styles.cellErrTxt });
+                row.push({ v: df.detalle, s: styles.cellErrTxt });
+            } else {
+                row.push(null, null, null);
+            }
+            
+            ws_data.push(row);
+          }
+
+          const ws = XLSX.utils.aoa_to_sheet([]);
+          
+          ws['!cols'] = [
+            { wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 20 },
+            { wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 20 },
+            { wch: 15 }, { wch: 20 }, { wch: 25 }
+          ];
+
+          ws['!merges'] = [
+            { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } },
+            { s: { r: 0, c: 4 }, e: { r: 0, c: 7 } },
+            { s: { r: 0, c: 8 }, e: { r: 0, c: 10 } },
+            { s: { r: 1, c: 0 }, e: { r: 1, c: 1 } },
+            { s: { r: 1, c: 2 }, e: { r: 1, c: 3 } },
+            { s: { r: 1, c: 4 }, e: { r: 1, c: 5 } },
+            { s: { r: 1, c: 6 }, e: { r: 1, c: 7 } },
+            { s: { r: 1, c: 8 }, e: { r: 1, c: 10 } },
+            { s: { r: 2, c: 0 }, e: { r: 2, c: 1 } },
+            { s: { r: 2, c: 2 }, e: { r: 2, c: 3 } },
+            { s: { r: 2, c: 4 }, e: { r: 2, c: 5 } },
+            { s: { r: 2, c: 6 }, e: { r: 2, c: 7 } },
+            { s: { r: 2, c: 8 }, e: { r: 2, c: 10 } },
+            { s: { r: 3, c: 2 }, e: { r: 3, c: 3 } },
+            { s: { r: 3, c: 6 }, e: { r: 3, c: 7 } },
+            { s: { r: 3, c: 8 }, e: { r: 3, c: 10 } },
+          ];
+
+          ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: ws_data.length - 1, c: 10 } });
+          ws_data.forEach((r, rIdx) => {
+            r.forEach((c, cIdx) => {
+              const cellRef = XLSX.utils.encode_cell({ r: rIdx, c: cIdx });
+              if (c !== null) {
+                if (c && typeof c === 'object' && 'v' in c) {
+                   ws[cellRef] = { t: typeof c.v === 'number' ? 'n' : 's', v: c.v, s: c.s, z: c.s?.numFmt };
+                } else if (c) {
+                   ws[cellRef] = { v: c };
+                }
+              }
+            });
+          });
+
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, "Reporte");
+          XLSX.writeFile(wb, `Reporte_Conciliacion_${new Date().toISOString().slice(0,10)}.xlsx`);
         };
 
         const copyToClipboard = () => {
@@ -813,11 +980,11 @@
                     {isProcessing ? 'Procesando...' : 'Procesar y comparar'}
                   </button>
                   <div className="flex gap-2">
-                    <button onClick={downloadCSV} disabled={pairs.length === 0} className="flex-1 bg-[#24364A] hover:bg-[#1F3A5F] text-[#EAF2FF] py-2 rounded-lg text-sm font-medium transition-colors flex justify-center items-center gap-2 disabled:opacity-50">
-                      <Download size={16} /> CSV
+                    <button onClick={handleExportExcel} disabled={pairs.length === 0} className="flex-1 bg-[#24364A] hover:bg-[#1F3A5F] text-[#EAF2FF] py-2 rounded-lg text-sm font-medium transition-colors flex justify-center items-center gap-2 disabled:opacity-50">
+                      <Download size={16} /> Excel (Pro)
                     </button>
                     <button onClick={copyToClipboard} disabled={pairs.length === 0} className="flex-1 bg-[#24364A] hover:bg-[#1F3A5F] text-[#EAF2FF] py-2 rounded-lg text-sm font-medium transition-colors flex justify-center items-center gap-2 disabled:opacity-50">
-                      <Copy size={16} /> Excel
+                      <Copy size={16} /> Copiar
                     </button>
                   </div>
                 </div>
@@ -1027,5 +1194,6 @@
       const root = createRoot(document.getElementById('root'));
       root.render(<App />);
     </script>
-  </body>
-</html>
+  
+
+</body></html>
