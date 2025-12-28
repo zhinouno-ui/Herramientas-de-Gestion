@@ -1,1125 +1,372 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dif • Comparador Agentes</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Babel for JSX transformation -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.min.js"></script>
-    
-    <style>
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
-      
-      body {
-        font-family: 'Inter', sans-serif;
-        background-color: #111418;
-        color: white;
-      }
-      
-      /* Custom Scrollbar for dark theme */
-      ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-      }
-      ::-webkit-scrollbar-track {
-        background: #1A1E23; 
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #2A2F36; 
-        border-radius: 4px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #3A4048; 
-      }
-
-      /* Animation utilities */
-      .animate-fade-in { animation: fadeIn 0.6s ease-out; }
-      .animate-slide-up { animation: slideInUp 0.4s ease-out; }
-      
-      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-      @keyframes slideInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-      
-      /* Utility classes not in Tailwind defaults */
-      .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-      .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-      .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
-    </style>
-    
-    <script type="importmap">
-    {
-      "imports": {
-        "react": "https://aistudiocdn.com/react@^19.2.0",
-        "react-dom/client": "https://aistudiocdn.com/react-dom@^19.2.0/client",
-        "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0"
-      }
+<head>
+  <meta charset="UTF-8" />
+  <title>Gestor de Contactos – Revinculación</title>
+  <style>
+    :root{
+      --bg:#0f172a;--panel:#111827;--card:#020617;
+      --text:#e5e7eb;--muted:#9ca3af;--accent:#22c55e;--warn:#f59e0b;--danger:#ef4444;--info:#38bdf8;
     }
-    </script>
-  </head>
-  <body>
-    <div id="root"></div>
+    *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto}
+    body{margin:0;background:#020617;color:var(--text)}
+    header{padding:16px 20px;border-bottom:1px solid #1f2937;display:flex;gap:16px;align-items:center}
+    header h1{font-size:18px;margin:0;font-weight:600}
+    .wrap{display:grid;grid-template-columns:280px 1fr;min-height:calc(100vh - 60px)}
+    aside{border-right:1px solid #1f2937;padding:16px;display:flex;flex-direction:column;gap:12px}
+    main{padding:16px}
+    .card{background:rgba(2,6,23,.8);border:1px solid #1f2937;border-radius:14px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    .card h3{margin:0 0 8px 0;font-size:14px;color:#cbd5f5}
+    .btn{background:#020617;border:1px solid #1f2937;color:var(--text);padding:6px 8px;border-radius:10px;cursor:pointer;font-size:12px}
+    .btn:hover{border-color:#334155}
+    .btn.accent{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.4)}
+    .btn.warn{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.4)}
+    .btn.danger{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.4)}
+    .btn.info{background:rgba(56,189,248,.1);border-color:rgba(56,189,248,.4)}
+    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    input,select{background:#020617;border:1px solid #1f2937;color:var(--text);padding:8px 10px;border-radius:10px}
+    input::placeholder{color:#64748b}
+    .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+    .stat{background:#020617;border:1px solid #1f2937;border-radius:12px;padding:10px}
+    .stat b{font-size:18px}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:8px;border-bottom:1px solid #1f2937;font-size:13px}
+    th{color:#cbd5f5;text-align:left}
+    tr:hover{background:#020617}
+    .tag{padding:2px 8px;border-radius:999px;border:1px solid #1f2937;font-size:11px}
+    .t-info{border-color:rgba(56,189,248,.6);color:#7dd3fc}
+    .actions{display:flex;gap:4px;flex-wrap:wrap}
 
-    <script type="text/babel" data-type="module">
-      import React, { useState, useEffect, useMemo } from 'react';
-      import { createRoot } from 'react-dom/client';
-      import { 
-        Eye, EyeOff, Edit2, Link as LinkIcon, Download, Copy, Maximize2, Minimize2 
-      } from 'lucide-react';
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;z-index:1000}
+    .modal{background:#020617;border:1px solid #1f2937;border-radius:16px;padding:18px;max-width:420px;width:100%}
+    .modal h2{margin:0 0 10px 0;font-size:16px;color:#cbd5f5}
+  </style>
+</head>
+<body>
+<header>
+  <h1>📇 Gestor de Contactos – Revinculación</h1>
+</header>
 
-      /* --- UTILS --- */
-      
-      const parseAmountRaw = (raw) => {
-        if (raw === null || raw === undefined) return 0;
-        let s = String(raw).trim();
-        if (!s) return 0;
-        s = s.replace(/[^\d,\.-]/g, '');
-        if (s.includes(',')) {
-          s = s.replace(/\./g, '').replace(',', '.');
-        }
-        const n = parseFloat(s);
-        return isNaN(n) ? 0 : n;
-      };
+<div class="wrap">
+  <aside>
 
-      const parseCSVLine = (line, delimiter = ',') => {
-        const out = [];
-        let cur = '';
-        let inQuotes = false;
-        for (let i = 0; i < line.length; i++) {
-          const ch = line[i];
-          if (ch === '"') {
-            if (inQuotes && line[i + 1] === '"') {
-              cur += '"';
-              i++;
-              continue;
-            }
-            inQuotes = !inQuotes;
-            continue;
-          }
-          if (ch === delimiter && !inQuotes) {
-            out.push(cur);
-            cur = '';
-            continue;
-          }
-          cur += ch;
-        }
-        out.push(cur);
-        return out;
-      };
+    <div class="card">
+      <h3>Importar CSV / VCF</h3>
+      <input type="file" id="csvFile" accept=".csv,.vcf" />
+      <input id="csvOrigen" placeholder="Origen (ej: pc1)" title="Nombre del archivo o fuente del contacto (pc1, pc2, etc.)"/>
+      <button class="btn accent" onclick="importCSV()" title="Importar archivo CSV o VCF">Importar / Actualizar</button>
+      <p style="font-size:12px;color:#94a3b8">Solo agrega contactos nuevos según número.</p>
+    </div>
 
-      const getTurnoFromDate = (d) => {
-        if (!d || isNaN(d.getTime())) return '';
-        const h = d.getHours();
-        if (h >= 6 && h < 14) return 'TM';
-        if (h >= 14 && h < 22) return 'TT';
-        return 'TN';
-      };
+    <div class="card">
+      <h3>Filtros</h3>
 
-      const parseAgentLines = (lines, labelA) => {
-        const rows = [];
-        let startIndex = 0;
-        let format = null;
+      <input id="search" placeholder="Buscar nombre o teléfono" oninput="render()" title="Buscar por nombre o número" />
 
-        if (lines.length === 0) return rows;
-        if (lines[0].toLowerCase().startsWith('sep=')) startIndex = 1;
-        
-        const headerLine = lines[startIndex];
-        if (headerLine) {
-          const headerCols = parseCSVLine(headerLine);
-          if (headerCols[3]?.toLowerCase() === 'cantidad' && headerCols[6]?.toLowerCase() === 'alias del jugador') {
-            format = 'sub';
-          } else if (headerCols[2]?.toLowerCase() === 'cantidad' && headerCols[4]?.toLowerCase() === 'alias') {
-            format = 'main';
-          } else {
-            console.warn(`No se pudo determinar el formato CSV para ${labelA}, se omite archivo.`);
-            return rows;
-          }
-          startIndex++;
-        }
+      <select id="fEstado" onchange="render()" title="Filtrar por estado">
+        <option value="">Todos los estados</option>
+        <option value="no_contactado">No contactado</option>
+        <option value="contactado">Contactado</option>
+        <option value="interesado">Interesado</option>
+        <option value="desinteresado">Desinteresado</option>
+        <option value="sin_whatsapp">Sin WhatsApp</option>
+      </select>
 
-        for (let i = startIndex; i < lines.length; i++) {
-          const line = lines[i];
-          if (!line.trim() || !line.includes(',')) continue;
-          const cols = parseCSVLine(line);
-          if (cols.length < 5) continue;
+      <input id="fOrigen" placeholder="Mostrar contactos desde (pc1,pc2 o !pc5)" oninput="render()" title="Ej: pc1 / pc1,pc2 / !pc5 para excluir pc5" />
+    </div>
 
-          const fechaRaw = (cols[0] || '').trim();
-          let montoRaw, usuarioRaw, tipoRaw;
+    <div class="card">
+      <h3>Estadísticas</h3>
+      <div class="stats">
+        <div class="stat"><b id="stTotal">0</b><div>Total</div></div>
+        <div class="stat"><b id="stInter">0</b><div>Interesados</div></div>
+        <div class="stat"><b id="stDes">0</b><div>Desinteresados</div></div>
+        <div class="stat"><b id="stNo">0</b><div>No contactados</div></div>
+      </div>
+    </div>
 
-          if (format === 'sub') {
-            montoRaw = cols[3];
-            usuarioRaw = cols[6];
-            tipoRaw = cols[1];
-          } else {
-            montoRaw = cols[2];
-            usuarioRaw = cols[4];
-            tipoRaw = cols[3];
-          }
+    <div class="card">
+      <h3>Exportar</h3>
+      <button class="btn info" onclick="exportCSV()" title="Descargar todos los contactos como CSV">Exportar todo (CSV)</button>
+    </div>
 
-          const monto = parseAmountRaw(montoRaw);
-          const usuario = (usuarioRaw || '').toLowerCase().trim();
-          const isAdminCharge = /te cargaron|ajuste/i.test(tipoRaw || '');
+    <div class="card">
+      <h3>Mantenimiento</h3>
+      <button class="btn danger" onclick="vaciarDB()" title="Eliminar definitivamente todos los contactos guardados">Vaciar contactos</button>
+    </div>
 
-          let fechaObj = null;
-          if (fechaRaw) {
-            const attempt = new Date(fechaRaw.replace(' ', 'T'));
-            fechaObj = isNaN(attempt.getTime()) ? new Date(fechaRaw) : attempt;
-            if (isNaN(fechaObj.getTime())) fechaObj = null;
-          }
+  </aside>
 
-          rows.push({
-            origen: 'A',
-            etiqueta: labelA,
-            fecha: fechaRaw,
-            fechaObj,
-            monto,
-            usuario,
-            isAdminCharge
-          });
-        }
-        return rows;
-      };
+  <main>
+    <div class="card">
+      <h3>Contactos</h3>
+      <table>
+        <thead>
+          <tr><th>Nombre</th><th>Teléfono</th><th>Origen</th><th>Estado</th><th>Acciones</th></tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
 
-      const parseBLines = (lines) => {
-        const rows = [];
-        for (let raw of lines) {
-          if (!raw.trim()) continue;
-          let parts = raw.split(/\t+/).map(p => p.trim()).filter(Boolean);
-          if (parts.length < 2) {
-            parts = raw.split(/\s{2,}/).map(p => p.trim()).filter(Boolean);
-          }
-          if (parts.length > 0 && /^\d{7,}$/.test(parts[0])) {
-            parts.shift();
-          }
-          if (parts.length >= 2 && /^\d{2}-\d{2}-\d{4}$/.test(parts[0]) && /^\d{2}:\d{2}:\d{2}$/.test(parts[1])) {
-            parts[0] = parts[0] + ' ' + parts[1];
-            parts.splice(1, 1);
-          }
+<footer style="padding:10px;color:#64748b;font-size:12px">
+  Datos guardados localmente en el navegador (IndexedDB).
+</footer>
 
-          if (parts.length < 4) continue;
+<script>
+let db;
+const req = indexedDB.open('contactosDB',1);
+req.onupgradeneeded = e => {
+  db = e.target.result;
+  db.createObjectStore('contactos',{keyPath:'telefono'});
+};
+req.onsuccess = e => { db = e.target.result; render(); };
 
-          let [fechaRaw, operador, medioRaw, montoRaw, usuarioRaw] = parts;
-          let medio = (medioRaw || '').replace(/.*-\s*/, '').trim();
-          if (!medio) medio = (medioRaw || '').trim();
-          const monto = parseAmountRaw(montoRaw);
-          const usuario = (usuarioRaw || '').toLowerCase().trim();
-          
-          let fechaObj = null;
-          if (fechaRaw) {
-            const m = fechaRaw.match(/(\d{2})-(\d{2})-(\d{4})\s+(\d{2}:\d{2}:\d{2})/);
-            if (m) {
-              fechaObj = new Date(`${m[3]}-${m[2]}-${m[1]}T${m[4]}`);
-            } else {
-              const attempt = new Date(fechaRaw.replace(' ', 'T'));
-              if (!isNaN(attempt.getTime())) fechaObj = attempt;
-            }
-          }
+function getAll(cb){
+  const tx=db.transaction('contactos','readonly');
+  tx.objectStore('contactos').getAll().onsuccess=e=>cb(e.target.result||[]);
+}
+function put(c){
+  const tx=db.transaction('contactos','readwrite');
+  tx.objectStore('contactos').put(c);
+}
+function del(t){
+  const tx=db.transaction('contactos','readwrite');
+  tx.objectStore('contactos').delete(t);
+}
 
-          rows.push({
-            origen: 'B',
-            fecha: fechaRaw,
-            fechaObj,
-            monto,
-            usuario,
-            operador: (operador || '').toLowerCase().trim(),
-            medio: (medio || '').toUpperCase().trim()
-          });
-        }
-        return rows;
-      };
+/* =================== IMPORTACIÓN =================== */
+let dupQueue=[];
 
-      const formatCurrency = (val) => {
-        return val.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      };
+function importCSV(){
+  const file=document.getElementById('csvFile').files[0];
+  const origen=document.getElementById('csvOrigen').value.trim();
+  if(!file||!origen) return alert('Elegí archivo y origen');
 
-      const formatTime = (d) => {
-        if (!d || isNaN(d.getTime())) return '';
-        const pad = (num) => num.toString().padStart(2, '0');
-        return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-      };
+  const reader=new FileReader();
+  reader.onload=e=>{
+    if(file.name.endsWith('.vcf')) importVCF(e.target.result,origen);
+    else alert('Por ahora soportado: VCF');
+  };
+  reader.readAsText(file);
+}
 
-      const formatDateStr = (d) => {
-        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      };
+function importVCF(text,origen){
+  dupQueue=[];
+  const cards=text.split('BEGIN:VCARD').slice(1);
 
-      /* --- COMPONENTS: MODALS --- */
+  cards.forEach(card=>{
+    const telMatch=card.match(/TEL[^:]*:(.+)/i);
+    if(!telMatch) return;
 
-      const EditModal = ({ isOpen, pair, onClose, onSave }) => {
-        const [formData, setFormData] = useState({
-          aUser: '', aMonto: '0', aBilletera: '',
-          bUser: '', bMonto: '0', bBilletera: ''
-        });
+    const telefono=telMatch[1].replace(/[^0-9]/g,'');
+    const nameMatch=card.match(/FN:(.+)/i);
+    const nombre=(nameMatch?nameMatch[1]:'').trim();
 
-        useEffect(() => {
-          if (pair) {
-            setFormData({
-              aUser: pair.a?.usuario || '',
-              aMonto: pair.a?.monto?.toString() || '0',
-              aBilletera: '',
-              bUser: pair.b?.usuario || '',
-              bMonto: pair.b?.monto?.toString() || '0',
-              bBilletera: pair.b?.medio || ''
-            });
-          }
-        }, [pair]);
+    const tx=db.transaction('contactos','readwrite');
+    const store=tx.objectStore('contactos');
+    const req=store.get(telefono);
 
-        if (!isOpen || !pair) return null;
+    req.onsuccess=()=>{
+      const ex=req.result;
 
-        const handleSave = () => {
-          const updated = { ...pair };
-          
-          // Lógica para actualizar o crear Agente (A)
-          if (formData.aUser || parseFloat(formData.aMonto) !== 0) {
-            if (!updated.a) {
-              // Si no existía A, lo creamos
-              updated.a = {
-                origen: 'A',
-                etiqueta: 'MANUAL',
-                fecha: updated.b?.fecha || '',
-                fechaObj: updated.b?.fechaObj || new Date(),
-                isAdminCharge: false,
-                turno: updated.b?.turno || ''
-              };
-            }
-            updated.a.usuario = formData.aUser;
-            updated.a.monto = parseFloat(formData.aMonto);
-          }
+      if(!ex){
+        store.put({telefono,nombre,origen,estado:'no_contactado',fecha:''});
+        return;
+      }
 
-          // Lógica para actualizar o crear Chunior (B)
-          if (formData.bUser || parseFloat(formData.bMonto) !== 0 || formData.bBilletera) {
-            if (!updated.b) {
-              // Si no existía B, lo creamos
-              updated.b = {
-                origen: 'B',
-                operador: 'MANUAL',
-                fecha: updated.a?.fecha || '',
-                fechaObj: updated.a?.fechaObj || new Date(),
-                turno: updated.a?.turno || ''
-              };
-            }
-            updated.b.usuario = formData.bUser;
-            updated.b.monto = parseFloat(formData.bMonto);
-            updated.b.medio = formData.bBilletera;
-          }
+      const oldName=(ex.nombre||'').trim();
+      const newName=nombre;
+      const sameName=!newName||oldName.toLowerCase()===newName.toLowerCase();
 
-          // Si ahora tenemos ambos lados, cambiamos estado a MANUAL (emparejado)
-          if (updated.a && updated.b) {
-            updated.estado = 'MANUAL';
-            // Recalculamos tipoMovimiento si es necesario, basado en A
-            updated.tipoMovimiento = updated.a.monto < 0 ? 'EGRESO' : 'INGRESO';
-          }
+      const origs=(ex.origen||'').split(',').map(o=>o.trim());
+      const sameOrigin=origs.includes(origen);
 
-          onSave(updated);
-        };
+      if(sameName||sameOrigin){
+        if(!sameOrigin) ex.origen+=(ex.origen?',':'')+origen;
+        if(!oldName&&newName) ex.nombre=newName;
+        store.put(ex);
+        return;
+      }
 
-        const inputClass = "w-full bg-[#1E2329] border border-[#2A2A2A] rounded p-2 text-white focus:border-[#C7F24A] focus:outline-none mb-4 disabled:opacity-50 disabled:cursor-not-allowed";
-        const labelClass = "block text-xs text-[#A8A8A8] mb-1 uppercase font-semibold";
-
-        return (
-          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100] backdrop-blur-sm animate-fade-in">
-            <div className="bg-[#1A1E23] border border-[#2A2A2A] rounded-xl p-6 w-full max-w-lg shadow-2xl animate-slide-up">
-              <h2 className="text-xl font-bold text-white mb-4 border-b border-[#2A2A2A] pb-2">✏️ Editar movimiento</h2>
-              <p className="text-xs text-[#777] mb-4">Puedes completar los datos faltantes para conciliar manualmente.</p>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h3 className="text-[#C7F24A] text-sm font-bold mb-3 flex items-center gap-2">
-                    Datos Agente
-                    {!pair.a && <span className="text-[10px] bg-[#2A2F36] px-1 rounded text-[#AAA]">FALTA</span>}
-                  </h3>
-                  <label className={labelClass}>Usuario</label>
-                  <input className={inputClass} value={formData.aUser} onChange={e => setFormData({...formData, aUser: e.target.value})} />
-                  
-                  <label className={labelClass}>Monto</label>
-                  <input type="number" className={inputClass} value={formData.aMonto} onChange={e => setFormData({...formData, aMonto: e.target.value})} />
-                </div>
-
-                <div>
-                  <h3 className="text-[#7A5CFF] text-sm font-bold mb-3 flex items-center gap-2">
-                    Datos Chunior
-                    {!pair.b && <span className="text-[10px] bg-[#2A2F36] px-1 rounded text-[#AAA]">FALTA</span>}
-                  </h3>
-                  <label className={labelClass}>Usuario</label>
-                  <input className={inputClass} value={formData.bUser} onChange={e => setFormData({...formData, bUser: e.target.value})} />
-                  
-                  <label className={labelClass}>Monto</label>
-                  <input type="number" className={inputClass} value={formData.bMonto} onChange={e => setFormData({...formData, bMonto: e.target.value})} />
-                  
-                  <label className={labelClass}>Billetera</label>
-                  <input className={inputClass} value={formData.bBilletera} onChange={e => setFormData({...formData, bBilletera: e.target.value})} />
-                </div>
-              </div>
-                   <button onClick={downloadCSV} disabled={pairs.length === 0} className="flex-1 bg-[#24364A] hover:bg-[#1F3A5F] text-[#EAF2FF] py-2 rounded-lg text-sm font-medium transition-colors flex justify-center items-center gap-2 disabled:opacity-50">
-                      <Download size={16} /> CSV
-                    </button>
-              <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-[#2A2A2A]">
-                <button onClick={onClose} className="px-4 py-2 rounded-lg bg-[#2A2F36] text-[#A8A8A8] hover:text-white transition-colors">Cancelar</button>
-                <button onClick={handleSave} className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#C7F24A] to-[#D4FF4A] text-[#0D1117] font-bold shadow-lg shadow-[#C7F24A]/20 hover:translate-y-[-2px] transition-transform">Guardar</button>
-              </div>
-            </div>
-          </div>
-        );
-      };
-
-      const LinkModal = ({ isOpen, basePair, allPairs, onClose, onLink }) => {
-        if (!isOpen || !basePair) return null;
-
-        const isLookingForB = !!basePair.a;
-        
-        const candidates = allPairs.filter(p => {
-          if (p.id === basePair.id) return false;
-          if (p.estado === 'OK' || p.estado === 'MANUAL') return false; 
-          if (isLookingForB) return !!p.b && !p.a;
-          return !!p.a && !p.b;
-        });
-
-        return (
-          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100] backdrop-blur-sm animate-fade-in">
-            <div className="bg-[#1A1E23] border border-[#2A2A2A] rounded-xl p-6 w-full max-w-lg shadow-2xl animate-slide-up flex flex-col max-h-[80vh]">
-              <h2 className="text-xl font-bold text-white mb-2">🔗 Enlazar movimiento</h2>
-              <p className="text-[#A8A8A8] text-sm mb-4">Seleccioná un movimiento huérfano para unirlo con el actual.</p>
-
-              <div className="overflow-y-auto flex-1 space-y-2 pr-2 custom-scrollbar">
-                {candidates.length === 0 ? (
-                  <div className="text-center p-4 text-[#A8A8A8] italic">No hay candidatos disponibles para enlazar.</div>
-                ) : (
-                  candidates.map(c => {
-                    const displayUser = c.a?.usuario || c.b?.usuario;
-                    const displayMonto = c.a?.monto ?? c.b?.monto;
-                    const displayTime = c.a?.fecha?.split(' ')[1] || c.b?.fecha?.split(' ')[1];
-                    
-                    return (
-                      <button 
-                        key={c.id}
-                        onClick={() => onLink(basePair.id, c.id)}
-                        className="w-full text-left p-3 rounded bg-[#1E2329] border border-[#2A2A2A] hover:border-[#7A5CFF] hover:bg-[#242930] transition-all flex justify-between items-center group"
-                      >
-                        <div>
-                          <div className="font-bold text-white group-hover:text-[#7A5CFF]">{displayUser}</div>
-                          <div className="text-xs text-[#777]">{displayTime || 'Unknown Time'}</div>
-                        </div>
-                        <div className={`font-mono font-bold ${(displayMonto || 0) < 0 ? 'text-[#EF4444]' : 'text-[#9EE759]'}`}>
-                          $ {(displayMonto || 0).toLocaleString('es-AR', {minimumFractionDigits: 2})}
-                        </div>
-                      </button>
-                    );
-                  })
-                )}
-              </div>
-
-              <div className="flex justify-end mt-4 pt-4 border-t border-[#2A2A2A]">
-                <button onClick={onClose} className="px-4 py-2 rounded-lg bg-[#2A2F36] text-[#A8A8A8] hover:text-white transition-colors">Cerrar</button>
-              </div>
-            </div>
-          </div>
-        );
-      };
-
-      const SummaryBadge = ({ label, value, type }) => {
-        let color = "text-white";
-        if (type === 'diff') color = value === 0 ? "text-[#9EE759]" : (value > 0 ? "text-[#9EE759]" : "text-[#EF4444]");
-        if (type === 'warn') color = "text-[#F59E0B]";
-        if (type === 'bad') color = "text-[#EF4444]";
-        if (type === 'neutral') color = "text-[#9EE759]";
-
-        return (
-          <div className={`flex flex-col items-center justify-center p-3 rounded-lg bg-[#1E2329] border border-[#2A2A2A] ${type === 'diff' && Math.abs(value) > 0.01 ? 'border-[#EF4444]/30 bg-[#EF4444]/5' : ''}`}>
-            <span className="text-xs text-[#A8A8A8] uppercase font-semibold">{label}</span>
-            <strong className={`text-lg mt-1 ${color}`}>{formatCurrency(value)}</strong>
-          </div>
-        );
-      };
-
-      const CompactSummaryBadge = ({ label, value, type }) => {
-        let color = "text-white";
-        if (type === 'diff') color = value === 0 ? "text-[#9EE759]" : (value > 0 ? "text-[#9EE759]" : "text-[#EF4444]");
-        if (type === 'warn') color = "text-[#F59E0B]";
-        if (type === 'bad') color = "text-[#EF4444]";
-        if (type === 'neutral') color = "text-[#9EE759]";
-
-        return (
-          <div className="flex items-center gap-2 px-3 py-1 bg-[#2A2F36] rounded border border-[#2A2A2A] shrink-0">
-            <span className="text-[10px] text-[#AAA] uppercase font-bold">{label}:</span>
-            <span className={`text-xs font-bold font-mono ${color}`}>{formatCurrency(value)}</span>
-          </div>
-        );
-      };
-
-      const SelectFilter = ({ label, value, options, onChange }) => {
-        return (
-          <div className="flex flex-col">
-            <label className="text-[11px] text-[#777] font-bold uppercase mb-1">{label}</label>
-            <div className="relative">
-              <select 
-                value={value} 
-                onChange={e => onChange(e.target.value)}
-                className="w-full bg-[#1E2329]/80 border border-[#2A2A2A] text-[#DDD] text-xs rounded p-2 pr-6 appearance-none focus:border-[#24364A] focus:outline-none cursor-pointer hover:bg-[#242930] transition-colors"
-              >
-                <option value="__ALL">Todos</option>
-                {options.map(o => <option key={o} value={o}>{o}</option>)}
-              </select>
-              <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-[#555] text-[10px]">▼</div>
-            </div>
-          </div>
-        );
-      };
-
-      /* --- APP COMPONENT --- */
-
- function App() {
-  const [agentFiles, setAgentFiles] = useState(null);
-  const [chuniorText, setChuniorText] = useState('');
-  const [pairs, setPairs] = useState([]);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [ignoredIds, setIgnoredIds] = useState(new Set());
-  const [tableFullscreen, setTableFullscreen] = useState(false);
-
-  // Modal State
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editingPair, setEditingPair] = useState(null);
-  const [linkModalOpen, setLinkModalOpen] = useState(false);
-  const [linkingBasePair, setLinkingBasePair] = useState(null);
-
-  // Filters
-  const [filters, setFilters] = useState({
-    fecha: '__ALL',
-    agente: '__ALL',
-    operador: '__ALL',
-    billetera: '__ALL',
-    turno: '__ALL',
-    estado: '__ALL',
-    movimiento: '__ALL'
+      dupQueue.push({
+        telefono,
+        origen,
+        existente:ex,
+        nuevo:{telefono,nombre,origen}
+      });
+    };
   });
 
-  // Esc para salir fullscreen tabla
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && tableFullscreen) {
-        setTableFullscreen(false);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [tableFullscreen]);
-
-  // Filtrado y summary (no muestro toda la lógica para no hacer kilombo, pero vos dejá la que ya tenés)
-  // ...
-
-  // FUNCION EXPORTAR XLSX ALINEADO
-  const exportToExcel = () => {
-    // FILTRADO por tipo
-    const egresos = pairs.filter(p => p.tipoMovimiento === "EGRESO" && !ignoredIds.has(p.id));
-    const ingresos = pairs.filter(p => p.tipoMovimiento === "INGRESO" && !ignoredIds.has(p.id));
-    // Creación de filas alineadas por usuario
-    function buildAlignedRows(list) {
-      return list.map(p => {
-        const estado =
-          p.estado === "OK" || p.estado === "MANUAL" ? "OK"
-          : (p.estado === "MISSING_AGENT" ? "FALTA AGENTE"
-          : (p.estado === "MISSING_CHUNIOR" ? "FALTA CHUNIOR" : ""));
-        return [
-          { v: p.a?.monto ?? "", t: "n" },
-          { v: p.a?.usuario ?? "", t: "s" },
-          { v: p.b?.monto ?? "", t: "n" },
-          { v: p.b?.usuario ?? "", t: "s" },
-          { v: (p.a?.monto ?? 0) - (p.b?.monto ?? 0), t: "n" },
-          { v: estado, t: "s" }
-        ];
-      });
-    }
-    // TOTALES
-    const totalEgresosAgente = egresos.reduce((s,p) => s+(p.a?.monto??0),0);
-    const totalEgresosChunior = egresos.reduce((s,p) => s+(p.b?.monto??0),0);
-    const difEgresos = totalEgresosAgente - totalEgresosChunior;
-    const totalIngresosAgente = ingresos.reduce((s,p) => s+(p.a?.monto??0),0);
-    const totalIngresosChunior = ingresos.reduce((s,p) => s+(p.b?.monto??0),0);
-    const difIngresos = totalIngresosAgente - totalIngresosChunior;
-    // HEADER Y TOTALES
-    const egresosHeaderRow = [
-      { v: "EGRESOS", t:"s", s: { font:{bold:true}, fill:{fgColor:{rgb:"87CEEB"}}}},
-      { v: "", t:"s" },{ v: "", t:"s" },{ v: "", t:"s" },{ v: "", t:"s" },{ v: "", t:"s" }
-    ];
-    const egresosTotalRow = [
-      { v: "TOTAL AGENTE", t:"s", s:{ font:{bold:true}}},
-      { v: totalEgresosAgente, t:"n", s:{ numFmt:"$ #,##0.00"}},
-      { v: "TOTAL CHUNIOR", t:"s", s:{ font:{bold:true}}},
-      { v: totalEgresosChunior, t:"n", s:{ numFmt:"$ #,##0.00"}},
-      { v: difEgresos, t:"n", s:{ numFmt:"$ #,##0.00", font:{bold:true}, fill:{fgColor:{rgb:"A9FFAA"}} }},
-      { v: "", t:"s" }
-    ];
-    const egresosSubHeaderRow = [
-      { v:"MONTO AGENTE", t:"s" },
-      { v:"USUARIO AGENTE", t:"s" },
-      { v:"MONTO CHUNIOR", t:"s" },
-      { v:"USUARIO CHUNIOR", t:"s" },
-      { v:"DIFERENCIA", t:"s" },
-      { v:"ESTADO", t:"s" }
-    ];
-    const egresosDataRows = buildAlignedRows(egresos);
-    // INGRESOS igual
-    const ingresosHeaderRow = [
-      { v: "INGRESOS", t:"s", s: { font:{bold:true}, fill:{fgColor:{rgb:"FFEB99"}}}},
-      { v: "", t:"s" },{ v: "", t:"s" },{ v: "", t:"s" },{ v: "", t:"s" },{ v: "", t:"s" }
-    ];
-    const ingresosTotalRow = [
-      { v: "TOTAL AGENTE", t:"s", s:{ font:{bold:true}}},
-      { v: totalIngresosAgente, t:"n", s:{ numFmt:"$ #,##0.00"}},
-      { v: "TOTAL CHUNIOR", t:"s", s:{ font:{bold:true}}},
-      { v: totalIngresosChunior, t:"n", s:{ numFmt:"$ #,##0.00"}},
-      { v: difIngresos, t:"n", s:{ numFmt:"$ #,##0.00", font:{bold:true}, fill:{fgColor:{rgb:"A9FFAA"}} }},
-      { v: "", t:"s" }
-    ];
-    const ingresosSubHeaderRow = [
-      { v:"MONTO AGENTE", t:"s" },
-      { v:"USUARIO AGENTE", t:"s" },
-      { v:"MONTO CHUNIOR", t:"s" },
-      { v:"USUARIO CHUNIOR", t:"s" },
-      { v:"DIFERENCIA", t:"s" },
-      { v:"ESTADO", t:"s" }
-    ];
-    const ingresosDataRows = buildAlignedRows(ingresos);
-    const allRows = [
-      egresosHeaderRow,
-      egresosTotalRow,
-      egresosSubHeaderRow,
-      ...egresosDataRows,
-      [],
-      ingresosHeaderRow,
-      ingresosTotalRow,
-      ingresosSubHeaderRow,
-      ...ingresosDataRows,
-    ];
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet([]);
-    XLSX.utils.sheet_add_aoa(ws, allRows, { origin: "A1" });
-    ws['!cols'] = [ { wch: 18 },{ wch: 22 },{ wch: 18 },{ wch: 22 },{ wch: 18 },{ wch: 14 } ];
-    XLSX.utils.book_append_sheet(wb, ws, "Resumen");
-    XLSX.writeFile(wb, `Resumen_${new Date().toISOString().slice(0,10)}.xlsx`);
-  };
-             const set = new Set();
-             relevantPairs.forEach(p => {
-               const val = itemAccessor(p);
-               if (val) set.add(val);
-             });
-             return set;
-          };
-const filtros = useMemo(() => {
-
-  const getoptions = (label, itemAccessor) => {
-    const relevantPairs = pairs.filter(p => itemAccessor(p));
-    const set = new Set();
-    relevantPairs.forEach(p => {
-      const val = itemAccessor(p);
-      if (val) set.add(val);
-    });
-    return set;
-  };
-
-  return {
-    dates: getoptions('fecha', p => {
-      const d = p.a?.fechaObj || p.b?.fechaObj;
-      return d ? formatDateStr(d) : null;
-    }),
-
-    etiquetas: getoptions('agente', p => p.a?.etiqueta || p.b?.etiqueta),
-
-    operadores: getoptions('operador', p => p.a?.operador || p.b?.operador)
-  };
-
-}, [pairs]);
-
-        const handleToggleIgnore = (id) => {
-          const newSet = new Set(ignoredIds);
-          if (newSet.has(id)) newSet.delete(id);
-          else newSet.add(id);
-          setIgnoredIds(newSet);
-        };
-
-        const handleEditSave = (updated) => {
-          setPairs(prev => prev.map(p => p.id === updated.id ? updated : p));
-          setEditModalOpen(false);
-        };
-
-        const handleLink = (baseId, targetId) => {
-          setPairs(prev => {
-            const baseIdx = prev.findIndex(p => p.id === baseId);
-            const targetIdx = prev.findIndex(p => p.id === targetId);
-            if (baseIdx === -1 || targetIdx === -1) return prev;
-
-            const base = prev[baseIdx];
-            const target = prev[targetIdx];
-
-            const newPair = {
-              id: `link-${Date.now()}`,
-              a: base.a || target.a,
-              b: base.b || target.b,
-              estado: 'MANUAL',
-              tipoMovimiento: base.tipoMovimiento || target.tipoMovimiento,
-              manualPairId: `${baseId}|${targetId}`
-            };
-
-            const newArr = prev.filter(p => p.id !== baseId && p.id !== targetId);
-            newArr.push(newPair);
-            
-            return newArr.sort((x, y) => {
-              const dx = x.a?.fechaObj || x.b?.fechaObj; 
-              const dy = y.a?.fechaObj || y.b?.fechaObj;
-              return (dx?.getTime() || 0) - (dy?.getTime() || 0);
-            });
-          });
-          setLinkModalOpen(false);
-        };
-
-        const totalMissing = pairs.filter(p => (p.estado === 'MISSING_AGENT' || p.estado === 'MISSING_CHUNIOR') && !ignoredIds.has(p.id)).length;
-
-        const downloadCSV = () => {
-          const headers = ['ETIQUETA_A','TURNO','HORA_A','USUARIO_A','MONTO_A','HORA_B','USUARIO_B','MONTO_B','OPERADOR','MEDIO','ESTADO','TIPO_MOVIMIENTO'];
-          const rows = filteredPairs.filter(p => !ignoredIds.has(p.id)).map(p => {
-             const a = p.a; const b = p.b;
-             return [
-               a?.etiqueta?.toUpperCase() || '',
-               a?.turno || b?.turno || '',
-               a?.fechaObj?.toISOString() || '',
-               a?.isAdminCharge ? 'AJUSTE' : (a?.usuario || ''),
-               a?.monto?.toFixed(2) || '',
-               b?.fechaObj?.toISOString() || '',
-               b?.usuario || '',
-               b?.monto?.toFixed(2) || '',
-               b?.operador?.toUpperCase() || '',
-               b?.medio || '',
-               a?.isAdminCharge ? 'AJUSTE' : p.estado,
-               p.tipoMovimiento
-             ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
-          });
-          
-          const csvContent = [headers.join(','), ...rows].join('\n');
-          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `comparacion_${new Date().toISOString().slice(0,10)}.csv`;
-          link.click();
-        };
-
-        const copyToClipboard = () => {
-          const rows = filteredPairs.filter(p => !ignoredIds.has(p.id)).map(p => {
-             const a = p.a; const b = p.b;
-             return [
-               a?.etiqueta?.toUpperCase() || '',
-               a?.turno || b?.turno || '',
-               formatTime(a?.fechaObj),
-               a?.isAdminCharge ? 'AJUSTE' : (a?.usuario || ''),
-               a?.monto?.toLocaleString('es-AR') || '',
-               formatTime(b?.fechaObj),
-               b?.usuario || '',
-               b?.monto?.toLocaleString('es-AR') || '',
-               b?.operador?.toUpperCase() || '',
-               b?.medio || '',
-               a?.isAdminCharge ? 'AJUSTE' : p.estado,
-               p.tipoMovimiento
-             ].join('\t');
-          });
-          const content = rows.join('\n');
-          navigator.clipboard.writeText(content).then(() => alert('Copiado al portapapeles!'));
-        };
-
-        // Container logic
-        const resultsContainerClass = tableFullscreen 
-          ? "fixed inset-0 z-50 bg-[#111418] flex flex-col animate-fade-in"
-          : "animate-slide-up relative bg-[#1A1E23] rounded-xl border border-[#2A2A2A] shadow-lg flex flex-col p-4";
-
-  // --- FUNCIÓN PARA EXPORTAR XLSX PROFESIONAL ---
-  const exportToExcel = () => {
-      const egresosHeader = { font: { bold: true }, fill: { fgColor: { rgb: "87CEEB" } } }; // celeste
-  const ingresosHeader = { font: { bold: true }, fill: { fgColor: { rgb: "FFEB99" } } }; // amarillo
-  const diferenciaHeader = { font: { bold: true }, fill: { fgColor: { rgb: "A9FFAA" } } }; // verde claro
-  const agentStyle = { fill: { fgColor: { rgb: "00FF00" } }, font: { bold: true } }; // verde
-  const chuniorStyle = { fill: { fgColor: { rgb: "ADD8E6" } }, font: { bold: true } }; // celeste claro
-  const totalStyleAgente = { font: { bold: true }, fill: { fgColor: { rgb: "F0C674" } } }; // amarillo naranja
-  const totalStyleChunior = { font: { bold: true }, fill: { fgColor: { rgb: "5DADE2" } } }; // azul claro
-  const moneyStyle = { numFmt: "$ #,##0.00" };
-
-     // --- BLOQUE: TÍTULOS Y TOTALES ---
-  const mainTitleRow = [
-    { v: "EGRESOS", t: "s", s: egresosHeader },
-    { v: "", t: "s", s: egresosHeader },
-    { v: "INGRESOS", t: "s", s: ingresosHeader },
-    { v: "", t: "s", s: ingresosHeader },
-    { v: "DIFERENCIA", t: "s", s: diferenciaHeader },
-  ];
-  const totalEgresosAgente = summary.aOutcome || 0;
-  const totalEgresosChunior = summary.bOutcome || 0;
-  const totalIngresosAgente = summary.aIncome || 0;
-  const totalIngresosChunior = summary.bIncome || 0;
-  const diferenciaEgresos = totalEgresosAgente - totalEgresosChunior;
-  const diferenciaIngresos = totalIngresosAgente - totalIngresosChunior;
-  const totalsRowEgresos = [
-    { v: "TOTAL AGENTE", t: "s", s: totalStyleAgente },
-    { v: totalEgresosAgente, t: "n", s: moneyStyle },
-    { v: "TOTAL CHUNIOR", t: "s", s: totalStyleChunior },
-    { v: totalEgresosChunior, t: "n", s: moneyStyle },
-    { v: diferenciaEgresos, t: "n", s: moneyStyle },
-  ];
-  const totalsRowIngresos = [
-    { v: "TOTAL AGENTE", t: "s", s: totalStyleAgente },
-    { v: totalIngresosAgente, t: "n", s: moneyStyle },
-    { v: "TOTAL CHUNIOR", t: "s", s: totalStyleChunior },
-    { v: totalIngresosChunior, t: "n", s: moneyStyle },
-    { v: diferenciaIngresos, t: "n", s: moneyStyle },
-  ];
-
-  // --- BLOQUE: SUBTÍTULOS DE CATEGORÍA ---
-  const subtituloEgresos = [
-    { v: "RETIROS AGENTE", t: "s", s: agentStyle },
-    { v: "RETIROS CHUNIOR", t: "s", s: chuniorStyle },
-    { v: "", t: "s" }, { v: "", t: "s" }, { v: "", t: "s" }
-  ];
-  const subtituloIngresos = [
-    { v: "DEPOSITOS", t: "s", s: agentStyle },
-    { v: "DEPOSITOS CHUNIOR", t: "s", s: chuniorStyle },
-    { v: "", t: "s" }, { v: "", t: "s" }, { v: "", t: "s" }
-  ];
-
-  // --- BLOQUE: DETALLE Egresos/Ingresos ---
-  const egresosAgenteRows = filteredPairs
-    .filter(p => p.tipoMovimiento === "EGRESO" && p.a && !ignoredIds.has(p.id))
-    .map(p => [
-      { v: p.a.monto, t: "n", s: moneyStyle },
-      { v: p.a.usuario, t: "s" },
-      { v: "", t: "s" }, { v: "", t: "s" }, { v: "", t: "s" }
-    ]);
-  const egresosChuniorRows = filteredPairs
-    .filter(p => p.tipoMovimiento === "EGRESO" && p.b && !ignoredIds.has(p.id))
-    .map((p, i) => [
-      { v: "", t: "s" },
-      { v: "", t: "s" },
-      { v: p.b.monto, t: "n", s: moneyStyle },
-      { v: p.b.usuario, t: "s" },
-      { v: "", t: "s" }
-    ]);
-  const ingresosAgenteRows = filteredPairs
-    .filter(p => p.tipoMovimiento === "INGRESO" && p.a && !ignoredIds.has(p.id))
-    .map(p => [
-      { v: p.a.monto, t: "n", s: moneyStyle },
-      { v: p.a.usuario, t: "s" },
-      { v: "", t: "s" }, { v: "", t: "s" }, { v: "", t: "s" }
-    ]);
-  const ingresosChuniorRows = filteredPairs
-    .filter(p => p.tipoMovimiento === "INGRESO" && p.b && !ignoredIds.has(p.id))
-    .map((p, i) => [
-      { v: "", t: "s" },
-      { v: "", t: "s" },
-      { v: p.b.monto, t: "n", s: moneyStyle },
-      { v: p.b.usuario, t: "s" },
-      { v: "", t: "s" }
-    ]);
-
-  // --- DIFERENCIAS Y FALTANTES ---
-  const diferenciasRows = filteredPairs
-    .filter(p => (p.estado === "MISSING_AGENT" || p.estado === "MISSING_CHUNIOR") && !ignoredIds.has(p.id))
-    .map(p => [
-      { v: "", t: "s" }, { v: "", t: "s" }, { v: "", t: "s" }, { v: "", t: "s" },
-    { 
-  v: p.a 
-      ? `Falta en Chunior: ${p.a.usuario}` 
-      : `Falta en Agente: ${p.b.usuario}`,
-  t: "s",
-  s: diferenciaHeader
+  setTimeout(()=>processNextDuplicate(),400);
+  setTimeout(render,800);
 }
-    ]);
 
-  // --- UNÍS TODOS LOS BLOQUES ---
-  const allRows = [
-    mainTitleRow,
-    totalsRowEgresos,
-    subtituloEgresos,
-    ...egresosAgenteRows,
-    ...egresosChuniorRows,
-    [],
-    totalsRowIngresos,
-    subtituloIngresos,
-    ...ingresosAgenteRows,
-    ...ingresosChuniorRows,
-    [],
-    [["", "", "", "", "FALTAS"]],
-    ...diferenciasRows
-  ];
+/* =================== MODAL =================== */
+function processNextDuplicate(){
+  if(!dupQueue.length) return;
+  const item=dupQueue.shift();
+  showDuplicateModal(item,()=>processNextDuplicate());
+}
 
-  // --- EXPORTA EL XLSX ---
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet([]);
-  XLSX.utils.sheet_add_aoa(ws, allRows, { origin: "A1" });
-  ws['!cols'] = [ { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 30 } ];
-  XLSX.utils.book_append_sheet(wb, ws, "RESUMEN");
-  XLSX.writeFile(wb, `Resumen_${new Date().toISOString().slice(0,10)}.xlsx`);
-};
-         
-        return (
-          <div className="min-h-screen p-4 md:p-6 pb-20 max-w-[1600px] mx-auto animate-fade-in relative">
-            <div className="flex justify-between items-center mb-6 animate-slide-up">
-              <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-[#8C6CFF]">
-                Dif • Comparador agentes - chunior
-              </h1>
-            </div>
+function showDuplicateModal(item,done){
+  const {telefono,existente,nuevo,origen}=item;
+  const back=document.createElement('div');
+  back.className='modal-backdrop';
 
-            <div className="bg-[#1A1E23] rounded-xl border border-[#2A2A2A] shadow-2xl p-6 mb-6 animate-slide-up">
-              <div className="flex flex-col lg:flex-row gap-6">
-                <div className="flex-1 min-w-[280px]">
-                  <label className="block text-[#A8A8A8] text-sm font-medium mb-2">1. Cargar CSV(s) extraido de agentes/sub-agentes</label>
-                  <div className="relative group">
-                    <input 
-                      type="file" 
-                      multiple 
-                      accept=".csv"
-                      onChange={(e) => setAgentFiles(e.target.files)}
-                      className="w-full bg-[#1E2329]/50 border border-[#2A2A2A] rounded-lg p-3 text-sm text-[#CCCCCC] file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-[#24364A] file:text-white hover:file:bg-[#1F3A5F] transition-all cursor-pointer hover:border-[#24364A]"
-                    />
-                  </div>
-                  <p className="text-xs text-[#555] mt-2">Podés seleccionar varios archivos. Renombrá con criterio (ej: pc1, pc2).</p>
-                </div>
+  back.innerHTML=`
+  <div class="modal">
+    <h2>Contacto duplicado</h2>
+    <small>Teléfono: ${telefono}</small>
 
-                <div className="flex-1 min-w-[300px]">
-                  <label className="block text-[#A8A8A8] text-sm font-medium mb-2">2. Pegar texto desde chunior</label>
-                  <textarea 
-                    value={chuniorText}
-                    onChange={(e) => setChuniorText(e.target.value)}
-                    placeholder="Pega aquí las líneas copiadas desde chunior..."
-                    className="w-full h-[120px] bg-[#1E2329]/50 border border-[#2A2A2A] rounded-lg p-3 text-sm text-white resize-none focus:border-[#24364A] focus:outline-none transition-colors custom-scrollbar"
-                  />
-                </div>
+    <p>El nombre del archivo es diferente al guardado. Elegí qué hacer:</p>
 
-                <div className="w-full lg:w-[240px] flex flex-col gap-3 justify-end">
-                  <button 
-                    onClick={processData}
-                    disabled={isProcessing || (!agentFiles && !chuniorText)}
-                    className="w-full bg-gradient-to-r from-[#C7F24A] to-[#D4FF4A] text-[#0D1117] font-bold py-3 rounded-xl shadow-[0_8px_18px_rgba(199,242,74,0.15)] hover:translate-y-[-2px] hover:shadow-[0_12px_26px_rgba(199,242,74,0.25)] active:translate-y-0 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
-                  >
-                    {isProcessing ? 'Procesando...' : 'Procesar y comparar'}
-                  </button>
-                  <div className="flex gap-2">
+    <p><b>Nombre existente:</b><br>${existente.nombre||'(vacío)'}</p>
+    <p><b>Nuevo nombre detectado:</b><br>${nuevo.nombre||'(vacío)'}</p>
 
-                    <button onClick={copyToClipboard} disabled={pairs.length === 0} className="flex-1 bg-[#24364A] hover:bg-[#1F3A5F] text-[#EAF2FF] py-2 rounded-lg text-sm font-medium transition-colors flex justify-center items-center gap-2 disabled:opacity-50">
-                      <Copy size={16} /> Copiar
-                    </button>
-                     <button
-  onClick={exportToExcel}
-  disabled={pairs.length === 0}
-  className="flex-1 bg-[#24364A] hover:bg-[#1F3A5F] text-[#EAF2FF] py-2 rounded-lg text-sm font-medium transition-colors flex justify-center items-center gap-2 disabled:opacity-50"
->
-  <Download size={16} /> Excel (.xlsx)
-</button>
-                  </div>
-                </div>
-              </div>
-            </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn" id="keepOld" title="Conservar el nombre actual y solo agregar el origen">Conservar existente</button>
+      <button class="btn accent" id="useNew" title="Actualizar el nombre al nuevo detectado">Usar nuevo</button>
+    </div>
+  </div>
+  `;
 
-            {pairs.length > 0 && (
-              <div className={resultsContainerClass}>
-                
-                {/* Maximize Button (Only in Normal mode) */}
-                {!tableFullscreen && (
-                  <button 
-                    onClick={() => setTableFullscreen(true)} 
-                    className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white rounded-full bg-[#2A2F36] hover:bg-[#3A4048] transition-colors z-20 shadow-lg"
-                    title="Pantalla completa"
-                  >
-                    <Maximize2 size={20} />
-                  </button>
-                )}
+  document.body.appendChild(back);
 
-                {/* Summary Section */}
-                {tableFullscreen ? (
-                  // Fullscreen: Compact Bar
-                  <div className="shrink-0 flex items-center justify-between p-3 border-b border-[#2A2A2A] bg-[#1A1E23]">
-                    <div className="flex flex-wrap gap-2 overflow-x-auto items-center">
-                       <CompactSummaryBadge label="Dif Total" value={summary.aTotal - summary.bTotal} type="diff" />
-                       <CompactSummaryBadge label="Total A" value={summary.aTotal} type="neutral" />
-                       <CompactSummaryBadge label="Total B" value={summary.bTotal} type="neutral" />
-                       <div className="h-4 w-px bg-[#333] mx-1"></div>
-                       <CompactSummaryBadge label="Ingresos A" value={summary.aIncome} type="neutral" />
-                       <CompactSummaryBadge label="Ingresos B" value={summary.bIncome} type="neutral" />
-                       <div className="h-4 w-px bg-[#333] mx-1"></div>
-                       <CompactSummaryBadge label="Egresos A" value={summary.aOutcome} type="bad" />
-                       <CompactSummaryBadge label="Egresos B" value={summary.bOutcome} type="bad" />
-                       <div className="ml-2 flex items-center gap-2 px-2 text-xs text-[#777]">
-                         <span>Visibles: {summary.totalVisible}</span>
-                         <span>Discrep: <span className="text-[#EF4444] font-bold">{summary.missingCount}</span></span>
-                       </div>
-                    </div>
-                    <button 
-                      onClick={() => setTableFullscreen(false)} 
-                      className="ml-3 p-2 text-gray-400 hover:text-white rounded-full bg-[#2A2F36] hover:bg-[#3A4048] transition-colors shadow-lg shrink-0"
-                      title="Salir de pantalla completa (ESC)"
-                    >
-                      <Minimize2 size={20} />
-                    </button>
-                  </div>
-                ) : (
-                  // Normal: Expanded Grid
-                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-6 p-2">
-                    <SummaryBadge label="Total Agente" value={summary.aTotal} type="neutral" />
-                    <SummaryBadge label="Total Chunior" value={summary.bTotal} type="neutral" />
-                    <SummaryBadge label="Diferencia Total" value={summary.aTotal - summary.bTotal} type="diff" />
-                    <SummaryBadge label="Cargas Admin" value={summary.adminTotal} type="warn" />
-                    <div className="hidden lg:block"></div> 
+  function mergeOrigin(c){
+    c.origen=(c.origen||'').trim();
+    if(!c.origen) c.origen=origen;
+    else{
+      const arr=c.origen.split(',').map(o=>o.trim());
+      if(!arr.includes(origen)) c.origen+=','+origen;
+    }
+  }
 
-                    <SummaryBadge label="Ingresos Agente" value={summary.aIncome} type="neutral" />
-                    <SummaryBadge label="Ingresos Chunior" value={summary.bIncome} type="neutral" />
-                    <SummaryBadge label="Dif. Ingresos" value={summary.aIncome - summary.bIncome} type="diff" />
-                    <div className="hidden lg:block col-span-2"></div>
+  back.querySelector('#keepOld').onclick=()=>{
+    mergeOrigin(existente);
+    put(existente);
+    document.body.removeChild(back);
+    done();
+  };
 
-                    <SummaryBadge label="Egresos Agente" value={summary.aOutcome} type="bad" />
-                    <SummaryBadge label="Egresos Chunior" value={summary.bOutcome} type="bad" />
-                    <SummaryBadge label="Dif. Egresos" value={summary.aOutcome - summary.bOutcome} type="diff" />
-                  </div>
-                )}
+  back.querySelector('#useNew').onclick=()=>{
+    existente.nombre=nuevo.nombre;
+    mergeOrigin(existente);
+    put(existente);
+    document.body.removeChild(back);
+    done();
+  };
+}
 
-                {/* Filters */}
-             <div className={`shrink-0 flex flex-col lg:flex-row justify-between items-end gap-4 mb-4 pb-4 border-b border-[#2A2A2A] ${tableFullscreen ? 'px-4 pt-2' : ''}`}>
-                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 w-full">
-                     <SelectFilter label="Fecha" value={filters.fecha} options={Array.from(filterOptions.dates)} onChange={v => setFilters({...filters, fecha: v})} />
-                     <SelectFilter label="Agente" value={filters.agente} options={Array.from(filterOptions.etiquetas)} onChange={v => setFilters({...filters, agente: v})} />
-                     <SelectFilter label="Operador" value={filters.operador} options={Array.from(filterOptions.operadores)} onChange={v => setFilters({...filters, operador: v})} />
-                     <SelectFilter label="Billetera" value={filters.billetera} options={Array.from(filterOptions.medios)} onChange={v => setFilters({...filters, billetera: v})} />
-                     <SelectFilter label="Turno" value={filters.turno} options={['TM','TT','TN']} onChange={v => setFilters({...filters, turno: v})} />
-                     <SelectFilter label="Estado" value={filters.estado} options={['OK','MISSING_CHUNIOR','MISSING_AGENT', 'MANUAL']} onChange={v => setFilters({...filters, estado: v})} />
-                     <SelectFilter label="Tipo" value={filters.movimiento} options={['INGRESO','EGRESO']} onChange={v => setFilters({...filters, movimiento: v})} />
-                  </div>
-                  {!tableFullscreen && (
-                    <div className="text-right min-w-[140px] text-sm space-y-1">
-                      <div className="text-[#A8A8A8]">Visibles: <span className="text-white">{summary.totalVisible}</span></div>
-                      <div>Emparejados: <strong className="text-[#9EE759]">{summary.pairedCount}</strong></div>
-                      <div>Discrepancias: <strong className="text-[#EF4444]">{summary.missingCount}</strong></div>
-                    </div>
-                  )}
-                </div>
+/* =================== RENDER + FILTRO ORIGEN =================== */
+function render(){
+  if(!db) return;
 
-                {/* Table Container */}
-                <div className={`overflow-x-auto rounded-lg border border-[#2A2A2A] bg-[#1E2329] custom-scrollbar shadow-inner relative flex-1 ${tableFullscreen ? 'overflow-y-auto mb-4 mx-4' : 'max-h-[60vh] overflow-y-auto'}`}>
-                  <table className="w-full text-sm text-left border-collapse relative">
-                    <thead className="sticky top-0 bg-[#1E2329]/95 backdrop-blur-md z-10 text-[#CCCCCC] font-semibold text-xs uppercase tracking-wider shadow-sm">
-                      <tr>
-                        <th className="p-3 border-b border-[#2A2A2A]">Agente/Sub</th>
-                        <th className="p-3 border-b border-[#2A2A2A]">Turno</th>
-                        <th className="p-3 border-b border-[#2A2A2A]">Hora A</th>
-                        <th className="p-3 border-b border-[#2A2A2A]">Usuario A</th>
-                        <th className="p-3 border-b border-[#2A2A2A] text-right">Monto A</th>
-                        <th className="p-3 border-b border-[#2A2A2A] border-l-2 border-l-[#2A2A2A]">Hora B</th>
-                        <th className="p-3 border-b border-[#2A2A2A]">Usuario B</th>
-                        <th className="p-3 border-b border-[#2A2A2A] text-right">Monto B</th>
-                        <th className="p-3 border-b border-[#2A2A2A]">Operador</th>
-                        <th className="p-3 border-b border-[#2A2A2A]">Billetera</th>
-                        <th className="p-3 border-b border-[#2A2A2A]">Estado</th>
-                        <th className="p-3 border-b border-[#2A2A2A] text-center w-[120px]">Acción</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredPairs.length === 0 ? (
-                        <tr><td colSpan={12} className="p-8 text-center text-[#555]">No hay registros para mostrar.</td></tr>
-                      ) : (
-                        filteredPairs.map(p => {
-                          const isIgnored = ignoredIds.has(p.id);
-                          const isMatch = p.estado === 'OK' || p.estado === 'MANUAL' || p.a?.isAdminCharge;
-                          const isMissA = p.estado === 'MISSING_AGENT';
-                          
-                          let rowClass = "hover:bg-[#24364A]/20 transition-colors border-b border-[#2A2A2A]/50";
-                          if (isIgnored) rowClass += " opacity-50 bg-[#1A1E23] grayscale";
-                          else if (p.a?.isAdminCharge) rowClass += ""; 
-                          else if (isMatch) rowClass += ""; 
-                          else if (isMissA) rowClass += " border-l-2 border-l-[#F59E0B] bg-[#F59E0B]/5"; 
-                          else rowClass += " border-l-2 border-l-[#EF4444] bg-[#EF4444]/5"; 
+  const q=document.getElementById('search').value.toLowerCase();
+  const fe=document.getElementById('fEstado').value;
+  const fo=document.getElementById('fOrigen').value.toLowerCase().trim();
 
-                          return (
-                            <tr key={p.id} className={rowClass}>
-                              <td className="p-3">{p.a?.etiqueta?.toUpperCase()}</td>
-                              <td className="p-3">{p.a?.turno || p.b?.turno}</td>
-                              <td className="p-3 font-mono text-xs">{formatTime(p.a?.fechaObj)}</td>
-                              <td className="p-3">{p.a?.isAdminCharge ? <span className="text-[#C7F24A] font-bold">AJUSTE</span> : p.a?.usuario}</td>
-                           <td className={`p-3 text-right font-mono font-bold ${
-  (p.a?.monto || 0) < 0 ? 'text-[#EF4444]' : 'text-[#9EE759]'
-}`}>
-                                {p.a ? `$ ${formatCurrency(p.a.monto)}` : ''}
-                              </td>
-                              
-                              <td className="p-3 border-l-2 border-l-[#2A2A2A] font-mono text-xs">{formatTime(p.b?.fechaObj)}</td>
-                              <td className="p-3">{p.b?.usuario}</td>
-                             <td className={`p-3 text-right font-mono font-bold ${
-  (p.b?.monto || 0) < 0 ? 'text-[#EF4444]' : 'text-[#9EE759]'
-}`}>
+  getAll(all=>{
+    let arr=all.filter(c=>{
+      const matchesText=!q||(c.nombre||'').toLowerCase().includes(q)||c.telefono.includes(q);
+      const matchesState=!fe||c.estado===fe;
 
-                                {p.b ? `$ ${formatCurrency(p.b.monto)}` : ''}
-                              </td>
-                              
-                              <td className="p-3">{p.b?.operador?.toUpperCase()}</td>
-                              <td className="p-3">{p.b?.medio}</td>
-                              <td className="p-3">
-                                {p.a?.isAdminCharge ? <span className="text-[#C7F24A] font-bold text-xs">✔ AJUSTE</span> : 
-                                 p.estado === 'OK' ? <span className="text-[#9EE759] font-bold text-xs">✔ OK</span> :
-                                 p.estado === 'MANUAL' ? <span className="text-[#7A5CFF] font-bold text-xs">✔ MANUAL</span> :
-                                 p.estado === 'MISSING_AGENT' ? <span className="text-[#F59E0B] font-extrabold text-xs">❌ FALTA A</span> :
-                                 <span className="text-[#EF4444] font-extrabold text-xs">❌ FALTA B</span>}
-                              </td>
-                              <td className="p-3 text-center">
-                                <div className="flex items-center justify-center gap-1">
-                                   {!isIgnored && (
-                                     <button 
-                                       onClick={() => { setEditingPair(p); setEditModalOpen(true); }}
-                                       className="p-1.5 rounded-md hover:bg-[#24364A] text-[#A8A8A8] hover:text-[#C7F24A] transition-colors"
-                                       title="Editar"
-                                     >
-                                       <Edit2 size={14} />
-                                     </button>
-                                   )}
+      let matchesOrigen=true;
+      if(fo){
+        const parts=fo.split(',').map(x=>x.trim()).filter(Boolean);
+        const origen=(c.origen||'').toLowerCase();
 
-                                   {!isIgnored && !isMatch && totalMissing > 1 && (
-                                     <button 
-                                       onClick={() => { setLinkingBasePair(p); setLinkModalOpen(true); }}
-                                       className="p-1.5 rounded-md hover:bg-[#24364A] text-[#A8A8A8] hover:text-[#7A5CFF] transition-colors"
-                                       title="Enlazar"
-                                     >
-                                       <LinkIcon size={14} />
-                                     </button>
-                                   )}
-
-                                   <button 
-                                     onClick={() => handleToggleIgnore(p.id)}
-                                     className={`p-1.5 rounded-md hover:bg-[#24364A] transition-colors ${isIgnored ? 'text-[#C7F24A]' : 'text-[#A8A8A8] hover:text-white'}`}
-                                     title={isIgnored ? "Mostrar" : "Ignorar"}
-                                   >
-                                     {isIgnored ? <Eye size={14} /> : <EyeOff size={14} />}
-                                   </button>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            <EditModal 
-              isOpen={editModalOpen} 
-              pair={editingPair} 
-              onClose={() => setEditModalOpen(false)} 
-              onSave={handleEditSave} 
-            />
-            
-            <LinkModal 
-              isOpen={linkModalOpen}
-              basePair={linkingBasePair}
-              allPairs={pairs}
-              onClose={() => setLinkModalOpen(false)}
-              onLink={handleLink}
-            />
-          </div>
-        );
+        for(const p of parts){
+          if(p.startsWith('!')){
+            if(origen.includes(p.slice(1))) return false;
+          }else{
+            if(!origen.includes(p)) matchesOrigen=false;
+          }
+        }
+        if(parts.some(p=>!p.startsWith('!'))) matchesOrigen;
       }
 
-      const root = createRoot(document.getElementById('root'));
-      root.render(<App />);
-    </script>
-  </body>
+      return matchesText && matchesState && matchesOrigen;
+    });
+
+    const tb=document.getElementById('tbody');
+    tb.innerHTML='';
+
+    arr.forEach(c=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`
+        <td contenteditable onblur="editName('${c.telefono}',this.innerText)" title="Hacé click para editar el nombre">${c.nombre||''}</td>
+        <td>${c.telefono}</td>
+        <td><span class="tag t-info" title="Origen del contacto: ${c.origen||''}">${c.origen||''}</span></td>
+        <td><span class="tag">${c.estado}</span></td>
+        <td class="actions">
+          <button class="btn accent" title="Marcar como interesado" onclick="setEstado('${c.telefono}','interesado')">✔</button>
+          <button class="btn warn" title="Marcar como contactado" onclick="setEstado('${c.telefono}','contactado')">☎</button>
+          <button class="btn danger" title="Marcar como desinteresado" onclick="setEstado('${c.telefono}','desinteresado')">✖</button>
+          <button class="btn" title="No tiene WhatsApp" onclick="setEstado('${c.telefono}','sin_whatsapp')">🚫</button>
+          <button class="btn info" title="Enviar WhatsApp" onclick="wa('${c.telefono}')">WA</button>
+          <button class="btn danger" title="Eliminar este contacto" onclick="deleteContacto('${c.telefono}')">🗑</button>
+        </td>`;
+      tb.appendChild(tr);
+    });
+
+    stats(all);
+  });
+}
+
+function setEstado(t,e){
+  getAll(all=>{
+    const c=all.find(x=>x.telefono===t);
+    if(!c) return;
+    c.estado=e;
+    c.fecha=new Date().toISOString();
+    put(c);
+    render();
+  });
+}
+
+function editName(t,n){
+  getAll(all=>{
+    const c=all.find(x=>x.telefono===t);
+    if(!c) return;
+    c.nombre=n.trim();
+    put(c);
+  });
+}
+
+function deleteContacto(t){
+  if(confirm('¿Eliminar este contacto?')){ del(t); render(); }
+}
+
+function wa(t){ window.open('https://wa.me/'+t,'_blank'); }
+
+function stats(all){
+  document.getElementById('stTotal').innerText=all.length;
+  document.getElementById('stInter').innerText=all.filter(c=>c.estado==='interesado').length;
+  document.getElementById('stDes').innerText=all.filter(c=>c.estado==='desinteresado').length;
+  document.getElementById('stNo').innerText=all.filter(c=>c.estado==='no_contactado').length;
+}
+
+/* =================== VACIAR =================== */
+function vaciarDB(){
+  if(!confirm('¿Seguro que querés borrar TODOS los contactos?')) return;
+  const tx=db.transaction('contactos','readwrite');
+  const store=tx.objectStore('contactos');
+  store.clear().onsuccess=()=>{ alert('Contactos eliminados'); render(); };
+}
+
+/* =================== EXPORT =================== */
+function exportCSV(){
+  getAll(all=>{
+    let csv='nombre,telefono,origen,estado,fecha\n';
+    all.forEach(c=>csv+=`${c.nombre||''},${c.telefono},${c.origen||''},${c.estado||''},${c.fecha||''}\n`);
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+    a.download='contactos_export.csv';
+    a.click();
+  });
+}
+</script>
+</body>
 </html>
