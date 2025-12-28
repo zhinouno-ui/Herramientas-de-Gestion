@@ -41,29 +41,21 @@
     .actions{display:flex;gap:4px;flex-wrap:wrap}
     footer{padding:10px;color:#64748b;font-size:12px}
 
-    /* -------- MODAL DUPLICADOS -------- */
     .modal-backdrop{
-      position:fixed;inset:0;
-      background:rgba(0,0,0,.65);
-      display:flex;align-items:center;justify-content:center;
-      z-index:1000;
+      position:fixed;inset:0;background:rgba(0,0,0,.65);
+      display:flex;align-items:center;justify-content:center;z-index:1000;
     }
     .modal{
-      background:#020617;
-      border:1px solid #1f2937;
-      border-radius:16px;
-      padding:18px;
-      max-width:420px;
-      width:100%;
+      background:#020617;border:1px solid #1f2937;
+      border-radius:16px;padding:18px;max-width:420px;width:100%;
     }
     .modal h2{margin:0 0 10px 0;font-size:16px;color:#cbd5f5}
     .modal small{color:#94a3b8}
-    .modal input{
-      width:100%;margin-top:6px;margin-bottom:6px
-    }
+    .modal input{width:100%;margin-top:6px;margin-bottom:6px}
     .modal .row{justify-content:flex-end}
   </style>
 </head>
+
 <body>
 <header>
   <h1>📇 Gestor de Contactos – Revinculación</h1>
@@ -77,7 +69,7 @@
       <input type="file" id="csvFile" accept=".csv,.vcf" />
       <input id="csvOrigen" placeholder="Origen (ej: google1)" />
       <button class="btn accent" onclick="importCSV()">Importar / Actualizar</button>
-      <p style="font-size:12px;color:#94a3b8">Si el CSV ya fue importado, solo agrega contactos nuevos (por teléfono).</p>
+      <p style="font-size:12px;color:#94a3b8">Si el archivo ya fue importado, solo agrega contactos nuevos (por teléfono).</p>
     </div>
 
     <div class="card">
@@ -107,6 +99,14 @@
     <div class="card">
       <h3>Exportar</h3>
       <button class="btn info" onclick="exportCSV()">Exportar todo (CSV)</button>
+    </div>
+
+    <div class="card">
+      <h3>Mantenimiento</h3>
+      <button class="btn danger" onclick="vaciarDB()">Vaciar contactos</button>
+      <p style="font-size:12px;color:#94a3b8">
+        Elimina todos los contactos guardados en este navegador.
+      </p>
     </div>
   </aside>
 
@@ -151,6 +151,65 @@ function del(t){
 /* =================== IMPORTACIÓN =================== */
 let dupQueue=[];
 
+/* --- IMPORTAR DESDE ARCHIVO --- */
+function importCSV(){
+  const file=document.getElementById('csvFile').files[0];
+  const origen=document.getElementById('csvOrigen').value.trim()||'sin_origen';
+  if(!file){ alert('Seleccioná un archivo'); return; }
+
+  const r=new FileReader();
+  r.onload=()=>{
+    const text=r.result;
+
+    if(file.name.toLowerCase().endsWith('.vcf') || text.includes('BEGIN:VCARD')){
+      importVCF(text,origen);
+      return;
+    }
+
+    // CSV simple: nombre,telefono,...
+    const lines=text.split(/\r?\n/).filter(l=>l.trim());
+    lines.forEach((l,i)=>{
+      const parts=l.split(',');
+      if(parts.length<2) return;
+      let nombre=parts[0].trim();
+      let telefono=(parts[1]||'').replace(/[^0-9]/g,'');
+      if(!telefono) return;
+
+      const tx=db.transaction('contactos','readwrite');
+      const store=tx.objectStore('contactos');
+      const req=store.get(telefono);
+
+      req.onsuccess=()=>{
+        const ex=req.result;
+        if(!ex){
+          store.put({telefono,nombre,origen,estado:'no_contactado',fecha:''});
+          return;
+        }
+
+        const oldName=(ex.nombre||'').trim();
+        const sameName=!nombre || oldName.toLowerCase()===nombre.toLowerCase();
+
+        const origs=(ex.origen||'').split(',').map(o=>o.trim());
+        const sameOrigin=origs.includes(origen);
+
+        if(sameName || sameOrigin){
+          if(!sameOrigin) ex.origen += ','+origen;
+          if(!oldName && nombre) ex.nombre=nombre;
+          store.put(ex);
+          return;
+        }
+
+        dupQueue.push({telefono,origen,existente:ex,nuevo:{telefono,nombre,origen}});
+      };
+    });
+
+    setTimeout(()=>processNextDuplicate(),300);
+    setTimeout(render,600);
+  };
+  r.readAsText(file);
+}
+
+/* --- IMPORTAR VCF --- */
 function importVCF(text,origen){
   dupQueue=[];
   const cards=text.split('BEGIN:VCARD').slice(1);
@@ -170,37 +229,26 @@ function importVCF(text,origen){
     req.onsuccess=()=>{
       const ex=req.result;
 
-      // === NO EXISTE → LO CREAMOS ===
       if(!ex){
         store.put({telefono,nombre,origen,estado:'no_contactado',fecha:''});
         return;
       }
 
-      // === YA EXISTE → DEFINIMOS SI VA A MODAL O NO ===
       const oldName=(ex.nombre||'').trim();
       const newName=nombre;
-      const sameName =
-        !newName || // si viene vacío no molesta
-        oldName.toLowerCase() === newName.toLowerCase();
+      const sameName=!newName || oldName.toLowerCase()===newName.toLowerCase();
 
       const origs=(ex.origen||'').split(',').map(o=>o.trim());
-      const sameOrigin = origs.includes(origen);
+      const sameOrigin=origs.includes(origen);
 
-      // 👉 CASOS QUE NO NECESITAN MODAL
       if(sameName || sameOrigin){
         if(!sameOrigin) ex.origen += ','+origen;
-        if(!oldName && newName) ex.nombre=newName; // completar si estaba vacío
+        if(!oldName && newName) ex.nombre=newName;
         store.put(ex);
         return;
       }
 
-      // 👉 SOLO CUANDO HAY DIFERENCIA REAL
-      dupQueue.push({
-        telefono,
-        origen,
-        existente:ex,
-        nuevo:{telefono,nombre,origen}
-      });
+      dupQueue.push({telefono,origen,existente:ex,nuevo:{telefono,nombre,origen}});
     };
   });
 
@@ -208,11 +256,9 @@ function importVCF(text,origen){
   setTimeout(render,800);
 }
 
-
 /* =================== MODAL DUPLICADOS =================== */
 function processNextDuplicate(){
   if(!dupQueue.length) return;
-
   const item=dupQueue.shift();
   showDuplicateModal(item,()=>processNextDuplicate());
 }
@@ -248,15 +294,15 @@ function showDuplicateModal(item,done){
   back.appendChild(box);
   document.body.appendChild(back);
 
+  function ensureOrigin(obj){
+    obj.origen=(obj.origen||'').trim();
+    if(!obj.origen) obj.origen=origen;
+    else if(!obj.origen.split(',').map(o=>o.trim()).includes(origen))
+      obj.origen+=','+origen;
+  }
+
   box.querySelector('#keepOld').onclick=()=>{
-existente.origen = (existente.origen || '').trim();
-
-if(!existente.origen){
-  existente.origen = origen;
-} else if(!existente.origen.split(',').map(o=>o.trim()).includes(origen)){
-  existente.origen += ',' + origen;
-}
-
+    ensureOrigin(existente);
     put(existente);
     document.body.removeChild(back);
     done();
@@ -264,14 +310,7 @@ if(!existente.origen){
 
   box.querySelector('#useNew').onclick=()=>{
     existente.nombre=box.querySelector('#newName').value.trim();
-existente.origen = (existente.origen || '').trim();
-
-if(!existente.origen){
-  existente.origen = origen;
-} else if(!existente.origen.split(',').map(o=>o.trim()).includes(origen)){
-  existente.origen += ',' + origen;
-}
-
+    ensureOrigin(existente);
     put(existente);
     document.body.removeChild(back);
     done();
@@ -303,12 +342,12 @@ function render(){
         <td><span class="tag t-info">${c.origen||''}</span></td>
         <td><span class="tag">${c.estado}</span></td>
         <td class="actions">
-          <button class="btn accent" title="Marcar como interesado" onclick="setEstado('${c.telefono}','interesado')">✔</button>
-          <button class="btn warn" title="Marcar como contactado" onclick="setEstado('${c.telefono}','contactado')">☎</button>
-          <button class="btn danger" title="Marcar como desinteresado" onclick="setEstado('${c.telefono}','desinteresado')">✖</button>
-          <button class="btn" title="Sin WhatsApp" onclick="setEstado('${c.telefono}','sin_whatsapp')">🚫</button>
-          <button class="btn info" title="Enviar WhatsApp" onclick="wa('${c.telefono}')">WA</button>
-          <button class="btn danger" title="Eliminar contacto" onclick="deleteContacto('${c.telefono}')">🗑</button>
+          <button class="btn accent" onclick="setEstado('${c.telefono}','interesado')">✔</button>
+          <button class="btn warn" onclick="setEstado('${c.telefono}','contactado')">☎</button>
+          <button class="btn danger" onclick="setEstado('${c.telefono}','desinteresado')">✖</button>
+          <button class="btn" onclick="setEstado('${c.telefono}','sin_whatsapp')">🚫</button>
+          <button class="btn info" onclick="wa('${c.telefono}')">WA</button>
+          <button class="btn danger" onclick="deleteContacto('${c.telefono}')">🗑</button>
         </td>`;
       tb.appendChild(tr);
     });
@@ -350,18 +389,17 @@ function stats(all){
   document.getElementById('stNo').innerText=all.filter(c=>c.estado==='no_contactado').length;
 }
 
-  function vaciarDB(){
+/* =================== VACIAR =================== */
+function vaciarDB(){
   if(!confirm('¿Seguro que querés borrar TODOS los contactos?')) return;
-
   const tx=db.transaction('contactos','readwrite');
   const store=tx.objectStore('contactos');
-  const req=store.clear();
-
-  req.onsuccess=()=>{
+  store.clear().onsuccess=()=>{
     alert('Contactos eliminados');
     render();
   };
 }
+
 /* =================== EXPORT =================== */
 function exportCSV(){
   getAll(all=>{
@@ -373,16 +411,6 @@ function exportCSV(){
     a.click();
   });
 }
-  <div class="card">
-  <h3>Mantenimiento</h3>
-  <button class="btn danger" onclick="vaciarDB()">Vaciar contactos</button>
-  <p style="font-size:12px;color:#94a3b8">
-    Elimina todos los contactos guardados en este navegador.
-  </p>
-</div>
-
-
-  
 </script>
 </body>
 </html>
