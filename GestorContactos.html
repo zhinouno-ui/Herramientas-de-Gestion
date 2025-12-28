@@ -249,7 +249,14 @@ function showDuplicateModal(item,done){
   document.body.appendChild(back);
 
   box.querySelector('#keepOld').onclick=()=>{
-    if(!existente.origen.includes(origen)) existente.origen+=','+origen;
+existente.origen = (existente.origen || '').trim();
+
+if(!existente.origen){
+  existente.origen = origen;
+} else if(!existente.origen.split(',').map(o=>o.trim()).includes(origen)){
+  existente.origen += ',' + origen;
+}
+
     put(existente);
     document.body.removeChild(back);
     done();
@@ -257,7 +264,14 @@ function showDuplicateModal(item,done){
 
   box.querySelector('#useNew').onclick=()=>{
     existente.nombre=box.querySelector('#newName').value.trim();
-    if(!existente.origen.includes(origen)) existente.origen+=','+origen;
+existente.origen = (existente.origen || '').trim();
+
+if(!existente.origen){
+  existente.origen = origen;
+} else if(!existente.origen.split(',').map(o=>o.trim()).includes(origen)){
+  existente.origen += ',' + origen;
+}
+
     put(existente);
     document.body.removeChild(back);
     done();
@@ -336,6 +350,18 @@ function stats(all){
   document.getElementById('stNo').innerText=all.filter(c=>c.estado==='no_contactado').length;
 }
 
+  function vaciarDB(){
+  if(!confirm('¿Seguro que querés borrar TODOS los contactos?')) return;
+
+  const tx=db.transaction('contactos','readwrite');
+  const store=tx.objectStore('contactos');
+  const req=store.clear();
+
+  req.onsuccess=()=>{
+    alert('Contactos eliminados');
+    render();
+  };
+}
 /* =================== EXPORT =================== */
 function exportCSV(){
   getAll(all=>{
@@ -355,18 +381,6 @@ function exportCSV(){
   </p>
 </div>
 
-  function vaciarDB(){
-  if(!confirm('¿Seguro que querés borrar TODOS los contactos?')) return;
-
-  const tx=db.transaction('contactos','readwrite');
-  const store=tx.objectStore('contactos');
-  const req=store.clear();
-
-  req.onsuccess=()=>{
-    alert('Contactos eliminados');
-    render();
-  };
-}
 
   
 </script>
