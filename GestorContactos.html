@@ -151,17 +151,6 @@ function del(t){
 /* =================== IMPORTACIÓN =================== */
 let dupQueue=[];
 
-function importCSV(){
-  const file=document.getElementById('csvFile').files[0];
-  const origen=document.getElementById('csvOrigen').value||'desconocido';
-  if(!file) return alert('Seleccioná un VCF');
-  if(!file.name.toLowerCase().endsWith('.vcf')) return alert('Solo se permiten archivos VCF');
-
-  const r=new FileReader();
-  r.onload=()=>importVCF(r.result,origen);
-  r.readAsText(file);
-}
-
 function importVCF(text,origen){
   dupQueue=[];
   const cards=text.split('BEGIN:VCARD').slice(1);
@@ -169,31 +158,56 @@ function importVCF(text,origen){
   cards.forEach(card=>{
     const telMatch=card.match(/TEL[^:]*:(.+)/i);
     if(!telMatch) return;
+
     const telefono=telMatch[1].replace(/[^0-9]/g,'');
     const nameMatch=card.match(/FN:(.+)/i);
-    const nombre=nameMatch?nameMatch[1].trim():'';
+    const nombre=(nameMatch?nameMatch[1]:'').trim();
 
     const tx=db.transaction('contactos','readwrite');
     const store=tx.objectStore('contactos');
     const req=store.get(telefono);
 
     req.onsuccess=()=>{
-      if(req.result){
-        dupQueue.push({
-          telefono,
-          origen,
-          existente:req.result,
-          nuevo:{telefono,nombre,origen}
-        });
-      } else {
+      const ex=req.result;
+
+      // === NO EXISTE → LO CREAMOS ===
+      if(!ex){
         store.put({telefono,nombre,origen,estado:'no_contactado',fecha:''});
+        return;
       }
+
+      // === YA EXISTE → DEFINIMOS SI VA A MODAL O NO ===
+      const oldName=(ex.nombre||'').trim();
+      const newName=nombre;
+      const sameName =
+        !newName || // si viene vacío no molesta
+        oldName.toLowerCase() === newName.toLowerCase();
+
+      const origs=(ex.origen||'').split(',').map(o=>o.trim());
+      const sameOrigin = origs.includes(origen);
+
+      // 👉 CASOS QUE NO NECESITAN MODAL
+      if(sameName || sameOrigin){
+        if(!sameOrigin) ex.origen += ','+origen;
+        if(!oldName && newName) ex.nombre=newName; // completar si estaba vacío
+        store.put(ex);
+        return;
+      }
+
+      // 👉 SOLO CUANDO HAY DIFERENCIA REAL
+      dupQueue.push({
+        telefono,
+        origen,
+        existente:ex,
+        nuevo:{telefono,nombre,origen}
+      });
     };
   });
 
   setTimeout(()=>processNextDuplicate(),400);
   setTimeout(render,800);
 }
+
 
 /* =================== MODAL DUPLICADOS =================== */
 function processNextDuplicate(){
@@ -333,6 +347,28 @@ function exportCSV(){
     a.click();
   });
 }
+  <div class="card">
+  <h3>Mantenimiento</h3>
+  <button class="btn danger" onclick="vaciarDB()">Vaciar contactos</button>
+  <p style="font-size:12px;color:#94a3b8">
+    Elimina todos los contactos guardados en este navegador.
+  </p>
+</div>
+
+  function vaciarDB(){
+  if(!confirm('¿Seguro que querés borrar TODOS los contactos?')) return;
+
+  const tx=db.transaction('contactos','readwrite');
+  const store=tx.objectStore('contactos');
+  const req=store.clear();
+
+  req.onsuccess=()=>{
+    alert('Contactos eliminados');
+    render();
+  };
+}
+
+  
 </script>
 </body>
 </html>
