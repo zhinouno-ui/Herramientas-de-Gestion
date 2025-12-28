@@ -116,21 +116,45 @@ function put(c){
   tx.objectStore('contactos').put(c);
 }
 
-// ------------------ CSV IMPORT ------------------
+// ------------------ VCF IMPORT ------------------
 function importCSV(){
   const file=document.getElementById('csvFile').files[0];
   const origen=document.getElementById('csvOrigen').value||'desconocido';
-  if(!file) return alert('Seleccioná un CSV');
+  if(!file) return alert('Seleccioná un VCF');
+  if(!file.name.toLowerCase().endsWith('.vcf')) return alert('Solo se permiten archivos VCF');
   const r=new FileReader();
-  r.onload=()=>{
-    const text=r.result;
-    if(file.name.toLowerCase().endsWith('.vcf')){
-      importVCF(text,origen);
-    } else {
-      importCSVText(text,origen);
-    }
-  };
+  r.onload=()=>importVCF(r.result,origen);
   r.readAsText(file);
+}
+
+function importVCF(text,origen){
+  const cards=text.split('BEGIN:VCARD').slice(1);
+  cards.forEach(card=>{
+    const telMatch=card.match(/TEL[^:]*:(.+)/i);
+    if(!telMatch) return;
+    const telefono=telMatch[1].replace(/[^0-9]/g,'');
+    const nameMatch=card.match(/FN:(.+)/i);
+    const nombre=nameMatch?nameMatch[1].trim():'';
+    const tx=db.transaction('contactos','readwrite');
+    const store=tx.objectStore('contactos');
+    const req=store.get(telefono);
+    req.onsuccess=()=>{
+      if(req.result){
+        let c=req.result;
+        if(nombre && c.nombre && c.nombre!==nombre){
+          if(confirm(`Duplicado ${telefono}
+Nombre existente: ${c.nombre}
+Nuevo nombre: ${nombre}
+¿Reemplazar?`)) c.nombre=nombre;
+        } else if(!c.nombre) c.nombre=nombre;
+        if(!c.origen.includes(origen)) c.origen+=','+origen;
+        store.put(c);
+      } else {
+        store.put({telefono,nombre,origen,estado:'no_contactado',fecha:''});
+      }
+    };
+  });
+  setTimeout(render,300);
 }
 
 // ------------------ RENDER ------------------
