@@ -1,209 +1,323 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>Gestor de Contactos – Revinculación</title>
-  <style>
-    :root{
-      --bg:#0f172a;--panel:#111827;--card:#020617;
-      --text:#e5e7eb;--muted:#9ca3af;--accent:#22c55e;--warn:#f59e0b;--danger:#ef4444;--info:#38bdf8;
-    }
-    *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto}
-    body{margin:0;background:linear-gradient(180deg,#020617,#020617 60%,#020617);color:var(--text)}
-    header{padding:16px 20px;border-bottom:1px solid #1f2937;display:flex;gap:16px;align-items:center}
-    header h1{font-size:18px;margin:0;font-weight:600}
-    .wrap{display:grid;grid-template-columns:280px 1fr;min-height:calc(100vh - 60px)}
-    aside{border-right:1px solid #1f2937;padding:16px;display:flex;flex-direction:column;gap:12px}
-    main{padding:16px}
-    .card{background:rgba(2,6,23,.8);border:1px solid #1f2937;border-radius:14px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
-    .card h3{margin:0 0 8px 0;font-size:14px;color:#cbd5f5}
-    .btn{background:#020617;border:1px solid #1f2937;color:var(--text);padding:8px 10px;border-radius:10px;cursor:pointer}
-    .btn:hover{border-color:#334155}
-    .btn.accent{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.4)}
-    .btn.warn{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.4)}
-    .btn.danger{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.4)}
-    .btn.info{background:rgba(56,189,248,.1);border-color:rgba(56,189,248,.4)}
-    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    input,select{background:#020617;border:1px solid #1f2937;color:var(--text);padding:8px 10px;border-radius:10px}
-    input::placeholder{color:#64748b}
-    .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-    .stat{background:#020617;border:1px solid #1f2937;border-radius:12px;padding:10px}
-    .stat b{font-size:18px}
-    table{width:100%;border-collapse:collapse}
-    th,td{padding:8px;border-bottom:1px solid #1f2937;font-size:13px}
-    th{color:#cbd5f5;text-align:left}
-    tr:hover{background:#020617}
-    .tag{padding:2px 8px;border-radius:999px;border:1px solid #1f2937;font-size:11px}
-    .t-ok{border-color:rgba(34,197,94,.6);color:#86efac}
-    .t-warn{border-color:rgba(245,158,11,.6);color:#fde68a}
-    .t-no{border-color:rgba(239,68,68,.6);color:#fca5a5}
-    .t-info{border-color:rgba(56,189,248,.6);color:#7dd3fc}
-    .actions button{margin-right:4px}
-    footer{padding:10px;color:#64748b;font-size:12px}
-  </style>
+<meta charset="UTF-8">
+<title>Gestor de Contactos – Revinculación</title>
+<style>
+body{
+  margin:0;
+  font-family:Inter,system-ui,Arial;
+  background:#0b0f1a;
+  color:#e5e7eb;
+}
+header{
+  padding:14px 20px;
+  background:#020617;
+  border-bottom:1px solid #1e293b;
+  font-size:18px;
+  font-weight:600;
+}
+main{
+  display:grid;
+  grid-template-columns:280px 1fr;
+  height:calc(100vh - 56px);
+}
+aside{
+  padding:16px;
+  border-right:1px solid #1e293b;
+}
+section{
+  padding:16px;
+  overflow:auto;
+}
+.card{
+  background:#020617;
+  border:1px solid #1e293b;
+  border-radius:10px;
+  padding:12px;
+  margin-bottom:12px;
+}
+button,input,select{
+  background:#020617;
+  color:#e5e7eb;
+  border:1px solid #1e293b;
+  border-radius:8px;
+  padding:6px 10px;
+}
+button{
+  cursor:pointer;
+}
+button:hover{background:#020617cc}
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+th,td{
+  padding:8px;
+  border-bottom:1px solid #1e293b;
+  text-align:left;
+}
+.actions{
+  display:flex;
+  gap:6px;
+}
+.actions button{
+  width:32px;
+  height:32px;
+  padding:0;
+}
+.badge{
+  padding:2px 8px;
+  border-radius:999px;
+  font-size:12px;
+  background:#020617;
+  border:1px solid #1e293b;
+}
+.tooltip{
+  position:relative;
+}
+.tooltip:hover::after{
+  content:attr(data-tip);
+  position:absolute;
+  bottom:110%;
+  left:50%;
+  transform:translateX(-50%);
+  background:#020617;
+  border:1px solid #1e293b;
+  padding:4px 8px;
+  font-size:11px;
+  border-radius:6px;
+  white-space:nowrap;
+}
+.modal{
+  position:fixed;
+  inset:0;
+  background:#000a;
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
+.modal-content{
+  background:#020617;
+  border:1px solid #1e293b;
+  border-radius:12px;
+  padding:16px;
+  width:420px;
+}
+.modal-content input{
+  width:100%;
+}
+</style>
 </head>
 <body>
-<header>
-  <h1>📇 Gestor de Contactos – Revinculación</h1>
-  <span style="color:#64748b;font-size:12px">Persistencia local (IndexedDB) · Import CSV · Detección de duplicados</span>
-</header>
-<div class="wrap">
-  <aside>
-    <div class="card">
-      <h3>Importar CSV / VCF</h3>
-      <input type="file" id="csvFile" accept=".csv,.vcf" />
-      <input id="csvOrigen" placeholder="Origen (ej: google1)" />
-      <button class="btn accent" onclick="importCSV()">Importar / Actualizar</button>
-      <p style="font-size:12px;color:#94a3b8">Si el CSV ya fue importado, solo agrega contactos nuevos (por teléfono).</p>
-    </div>
-    <div class="card">
-      <h3>Filtros</h3>
-      <input id="search" placeholder="Buscar nombre o teléfono" oninput="render()" />
-      <select id="fEstado" onchange="render()">
-        <option value="">Todos los estados</option>
-        <option value="no_contactado">No contactado</option>
-        <option value="contactado">Contactado</option>
-        <option value="interesado">Interesado</option>
-        <option value="desinteresado">Desinteresado</option>
-        <option value="sin_whatsapp">Sin WhatsApp</option>
-      </select>
-      <input id="fOrigen" placeholder="Filtrar por origen" oninput="render()" />
-    </div>
-    <div class="card">
-      <h3>Estadísticas</h3>
-      <div class="stats">
-        <div class="stat"><b id="stTotal">0</b><div>Total</div></div>
-        <div class="stat"><b id="stInter">0</b><div>Interesados</div></div>
-        <div class="stat"><b id="stDes">0</b><div>Desinteresados</div></div>
-        <div class="stat"><b id="stNo">0</b><div>No contactados</div></div>
-      </div>
-    </div>
-    <div class="card">
-      <h3>Exportar</h3>
-      <button class="btn info" onclick="exportCSV()">Exportar todo (CSV)</button>
-    </div>
-  </aside>
-  <main>
-    <div class="card">
-      <h3>Contactos</h3>
-      <table>
-        <thead>
-          <tr><th>Nombre</th><th>Teléfono</th><th>Origen</th><th>Estado</th><th>Acciones</th></tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-      </table>
-    </div>
-  </main>
+
+<header>📇 Gestor de Contactos – Revinculación</header>
+
+<main>
+<aside>
+  <div class="card">
+    <input type="file" id="file">
+    <input id="origin" placeholder="origen (google 1)">
+    <button onclick="handleImport()">Importar VCF</button>
+  </div>
+
+  <div class="card">
+    <button onclick="exportCSV()">Exportar CSV</button>
+    <button onclick="resetAll()">🧹 Limpiar todo</button>
+  </div>
+</aside>
+
+<section>
+<table>
+<thead>
+<tr>
+<th>Nombre</th>
+<th>Teléfono</th>
+<th>Origen</th>
+<th>Estado</th>
+<th>Acciones</th>
+</tr>
+</thead>
+<tbody id="rows"></tbody>
+</table>
+</section>
+</main>
+
+<!-- MODAL DUPLICADOS -->
+<div class="modal" id="dupModal">
+<div class="modal-content">
+<h3>Contacto duplicado</h3>
+<p>Elegí o editá el nombre final:</p>
+<div>
+<label>Existente</label>
+<input id="oldName">
 </div>
-<footer>Datos guardados localmente en el navegador (IndexedDB). Podés copiar este archivo y usarlo offline.</footer>
+<div>
+<label>Nuevo</label>
+<input id="newName">
+</div>
+<div style="margin-top:10px;display:flex;gap:8px">
+<button onclick="keepOld()">Usar existente</button>
+<button onclick="keepNew()">Usar nuevo</button>
+<button onclick="mergeNames()">Editar / unir</button>
+</div>
+</div>
+</div>
 
 <script>
-// ------------------ DB (IndexedDB) ------------------
 let db;
-const req = indexedDB.open('contactosDB',1);
-req.onupgradeneeded = e => {
-  db = e.target.result;
-  const store = db.createObjectStore('contactos',{keyPath:'telefono'});
+let dupContext=null;
+
+const req=indexedDB.open("contactosDB",1);
+req.onupgradeneeded=e=>{
+  db=e.target.result;
+  db.createObjectStore("c",{keyPath:"phone"});
 };
-req.onsuccess = e => { db = e.target.result; render(); };
+req.onsuccess=e=>{
+  db=e.target.result;
+  render();
+};
 
-function getAll(cb){
-  const tx=db.transaction('contactos','readonly');
-  tx.objectStore('contactos').getAll().onsuccess=e=>cb(e.target.result||[]);
-}
-function put(c){
-  const tx=db.transaction('contactos','readwrite');
-  tx.objectStore('contactos').put(c);
+function parseVCF(text){
+  const contacts=[];
+  const blocks=text.split("END:VCARD");
+  blocks.forEach(b=>{
+    const n=b.match(/FN:(.+)/);
+    const t=b.match(/TEL[^:]*:(.+)/);
+    if(t){
+      contacts.push({
+        name:n?n[1]:"",
+        phone:t[1].replace(/\D/g,""),
+        origin:origin.value||"default",
+        status:"no_contactado"
+      });
+    }
+  });
+  return contacts;
 }
 
-// ------------------ VCF IMPORT ------------------
-function importCSV(){
-  const file=document.getElementById('csvFile').files[0];
-  const origen=document.getElementById('csvOrigen').value||'desconocido';
-  if(!file) return alert('Seleccioná un VCF');
-  if(!file.name.toLowerCase().endsWith('.vcf')) return alert('Solo se permiten archivos VCF');
+function handleImport(){
+  const f=file.files[0];
+  if(!f)return;
   const r=new FileReader();
-  r.onload=()=>importVCF(r.result,origen);
-  r.readAsText(file);
+  r.onload=()=>{
+    const parsed=parseVCF(r.result);
+    parsed.forEach(c=>upsert(c));
+  };
+  r.readAsText(f);
 }
 
-function importVCF(text,origen){
-  const cards=text.split('BEGIN:VCARD').slice(1);
-  cards.forEach(card=>{
-    const telMatch=card.match(/TEL[^:]*:(.+)/i);
-    if(!telMatch) return;
-    const telefono=telMatch[1].replace(/[^0-9]/g,'');
-    const nameMatch=card.match(/FN:(.+)/i);
-    const nombre=nameMatch?nameMatch[1].trim():'';
-    const tx=db.transaction('contactos','readwrite');
-    const store=tx.objectStore('contactos');
-    const req=store.get(telefono);
-    req.onsuccess=()=>{
-      if(req.result){
-        let c=req.result;
-        if(nombre && c.nombre && c.nombre!==nombre){
-          if(confirm(`Duplicado ${telefono}
-Nombre existente: ${c.nombre}
-Nuevo nombre: ${nombre}
-¿Reemplazar?`)) c.nombre=nombre;
-        } else if(!c.nombre) c.nombre=nombre;
-        if(!c.origen.includes(origen)) c.origen+=','+origen;
-        store.put(c);
-      } else {
-        store.put({telefono,nombre,origen,estado:'no_contactado',fecha:''});
-      }
-    };
-  });
-  setTimeout(render,300);
+function upsert(c){
+  const tx=db.transaction("c","readwrite");
+  const st=tx.objectStore("c");
+  const g=st.get(c.phone);
+  g.onsuccess=()=>{
+    if(g.result){
+      dupContext={old:g.result,new:c};
+      oldName.value=g.result.name;
+      newName.value=c.name;
+      dupModal.style.display="flex";
+    }else{
+      st.put(c);
+      render();
+    }
+  };
 }
 
-// ------------------ RENDER ------------------
+function keepOld(){
+  dupModal.style.display="none";
+}
+function keepNew(){
+  const tx=db.transaction("c","readwrite");
+  tx.objectStore("c").put(dupContext.new);
+  dupModal.style.display="none";
+  render();
+}
+function mergeNames(){
+  dupContext.old.name=oldName.value;
+  const tx=db.transaction("c","readwrite");
+  tx.objectStore("c").put(dupContext.old);
+  dupModal.style.display="none";
+  render();
+}
+
+function setStatus(p,s){
+  const tx=db.transaction("c","readwrite");
+  const st=tx.objectStore("c");
+  st.get(p).onsuccess=e=>{
+    const c=e.target.result;
+    c.status=s;
+    st.put(c);
+    render();
+  };
+}
+
+function delContact(p){
+  const tx=db.transaction("c","readwrite");
+  tx.objectStore("c").delete(p);
+  render();
+}
+
+function resetAll(){
+  if(!confirm("Borrar TODO?"))return;
+  indexedDB.deleteDatabase("contactosDB");
+  location.reload();
+}
+
 function render(){
-  if(!db) return;
-  const q=document.getElementById('search').value.toLowerCase();
-  const fe=document.getElementById('fEstado').value;
-  const fo=document.getElementById('fOrigen').value.toLowerCase();
-  getAll(all=>{
-    let arr=all.filter(c=>(!q||c.nombre.toLowerCase().includes(q)||c.telefono.includes(q))&&(!fe||c.estado===fe)&&(!fo||c.origen.toLowerCase().includes(fo)));
-    const tb=document.getElementById('tbody'); tb.innerHTML='';
-    arr.forEach(c=>{
-      const tr=document.createElement('tr');
-      tr.innerHTML=`<td contenteditable onblur="editName('${c.telefono}',this.innerText)">${c.nombre||''}</td>
-      <td>${c.telefono}</td>
-      <td><span class="tag t-info">${c.origen}</span></td>
-      <td><span class="tag">${c.estado}</span></td>
-      <td class="actions">
-        <button class="btn accent" onclick="setEstado('${c.telefono}','interesado')">✔</button>
-        <button class="btn warn" onclick="setEstado('${c.telefono}','contactado')">☎</button>
-        <button class="btn danger" onclick="setEstado('${c.telefono}','desinteresado')">✖</button>
-        <button class="btn" onclick="setEstado('${c.telefono}','sin_whatsapp')">🚫</button>
-        <button class="btn info" onclick="wa('${c.telefono}')">WA</button>
-      </td>`;
-      tb.appendChild(tr);
-    });
-    stats(all);
-  });
-}
-function setEstado(t,e){getAll(all=>{const c=all.find(x=>x.telefono===t);c.estado=e;c.fecha=new Date().toISOString();put(c);render();});}
-function editName(t,n){getAll(all=>{const c=all.find(x=>x.telefono===t);c.nombre=n;put(c);});}
-function wa(t){window.open('https://wa.me/'+t,'_blank');}
-function stats(all){
-  document.getElementById('stTotal').innerText=all.length;
-  document.getElementById('stInter').innerText=all.filter(c=>c.estado==='interesado').length;
-  document.getElementById('stDes').innerText=all.filter(c=>c.estado==='desinteresado').length;
-  document.getElementById('stNo').innerText=all.filter(c=>c.estado==='no_contactado').length;
+  const tb=document.getElementById("rows");
+  tb.innerHTML="";
+  const tx=db.transaction("c","readonly");
+  tx.objectStore("c").openCursor().onsuccess=e=>{
+    const cur=e.target.result;
+    if(!cur)return;
+    const c=cur.value;
+    tb.innerHTML+=`
+<tr>
+<td contenteditable onblur="cEdit('${c.phone}',this.innerText)">${c.name}</td>
+<td>${c.phone}</td>
+<td><span class="badge">${c.origin}</span></td>
+<td><span class="badge">${c.status}</span></td>
+<td class="actions">
+<button class="tooltip" data-tip="Interesado" onclick="setStatus('${c.phone}','interesado')">✔</button>
+<button class="tooltip" data-tip="Desinteresado" onclick="setStatus('${c.phone}','desinteresado')">✖</button>
+<button class="tooltip" data-tip="Sin WhatsApp" onclick="setStatus('${c.phone}','sin_whatsapp')">🚫</button>
+<button class="tooltip" data-tip="Eliminar" onclick="delContact('${c.phone}')">🗑</button>
+</td>
+</tr>`;
+    cur.continue();
+  };
 }
 
-// ------------------ EXPORT ------------------
+function cEdit(p,n){
+  const tx=db.transaction("c","readwrite");
+  const st=tx.objectStore("c");
+  st.get(p).onsuccess=e=>{
+    const c=e.target.result;
+    c.name=n;
+    st.put(c);
+  };
+}
+
 function exportCSV(){
-  getAll(all=>{
-    let csv='nombre,telefono,origen,estado,fecha\n';
-    all.forEach(c=>csv+=`${c.nombre},${c.telefono},${c.origen},${c.estado},${c.fecha||''}\n`);
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-    a.download='contactos_export.csv'; a.click();
-  });
+  const rows=[["Nombre","Telefono","Origen","Estado"]];
+  const tx=db.transaction("c","readonly");
+  tx.objectStore("c").openCursor().onsuccess=e=>{
+    const cur=e.target.result;
+    if(cur){
+      const c=cur.value;
+      rows.push([c.name,c.phone,c.origin,c.status]);
+      cur.continue();
+    }else{
+      const csv=rows.map(r=>r.join(",")).join("\n");
+      const a=document.createElement("a");
+      a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
+      a.download="contactos.csv";
+      a.click();
+    }
+  };
 }
 </script>
+
 </body>
 </html>
