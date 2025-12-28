@@ -6,148 +6,47 @@
 
 <style>
 :root{
-  --bg:#020617;
-  --panel:#020617;
-  --border:#1f2937;
-  --text:#e5e7eb;
-  --muted:#9ca3af;
-  --accent:#22c55e;
-  --warn:#f59e0b;
-  --danger:#ef4444;
-  --info:#38bdf8;
+  --bg:#020617;--border:#1f2937;--text:#e5e7eb;
+  --accent:#22c55e;--warn:#f59e0b;--danger:#ef4444;--info:#38bdf8;
 }
-
-*{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto}
+*{box-sizing:border-box;font-family:system-ui}
 body{margin:0;background:var(--bg);color:var(--text)}
-
-header{
-  padding:14px 18px;
-  border-bottom:1px solid var(--border);
-}
-
-.wrap{
-  display:grid;
-  grid-template-columns:300px 1fr;
-  height:calc(100vh - 56px);
-}
-
-aside{
-  padding:14px;
-  border-right:1px solid var(--border);
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-  position:sticky;
-  top:0;
-  height:100%;
-  overflow:auto;
-}
-
-main{
-  padding:14px;
-  overflow:auto;
-}
-
-.card{
-  background:#020617;
-  border:1px solid var(--border);
-  border-radius:14px;
-  padding:12px;
-}
-
-.card h3{
-  margin:0 0 8px;
-  font-size:14px;
-  color:#cbd5f5;
-}
-
-input,select{
-  width:100%;
-  background:#020617;
-  border:1px solid var(--border);
-  color:var(--text);
-  padding:8px 10px;
-  border-radius:10px;
-}
-
-.btn{
-  background:#020617;
-  border:1px solid var(--border);
-  color:var(--text);
-  padding:6px 8px;
-  border-radius:10px;
-  font-size:12px;
-  cursor:pointer;
-}
-.btn:hover{border-color:#334155}
+header{padding:14px 18px;border-bottom:1px solid var(--border)}
+.wrap{display:grid;grid-template-columns:300px 1fr;height:calc(100vh - 56px)}
+aside{padding:14px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:12px;position:sticky;top:0;overflow:auto}
+main{padding:14px;overflow:auto}
+.card{background:#020617;border:1px solid var(--border);border-radius:14px;padding:12px}
+.card h3{margin:0 0 8px;font-size:14px;color:#cbd5f5}
+input,select{width:100%;background:#020617;border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:10px}
+.btn{background:#020617;border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:10px;font-size:12px;cursor:pointer}
 .btn.accent{border-color:rgba(34,197,94,.5)}
 .btn.warn{border-color:rgba(245,158,11,.5)}
 .btn.danger{border-color:rgba(239,68,68,.5)}
 .btn.info{border-color:rgba(56,189,248,.5)}
-
-.stats{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:8px;
-}
-
-.stat{
-  border:1px solid var(--border);
-  border-radius:10px;
-  padding:8px;
-}
-.stat b{font-size:18px}
-
 table{width:100%;border-collapse:collapse}
 th,td{padding:8px;border-bottom:1px solid var(--border);font-size:13px}
 th{text-align:left;color:#cbd5f5}
-tr:hover{background:#020617}
-
-.tag{
-  display:inline-block;
-  margin:2px;
-  padding:2px 8px;
-  border-radius:999px;
-  font-size:11px;
-  border:1px solid rgba(56,189,248,.6);
-  color:#7dd3fc;
-}
-
+.tag{display:inline-block;margin:2px;padding:2px 8px;border-radius:999px;font-size:11px;border:1px solid rgba(56,189,248,.6);color:#7dd3fc}
 .actions{display:flex;gap:4px;flex-wrap:wrap}
-
-/* Tooltip */
 [data-tip]{position:relative}
 [data-tip]:hover::after{
-  content:attr(data-tip);
-  position:absolute;
-  bottom:130%;
-  left:50%;
-  transform:translateX(-50%);
-  background:#020617;
-  border:1px solid #334155;
-  padding:6px 8px;
-  border-radius:8px;
-  font-size:11px;
-  white-space:nowrap;
-  z-index:999;
+  content:attr(data-tip);position:absolute;bottom:130%;left:50%;
+  transform:translateX(-50%);background:#020617;border:1px solid #334155;
+  padding:6px 8px;border-radius:8px;font-size:11px;white-space:nowrap;z-index:999
 }
 </style>
 </head>
 
 <body>
-
-<header>
-<h1>📇 Gestor de Contactos – Revinculación</h1>
-</header>
+<header><h1>📇 Gestor de Contactos – Revinculación</h1></header>
 
 <div class="wrap">
-
 <aside>
 
 <div class="card">
 <h3>Importar VCF</h3>
 <input type="file" id="file" accept=".vcf" multiple>
-<input id="origenInput" placeholder="Origen (ej: PC1, PC2, PC chino)">
+<input id="origenInput" placeholder="Origen (PC1, PC chino, etc)">
 <button class="btn accent" onclick="importVCF()">Importar</button>
 </div>
 
@@ -169,38 +68,20 @@ tr:hover{background:#020617}
 <div id="origenFilters"></div>
 </div>
 
-<div class="card">
-<h3>Estadísticas</h3>
-<div class="stats">
-<div class="stat"><b id="stTotal">0</b><div>Total</div></div>
-<div class="stat"><b id="stInter">0</b><div>Interesados</div></div>
-<div class="stat"><b id="stDes">0</b><div>Desinteresados</div></div>
-<div class="stat"><b id="stNo">0</b><div>No contactados</div></div>
-</div>
-</div>
-
 <button class="btn danger" onclick="vaciar()">Vaciar todo</button>
 
 </aside>
 
 <main>
-
 <div class="card">
 <h3>Contactos</h3>
 <table>
 <thead>
-<tr>
-<th>Nombre</th>
-<th>Teléfono</th>
-<th>Origen</th>
-<th>Estado</th>
-<th>Acciones</th>
-</tr>
+<tr><th>Nombre</th><th>Teléfono</th><th>Origen</th><th>Estado</th><th>Acciones</th></tr>
 </thead>
 <tbody id="tbody"></tbody>
 </table>
 </div>
-
 </main>
 </div>
 
@@ -210,18 +91,26 @@ indexedDB.open('contactosDB',1).onupgradeneeded=e=>{
   db=e.target.result;
   db.createObjectStore('contactos',{keyPath:'telefono'});
 };
-indexedDB.open('contactosDB',1).onsuccess=e=>{
-  db=e.target.result;
-  render();
-};
+indexedDB.open('contactosDB',1).onsuccess=e=>{db=e.target.result;render();};
+
+function normalizeOrigen(o){
+  if(Array.isArray(o)) return o;
+  if(typeof o==='string') return o.split(',').map(x=>x.trim()).filter(Boolean);
+  return [];
+}
 
 function getAll(cb){
   db.transaction('contactos','readonly')
     .objectStore('contactos')
-    .getAll().onsuccess=e=>cb(e.target.result||[]);
+    .getAll().onsuccess=e=>{
+      const data=e.target.result||[];
+      data.forEach(c=>c.origen=normalizeOrigen(c.origen));
+      cb(data);
+    };
 }
 
 function put(c){
+  c.origen=normalizeOrigen(c.origen);
   db.transaction('contactos','readwrite')
     .objectStore('contactos').put(c);
 }
@@ -244,20 +133,10 @@ function importVCF(){
         getAll(all=>{
           let c=all.find(x=>x.telefono===telefono);
           if(!c){
-            put({
-              telefono,
-              nombre,
-              origen:[origen],
-              estado:'no_contactado',
-              fecha:''
-            });
+            put({telefono,nombre,origen:[origen],estado:'no_contactado'});
           }else{
-            if(!c.origen.includes(origen)){
-              c.origen.push(origen);
-            }
-            if(!c.nombre && nombre){
-              c.nombre=nombre;
-            }
+            if(!c.origen.includes(origen)) c.origen.push(origen);
+            if(!c.nombre && nombre) c.nombre=nombre;
             put(c);
           }
         });
@@ -272,7 +151,7 @@ function buildOrigenFilters(all){
   const cont=document.getElementById('origenFilters');
   cont.innerHTML='';
   const set=new Set();
-  all.forEach(c=>(c.origen||[]).forEach(o=>set.add(o)));
+  all.forEach(c=>c.origen.forEach(o=>set.add(o)));
   [...set].sort().forEach(o=>{
     cont.innerHTML+=`
       <label style="display:block;font-size:12px">
@@ -284,7 +163,6 @@ function buildOrigenFilters(all){
 function render(){
   getAll(all=>{
     buildOrigenFilters(all);
-
     const q=search.value.toLowerCase();
     const e=estado.value;
     const selected=[...document.querySelectorAll('#origenFilters input:checked')].map(i=>i.value);
@@ -308,26 +186,17 @@ function render(){
           <button class="btn accent" data-tip="Interesado" onclick="setEstado('${c.telefono}','interesado')">✔</button>
           <button class="btn warn" data-tip="Contactado" onclick="setEstado('${c.telefono}','contactado')">☎</button>
           <button class="btn danger" data-tip="Desinteresado" onclick="setEstado('${c.telefono}','desinteresado')">✖</button>
-          <button class="btn" data-tip="Sin WhatsApp" onclick="setEstado('${c.telefono}','sin_whatsapp')">🚫</button>
-          <button class="btn info" data-tip="Abrir WhatsApp" onclick="window.open('https://wa.me/${c.telefono}')">WA</button>
+          <button class="btn info" data-tip="WhatsApp" onclick="window.open('https://wa.me/${c.telefono}')">WA</button>
         </td>
       </tr>`;
     });
-
-    stTotal.innerText=all.length;
-    stInter.innerText=all.filter(c=>c.estado==='interesado').length;
-    stDes.innerText=all.filter(c=>c.estado==='desinteresado').length;
-    stNo.innerText=all.filter(c=>c.estado==='no_contactado').length;
   });
 }
 
 function setEstado(t,e){
   getAll(all=>{
     const c=all.find(x=>x.telefono===t);
-    if(!c) return;
-    c.estado=e;
-    put(c);
-    render();
+    if(c){c.estado=e;put(c);render();}
   });
 }
 
@@ -346,6 +215,5 @@ function vaciar(){
   }
 }
 </script>
-
 </body>
 </html>
