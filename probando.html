@@ -1482,7 +1482,7 @@
                 card.dataset.id = contact.id;
                 
                 const statusColor = STATUS_OPTIONS.find(s => s.id === contact.status)?.color || '#9ca3af';
-                const whatsappUrl = contact.phone ? `https://wa.me/+54${contact.phone}` : '#';
+                const whatsappUrl = contact.phone ? `https://wa.me/${contact.phone}` : '#';
                 
                 card.innerHTML = `
                     <div class="contact-header">
