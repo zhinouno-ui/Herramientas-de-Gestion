@@ -1537,7 +1537,7 @@
                 listItem.dataset.status = contact.status;
                 listItem.dataset.id = contact.id;
                 
-                const whatsappUrl = contact.phone ? `https://wa.me/+54${contact.phone}` : '#';
+                const whatsappUrl = contact.phone ? `https://wa.me/${contact.phone}` : '#';
                 const currentStatus = STATUS_OPTIONS.find(s => s.id === contact.status);
                 
                 listItem.innerHTML = `
@@ -1589,7 +1589,7 @@
             }
             
             const contact = AppState.filteredContacts[AppState.tinderIndex];
-            const whatsappUrl = contact.phone ? `https://wa.me/+54${contact.phone}` : '#';
+            const whatsappUrl = contact.phone ? `https://wa.me/${contact.phone}` : '#';
             
             elements.tinderCard.dataset.status = contact.status;
             elements.tinderName.textContent = contact.name;
