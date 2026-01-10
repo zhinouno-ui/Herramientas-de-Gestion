@@ -1151,3 +1151,788 @@
                 </button>
                 <button class="btn btn-success" id="confirmExport" style="flex: 2;">
                     <i class="fas fa-download"></i> Export
+                                    </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notificaciones -->
+    <div class="notification" id="notification"></div>
+
+    <script>
+        // Estado global de la aplicación
+        const AppState = {
+            contacts: [],
+            filteredContacts: [],
+            currentView: 'cards',
+            currentPage: 1,
+            itemsPerPage: 50,
+            filesToProcess: [],
+            origins: new Set(),
+            currentFilter: 'all',
+            tinderIndex: 0
+        };
+
+        // Configuración
+        const STATUS_OPTIONS = [
+            { id: 'sin revisar', label: 'Sin Revisar', color: '#9ca3af', icon: 'fas fa-clock' },
+            { id: 'jugando', label: 'Jugando', color: '#8b5cf6', icon: 'fas fa-gamepad' },
+            { id: 'contactado', label: 'Contactado', color: '#10b981', icon: 'fas fa-check' },
+            { id: 'no interesado', label: 'No Interesado', color: '#ef4444', icon: 'fas fa-times' },
+            { id: 'sin wsp', label: 'Sin WSP', color: '#6b7280', icon: 'fas fa-ban' }
+        ];
+
+        // Elementos del DOM
+        const elements = {
+            uploadScreen: document.getElementById('uploadScreen'),
+            mainInterface: document.getElementById('mainInterface'),
+            vcfFileInput: document.getElementById('vcfFileInput'),
+            dropArea: document.getElementById('dropArea'),
+            originName: document.getElementById('originName'),
+            fileList: document.getElementById('fileList'),
+            processFiles: document.getElementById('processFiles'),
+            cardsView: document.getElementById('cardsView'),
+            listView: document.getElementById('listView'),
+            tinderView: document.getElementById('tinderView'),
+            tinderCard: document.getElementById('tinderCard'),
+            tinderName: document.getElementById('tinderName'),
+            tinderOrigin: document.getElementById('tinderOrigin'),
+            tinderPhone: document.getElementById('tinderPhone'),
+            tinderWhatsapp: document.getElementById('tinderWhatsapp'),
+            tinderCounter: document.getElementById('tinderCounter'),
+            tinderBack: document.getElementById('tinderBack'),
+            tinderNext: document.getElementById('tinderNext'),
+            searchInput: document.getElementById('searchInput'),
+            viewButtons: document.querySelectorAll('.view-btn'),
+            pagination: document.getElementById('pagination'),
+            exportBtn: document.getElementById('exportBtn'),
+            clearDataBtn: document.getElementById('clearDataBtn'),
+            addMoreBtn: document.getElementById('addMoreBtn'),
+            exportModal: document.getElementById('exportModal'),
+            exportWarning: document.getElementById('exportWarning'),
+            cancelExport: document.getElementById('cancelExport'),
+            confirmExport: document.getElementById('confirmExport'),
+            notification: document.getElementById('notification'),
+            totalContacts: document.getElementById('totalContacts'),
+            unreviewedContacts: document.getElementById('unreviewedContacts'),
+            contactedContacts: document.getElementById('contactedContacts'),
+            playingContacts: document.getElementById('playingContacts'),
+            notInterestedContacts: document.getElementById('notInterestedContacts'),
+            noWhatsappContacts: document.getElementById('noWhatsappContacts'),
+            progressContainer: document.getElementById('progressContainer'),
+            progressPercentage: document.getElementById('progressPercentage'),
+            progressFill: document.getElementById('progressFill'),
+            reviewedCount: document.getElementById('reviewedCount'),
+            totalCount: document.getElementById('totalCount'),
+            statBoxes: document.querySelectorAll('.stat-box')
+        };
+
+        // Funciones de utilidad
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatPhone(phone) {
+            if (!phone) return 'Sin número';
+            return phone.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = elements.notification;
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Funciones de almacenamiento
+        function loadSavedData() {
+            const savedData = localStorage.getItem('contactManagerData');
+            if (savedData) {
+                try {
+                    const data = JSON.parse(savedData);
+                    AppState.contacts = data.contacts || [];
+                    AppState.origins = new Set(data.origins || []);
+                    
+                    if (AppState.contacts.length > 0) {
+                        elements.uploadScreen.style.display = 'none';
+                        elements.mainInterface.style.display = 'block';
+                        updateUI();
+                    }
+                } catch (e) {
+                    console.error('Error al cargar datos:', e);
+                }
+            }
+        }
+
+        function saveDataToStorage() {
+            const data = {
+                contacts: AppState.contacts,
+                origins: Array.from(AppState.origins)
+            };
+            localStorage.setItem('contactManagerData', JSON.stringify(data));
+        }
+
+        // Funciones de manejo de archivos
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files).filter(f => 
+                f.name.toLowerCase().endsWith('.vcf') || f.name.toLowerCase().endsWith('.vcard')
+            );
+            
+            if (files.length > 0) {
+                addFilesToList(files);
+            }
+        }
+
+        function addFilesToList(files) {
+            files.forEach(file => {
+                AppState.filesToProcess.push(file);
+                
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    <span>${file.name}</span>
+                    <span style="color: var(--accent-primary);">${(file.size / 1024).toFixed(1)} KB</span>
+                `;
+                
+                elements.fileList.appendChild(fileItem);
+            });
+            
+            elements.vcfFileInput.value = '';
+        }
+
+        async function processVCFiles() {
+            if (AppState.filesToProcess.length === 0) {
+                showNotification('Selecciona al menos un archivo VCF', 'warning');
+                return;
+            }
+
+            const originName = elements.originName.value.trim();
+            if (!originName) {
+                showNotification('Ingresa un nombre para el origen', 'warning');
+                return;
+            }
+
+            elements.processFiles.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+            elements.processFiles.disabled = true;
+
+            try {
+                for (const file of AppState.filesToProcess) {
+                    const text = await file.text();
+                    const contacts = parseVCF(text, originName);
+                    AppState.contacts.push(...contacts);
+                    AppState.origins.add(originName);
+                }
+
+                saveDataToStorage();
+                showNotification(`${AppState.filesToProcess.length} archivo(s) procesado(s)`, 'success');
+                
+                elements.uploadScreen.classList.add('hidden');
+                setTimeout(() => {
+                    elements.uploadScreen.style.display = 'none';
+                    elements.mainInterface.style.display = 'block';
+                    updateUI();
+                }, 500);
+                
+            } catch (error) {
+                showNotification('Error al procesar archivos: ' + error.message, 'error');
+            } finally {
+                elements.processFiles.innerHTML = '<i class="fas fa-play"></i> Procesar Archivos y Comenzar';
+                elements.processFiles.disabled = false;
+                AppState.filesToProcess = [];
+                elements.fileList.innerHTML = '';
+                elements.originName.value = '';
+            }
+        }
+
+        function parseVCF(vcfText, origin) {
+            const contacts = [];
+            const vcards = vcfText.split(/END:VCARD/i).filter(v => v.trim());
+            
+            for (let vcard of vcards) {
+                vcard = vcard.trim();
+                if (!vcard.includes('BEGIN:VCARD')) continue;
+                
+                const nameMatch = vcard.match(/FN:(.+)/i);
+                const telMatch = vcard.match(/TEL[^:]*:(.+)/i);
+                
+                if (nameMatch || telMatch) {
+                    const contact = {
+                        id: Date.now() + Math.random().toString(36).substr(2, 9),
+                        name: nameMatch ? nameMatch[1].trim() : 'Sin nombre',
+                        phone: telMatch ? telMatch[1].replace(/\D/g, '') : '',
+                        origin: origin,
+                        status: 'sin revisar',
+                        lastUpdated: new Date().toISOString()
+                    };
+                    
+                    contacts.push(contact);
+                }
+            }
+            
+            return contacts;
+        }
+
+        // Funciones de UI
+        function updateUI() {
+            filterContactsByStatus();
+            updateStats();
+            updateProgress();
+            updateView();
+            renderPagination();
+            updateTinderView();
+        }
+
+        function filterContactsByStatus() {
+            const searchTerm = elements.searchInput.value.toLowerCase().trim();
+            
+            if (AppState.currentFilter === 'all') {
+                AppState.filteredContacts = [...AppState.contacts];
+            } else {
+                AppState.filteredContacts = AppState.contacts.filter(c => c.status === AppState.currentFilter);
+            }
+            
+            if (searchTerm) {
+                AppState.filteredContacts = AppState.filteredContacts.filter(contact => {
+                    return contact.name.toLowerCase().includes(searchTerm) ||
+                           contact.phone.includes(searchTerm) ||
+                           contact.origin.toLowerCase().includes(searchTerm);
+                });
+            }
+            
+            AppState.currentPage = 1;
+        }
+
+        function updateStats() {
+            const total = AppState.contacts.length;
+            const unreviewed = AppState.contacts.filter(c => c.status === 'sin revisar').length;
+            const contacted = AppState.contacts.filter(c => c.status === 'contactado').length;
+            const playing = AppState.contacts.filter(c => c.status === 'jugando').length;
+            const notInterested = AppState.contacts.filter(c => c.status === 'no interesado').length;
+            const noWhatsapp = AppState.contacts.filter(c => c.status === 'sin wsp').length;
+            
+            elements.totalContacts.textContent = total.toLocaleString();
+            elements.unreviewedContacts.textContent = unreviewed.toLocaleString();
+            elements.contactedContacts.textContent = contacted.toLocaleString();
+            elements.playingContacts.textContent = playing.toLocaleString();
+            elements.notInterestedContacts.textContent = notInterested.toLocaleString();
+            elements.noWhatsappContacts.textContent = noWhatsapp.toLocaleString();
+        }
+
+        function updateProgress() {
+            const total = AppState.contacts.length;
+            const reviewed = total - AppState.contacts.filter(c => c.status === 'sin revisar').length;
+            const percentage = total > 0 ? Math.round((reviewed / total) * 100) : 0;
+            
+            elements.progressPercentage.textContent = `${percentage}%`;
+            elements.progressFill.style.width = `${percentage}%`;
+            elements.reviewedCount.textContent = `${reviewed} revisados`;
+            elements.totalCount.textContent = `${total} totales`;
+            
+            elements.progressContainer.style.display = total > 0 ? 'block' : 'none';
+        }
+
+        function updateView() {
+            // Ocultar todas las vistas primero
+            elements.cardsView.classList.remove('active');
+            elements.listView.classList.remove('active');
+            elements.tinderView.classList.remove('active');
+            
+            // Mostrar solo la vista activa
+            if (AppState.currentView === 'cards') {
+                elements.cardsView.classList.add('active');
+                renderCardsView();
+            } else if (AppState.currentView === 'list') {
+                elements.listView.classList.add('active');
+                renderListView();
+            } else if (AppState.currentView === 'tinder') {
+                elements.tinderView.classList.add('active');
+            }
+            
+            elements.pagination.style.display = AppState.currentView === 'tinder' ? 'none' : 'flex';
+        }
+
+        function renderCardsView() {
+            const startIndex = (AppState.currentPage - 1) * AppState.itemsPerPage;
+            const endIndex = startIndex + AppState.itemsPerPage;
+            const pageContacts = AppState.filteredContacts.slice(startIndex, endIndex);
+            
+            elements.cardsView.innerHTML = '';
+            
+            pageContacts.forEach(contact => {
+                const card = document.createElement('div');
+                card.className = 'contact-card';
+                card.dataset.status = contact.status;
+                card.dataset.id = contact.id;
+                
+                const statusColor = STATUS_OPTIONS.find(s => s.id === contact.status)?.color || '#9ca3af';
+                const whatsappUrl = contact.phone ? `https://wa.me/+54${contact.phone}` : '#';
+                
+                card.innerHTML = `
+                    <div class="contact-header">
+                        <div class="contact-name" onclick="copyToClipboard('${contact.name.replace(/'/g, "\\'")}', 'nombre')">
+                            ${escapeHtml(contact.name)}
+                        </div>
+                        <div class="contact-origin">${escapeHtml(contact.origin)}</div>
+                    </div>
+                    
+                    <div class="contact-info">
+                        <div class="contact-phone">${formatPhone(contact.phone)}</div>
+                        ${contact.phone ? `
+                            <a href="${whatsappUrl}" target="_blank" class="whatsapp-btn">
+                                <i class="fab fa-whatsapp"></i> Enviar WhatsApp
+                            </a>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="contact-actions">
+                        <select class="status-select" onchange="updateStatus('${contact.id}', this.value)">
+                            ${STATUS_OPTIONS.map(opt => `
+                                <option value="${opt.id}" ${contact.status === opt.id ? 'selected' : ''}>
+                                    ${opt.label}
+                                </option>
+                            `).join('')}
+                        </select>
+                        
+                        <button class="delete-btn" onclick="deleteContact('${contact.id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    
+                    <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                        <i class="far fa-clock"></i> ${formatDate(contact.lastUpdated)}
+                    </div>
+                `;
+                
+                elements.cardsView.appendChild(card);
+            });
+        }
+
+        function renderListView() {
+            const startIndex = (AppState.currentPage - 1) * AppState.itemsPerPage;
+            const endIndex = startIndex + AppState.itemsPerPage;
+            const pageContacts = AppState.filteredContacts.slice(startIndex, endIndex);
+            
+            elements.listView.innerHTML = '';
+            
+            pageContacts.forEach(contact => {
+                const listItem = document.createElement('div');
+                listItem.className = 'list-item';
+                listItem.dataset.status = contact.status;
+                listItem.dataset.id = contact.id;
+                
+                const whatsappUrl = contact.phone ? `https://wa.me/+54${contact.phone}` : '#';
+                const currentStatus = STATUS_OPTIONS.find(s => s.id === contact.status);
+                
+                listItem.innerHTML = `
+                    <div class="list-item-info">
+                        <div class="list-item-name" onclick="copyToClipboard('${contact.name.replace(/'/g, "\\'")}', 'nombre')">
+                            ${escapeHtml(contact.name)}
+                        </div>
+                        <div class="list-item-details">
+                            <span>${formatPhone(contact.phone)}</span>
+                            <span>${escapeHtml(contact.origin)}</span>
+                            <span>${formatDate(contact.lastUpdated)}</span>
+                        </div>
+                    </div>
+                    <div class="list-item-actions">
+                        ${STATUS_OPTIONS.map(opt => `
+                            <button class="list-status-btn ${contact.status === opt.id ? 'active' : ''}" 
+                                    onclick="updateStatus('${contact.id}', '${opt.id}')"
+                                    style="${contact.status === opt.id ? 'background: ' + opt.color + '; color: white;' : ''}">
+                                <i class="${opt.icon}"></i> ${opt.label}
+                            </button>
+                        `).join('')}
+                        ${contact.phone ? `
+                            <a href="${whatsappUrl}" target="_blank" style="background: #25D366; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none;">
+                                <i class="fab fa-whatsapp"></i>
+                            </a>
+                        ` : ''}
+                        <button onclick="deleteContact('${contact.id}')" style="background: transparent; border: 1px solid var(--accent-danger); color: var(--accent-danger); padding: 6px 12px; border-radius: 6px;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                
+                elements.listView.appendChild(listItem);
+            });
+        }
+
+        function updateTinderView() {
+            if (AppState.filteredContacts.length === 0) {
+                elements.tinderName.textContent = 'No hay contactos';
+                elements.tinderOrigin.textContent = '-';
+                elements.tinderPhone.textContent = '-';
+                elements.tinderWhatsapp.href = '#';
+                elements.tinderCounter.textContent = '0/0';
+                return;
+            }
+            
+            if (AppState.tinderIndex >= AppState.filteredContacts.length) {
+                AppState.tinderIndex = 0;
+            }
+            
+            const contact = AppState.filteredContacts[AppState.tinderIndex];
+            const whatsappUrl = contact.phone ? `https://wa.me/+54${contact.phone}` : '#';
+            
+            elements.tinderCard.dataset.status = contact.status;
+            elements.tinderName.textContent = contact.name;
+            elements.tinderOrigin.textContent = contact.origin;
+            elements.tinderPhone.textContent = formatPhone(contact.phone);
+            elements.tinderWhatsapp.href = whatsappUrl;
+            elements.tinderCounter.textContent = `${AppState.tinderIndex + 1}/${AppState.filteredContacts.length}`;
+            
+            if (!contact.phone) {
+                elements.tinderWhatsapp.style.opacity = '0.5';
+                elements.tinderWhatsapp.style.pointerEvents = 'none';
+            } else {
+                elements.tinderWhatsapp.style.opacity = '1';
+                elements.tinderWhatsapp.style.pointerEvents = 'auto';
+            }
+        }
+
+        function renderPagination() {
+            const totalPages = Math.ceil(AppState.filteredContacts.length / AppState.itemsPerPage);
+            
+            if (totalPages <= 1 || AppState.currentView === 'tinder') {
+                elements.pagination.innerHTML = '';
+                return;
+            }
+            
+            let paginationHTML = '';
+            
+            paginationHTML += `
+                <button class="page-btn" ${AppState.currentPage === 1 ? 'disabled' : ''} onclick="changePage(${AppState.currentPage - 1})">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            `;
+            
+            const maxVisiblePages = 5;
+            let startPage = Math.max(1, AppState.currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+            
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHTML += `
+                    <button class="page-btn ${i === AppState.currentPage ? 'active' : ''}" onclick="changePage(${i})">
+                        ${i}
+                    </button>
+                `;
+            }
+            
+            paginationHTML += `
+                <button class="page-btn" ${AppState.currentPage === totalPages ? 'disabled' : ''} onclick="changePage(${AppState.currentPage + 1})">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            `;
+            
+            elements.pagination.innerHTML = paginationHTML;
+        }
+
+        // Funciones globales
+        window.copyToClipboard = function(text, type = 'texto') {
+            navigator.clipboard.writeText(text)
+                .then(() => {
+                    showNotification(`${type.charAt(0).toUpperCase() + type.slice(1)} copiado al portapapeles`, 'success');
+                })
+                .catch(err => {
+                    showNotification('Error al copiar al portapapeles', 'error');
+                });
+        };
+
+        window.updateStatus = function(contactId, newStatus) {
+            const contactIndex = AppState.contacts.findIndex(c => c.id === contactId);
+            if (contactIndex !== -1) {
+                AppState.contacts[contactIndex].status = newStatus;
+                AppState.contacts[contactIndex].lastUpdated = new Date().toISOString();
+                saveDataToStorage();
+                updateUI();
+            }
+        };
+
+        window.deleteContact = function(contactId) {
+            if (confirm('¿Estás seguro de que quieres eliminar este contacto?')) {
+                const contactIndex = AppState.contacts.findIndex(c => c.id === contactId);
+                if (contactIndex !== -1) {
+                    const contactName = AppState.contacts[contactIndex].name;
+                    AppState.contacts.splice(contactIndex, 1);
+                    saveDataToStorage();
+                    updateUI();
+                    showNotification(`Contacto "${contactName}" eliminado`, 'success');
+                }
+            }
+        };
+
+        window.changePage = function(pageNumber) {
+            AppState.currentPage = pageNumber;
+            updateView();
+            renderPagination();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        // Funciones de exportación
+        function showExportModal() {
+            const totalContacts = AppState.contacts.length;
+            const unreviewedContacts = AppState.contacts.filter(c => c.status === 'sin revisar').length;
+            
+            let warningText = `Vas a exportar ${totalContacts.toLocaleString()} contacto(s).`;
+            
+            if (unreviewedContacts > 0) {
+                warningText += `\n\n⚠️ Hay ${unreviewedContacts.toLocaleString()} contacto(s) sin revisar.\n¿Deseas exportar de todos modos?`;
+            }
+            
+            elements.exportWarning.textContent = warningText;
+            elements.exportModal.classList.add('active');
+            
+            document.querySelectorAll('.export-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            document.querySelector('.export-option[data-format="excel"]').classList.add('selected');
+        }
+
+        function hideExportModal() {
+            elements.exportModal.classList.remove('active');
+        }
+
+        window.exportContacts = function() {
+            const selectedFormat = document.querySelector('.export-option.selected').dataset.format;
+            
+            if (selectedFormat === 'excel') {
+                exportToExcel();
+            } else {
+                exportToVCF();
+            }
+            
+            hideExportModal();
+        };
+
+        function exportToExcel() {
+            let csvContent = "Nombre,Teléfono,Origen,Estado,Fecha Actualización\n";
+            
+            AppState.contacts.forEach(contact => {
+                const row = [
+                    `"${contact.name.replace(/"/g, '""')}"`,
+                    contact.phone,
+                    `"${contact.origin}"`,
+                    contact.status,
+                    new Date(contact.lastUpdated).toLocaleDateString('es-ES')
+                ];
+                csvContent += row.join(',') + '\n';
+            });
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', `contactos_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('Exportación a Excel completada', 'success');
+        }
+
+        function exportToVCF() {
+            let vcfContent = '';
+            
+            AppState.contacts.forEach(contact => {
+                vcfContent += `BEGIN:VCARD\nVERSION:3.0\n`;
+                vcfContent += `FN:${contact.name}\n`;
+                if (contact.phone) {
+                    vcfContent += `TEL;TYPE=CELL:${contact.phone}\n`;
+                }
+                vcfContent += `NOTE:Origen: ${contact.origin}, Estado: ${contact.status}\n`;
+                vcfContent += `END:VCARD\n\n`;
+            });
+            
+            const blob = new Blob([vcfContent], { type: 'text/vcard;charset=utf-8' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', `contactos_${new Date().toISOString().split('T')[0]}.vcf`);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('Exportación a VCF completada', 'success');
+        }
+
+        function clearAllData() {
+            if (confirm('¿Estás seguro de que quieres borrar TODOS los contactos?')) {
+                AppState.contacts = [];
+                AppState.origins.clear();
+                localStorage.removeItem('contactManagerData');
+                
+                elements.mainInterface.style.display = 'none';
+                elements.uploadScreen.style.display = 'flex';
+                setTimeout(() => {
+                    elements.uploadScreen.classList.remove('hidden');
+                }, 10);
+                
+                showNotification('Todos los datos han sido borrados', 'success');
+            }
+        }
+
+        function showUploadScreen() {
+            elements.mainInterface.style.display = 'none';
+            elements.uploadScreen.style.display = 'flex';
+            setTimeout(() => {
+                elements.uploadScreen.classList.remove('hidden');
+            }, 10);
+        }
+
+        // Funciones para vista Tinder
+        function tinderNext() {
+            AppState.tinderIndex++;
+            if (AppState.tinderIndex >= AppState.filteredContacts.length) {
+                AppState.tinderIndex = 0;
+                showNotification('¡Has revisado todos los contactos! Volviendo al inicio.', 'info');
+            }
+            updateTinderView();
+        }
+
+        function tinderBack() {
+            AppState.tinderIndex--;
+            if (AppState.tinderIndex < 0) {
+                AppState.tinderIndex = AppState.filteredContacts.length - 1;
+            }
+            updateTinderView();
+        }
+
+        // Event Listeners
+        elements.dropArea.addEventListener('click', () => elements.vcfFileInput.click());
+        elements.vcfFileInput.addEventListener('change', handleFileSelect);
+        elements.processFiles.addEventListener('click', processVCFiles);
+        elements.searchInput.addEventListener('input', () => {
+            filterContactsByStatus();
+            updateView();
+            renderPagination();
+            updateTinderView();
+        });
+        
+        elements.exportBtn.addEventListener('click', showExportModal);
+        elements.clearDataBtn.addEventListener('click', clearAllData);
+        elements.addMoreBtn.addEventListener('click', showUploadScreen);
+        elements.cancelExport.addEventListener('click', hideExportModal);
+        elements.confirmExport.addEventListener('click', exportContacts);
+        
+        elements.tinderBack.addEventListener('click', tinderBack);
+        elements.tinderNext.addEventListener('click', tinderNext);
+
+        // Event listeners para vista
+        elements.viewButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                elements.viewButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                AppState.currentView = btn.dataset.view;
+                AppState.tinderIndex = 0;
+                updateView();
+            });
+        });
+
+        // Event listeners para filtros de estadísticas
+        elements.statBoxes.forEach(box => {
+            box.addEventListener('click', () => {
+                elements.statBoxes.forEach(b => b.classList.remove('active'));
+                box.classList.add('active');
+                AppState.currentFilter = box.dataset.filter;
+                filterContactsByStatus();
+                updateView();
+                renderPagination();
+                updateTinderView();
+            });
+        });
+
+        // Event listeners para botones de estado en vista Tinder
+        document.querySelectorAll('.tinder-action-btn[data-status]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                if (AppState.filteredContacts.length === 0) return;
+                
+                const contact = AppState.filteredContacts[AppState.tinderIndex];
+                const newStatus = e.target.dataset.status || e.target.closest('[data-status]').dataset.status;
+                
+                updateStatus(contact.id, newStatus);
+                
+                // Mostrar feedback visual
+                const statusInfo = STATUS_OPTIONS.find(s => s.id === newStatus);
+                showNotification(`Estado cambiado a: ${statusInfo.label}`, 'success');
+                
+                // Avanzar automáticamente después de un cambio
+                setTimeout(tinderNext, 500);
+            });
+        });
+
+        // Drag and drop
+        elements.dropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            elements.dropArea.style.borderColor = 'var(--accent-primary)';
+            elements.dropArea.style.background = 'rgba(59, 130, 246, 0.1)';
+        });
+
+        elements.dropArea.addEventListener('dragleave', () => {
+            elements.dropArea.style.borderColor = 'var(--border-color)';
+            elements.dropArea.style.background = 'transparent';
+        });
+
+        elements.dropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            elements.dropArea.style.borderColor = 'var(--border-color)';
+            elements.dropArea.style.background = 'transparent';
+            
+            const files = Array.from(e.dataTransfer.files).filter(f => 
+                f.name.toLowerCase().endsWith('.vcf') || f.name.toLowerCase().endsWith('.vcard')
+            );
+            
+            if (files.length > 0) {
+                addFilesToList(files);
+            }
+        });
+
+        // Event listener para opciones de exportación
+        document.querySelectorAll('.export-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('.export-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                option.classList.add('selected');
+            });
+        });
+
+        // Copiar nombre en vista Tinder
+        elements.tinderName.addEventListener('click', () => {
+            if (AppState.filteredContacts.length === 0) return;
+            
+            const contact = AppState.filteredContacts[AppState.tinderIndex];
+            copyToClipboard(contact.name, 'nombre');
+        });
+
+        // Inicializar
+        loadSavedData();
+    </script>
+</body>
+</html>
