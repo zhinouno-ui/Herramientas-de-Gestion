@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Contactos Masivo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: #334155;
+            --accent-primary: #3b82f6;
+            --accent-success: #10b981;
+            --accent-warning: #f59e0b;
+            --accent-danger: #ef4444;
+            --accent-neutral: #6b7280;
+            --accent-jugando: #8b5cf6;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --border-color: #475569;
+            --hover-color: #475569;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Pantalla de inicio */
+        .upload-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1e1b4b 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease;
+        }
+
+        .upload-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .upload-card {
+            background: var(--bg-secondary);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            border: 2px solid var(--accent-primary);
+        }
+
+        .upload-card h1 {
+            margin-bottom: 30px;
+            font-size: 2.2rem;
+            background: linear-gradient(90deg, var(--accent-primary), #8b5cf6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .upload-card i {
+            font-size: 4rem;
+            color: var(--accent-primary);
+            margin-bottom: 20px;
+        }
+
+        .file-upload-area {
+            border: 3px dashed var(--border-color);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--accent-primary);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .file-upload-area i {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .origin-input {
+            width: 100%;
+            padding: 12px 15px;
+            margin: 20px 0;
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .origin-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, var(--accent-primary), #6366f1);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .file-list {
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            text-align: left;
+        }
+
+        .file-item {
+            background: var(--bg-card);
+            padding: 10px 15px;
+            margin: 5px 0;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Barra de navegación */
+        .navbar {
+            background: var(--bg-secondary);
+            padding: 15px 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .stats {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+
+        .stat-box {
+            background: var(--bg-card);
+            padding: 10px 15px;
+            border-radius: 10px;
+            min-width: 120px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .stat-box:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-box.active {
+            border: 2px solid var(--accent-primary);
+        }
+
+        .stat-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .stat-total .stat-value { color: var(--accent-primary); }
+        .stat-unreviewed .stat-value { color: #9ca3af; }
+        .stat-contactado .stat-value { color: var(--accent-success); }
+        .stat-jugando .stat-value { color: var(--accent-jugando); }
+        .stat-no-interesado .stat-value { color: var(--accent-danger); }
+        .stat-sin-wsp .stat-value { color: var(--accent-neutral); }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-success {
+            background: var(--accent-success);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--accent-danger);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--accent-warning);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            opacity: 0.9;
+        }
+
+        /* Barra de progreso */
+        .progress-container {
+            background: var(--bg-secondary);
+            padding: 15px 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .progress-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .progress-percentage {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+
+        .progress-bar {
+            height: 12px;
+            background: var(--bg-card);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-primary), #8b5cf6);
+            border-radius: 6px;
+            transition: width 0.5s ease;
+        }
+
+        .progress-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Controles de vista */
+        .view-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 300px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 15px 12px 45px;
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+
+        .view-toggle {
+            display: flex;
+            gap: 5px;
+            background: var(--bg-card);
+            padding: 5px;
+            border-radius: 10px;
+        }
+
+        .view-btn {
+            padding: 10px 20px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .view-btn.active {
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        /* Vista de tarjetas */
+        .cards-view {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .cards-view.active {
+            display: grid;
+        }
+
+        .contact-card {
+            background: var(--bg-card);
+            border-radius: 15px;
+            padding: 20px;
+            transition: all 0.3s;
+            border-left: 5px solid var(--accent-neutral);
+            position: relative;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .contact-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .contact-card[data-status="jugando"] { border-left-color: var(--accent-jugando); }
+        .contact-card[data-status="contactado"] { border-left-color: var(--accent-success); }
+        .contact-card[data-status="no interesado"] { border-left-color: var(--accent-danger); }
+        .contact-card[data-status="sin wsp"] { border-left-color: var(--accent-neutral); }
+        .contact-card[data-status="sin revisar"] { border-left-color: #9ca3af; }
+
+        .contact-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .contact-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 6px;
+            transition: background 0.2s;
+            max-width: 70%;
+            word-break: break-word;
+        }
+
+        .contact-name:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .contact-origin {
+            background: var(--bg-secondary);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .contact-info {
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .contact-phone {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+        }
+
+        .whatsapp-btn {
+            background: #25D366;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            width: fit-content;
+            transition: all 0.3s;
+        }
+
+        .whatsapp-btn:hover {
+            background: #128C7E;
+            transform: translateY(-2px);
+        }
+
+        .contact-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .status-select {
+            flex: 1;
+            min-width: 150px;
+            padding: 8px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+
+        .status-select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .delete-btn {
+            background: transparent;
+            border: 2px solid var(--accent-danger);
+            color: var(--accent-danger);
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .delete-btn:hover {
+            background: var(--accent-danger);
+            color: white;
+        }
+
+        /* Vista de lista con botones */
+        .list-view {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .list-view.active {
+            display: flex;
+        }
+
+        .list-item {
+            background: var(--bg-card);
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+            border-left: 4px solid var(--accent-neutral);
+        }
+
+        .list-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .list-item[data-status="jugando"] { border-left-color: var(--accent-jugando); }
+        .list-item[data-status="contactado"] { border-left-color: var(--accent-success); }
+        .list-item[data-status="no interesado"] { border-left-color: var(--accent-danger); }
+        .list-item[data-status="sin wsp"] { border-left-color: var(--accent-neutral); }
+        .list-item[data-status="sin revisar"] { border-left-color: #9ca3af; }
+
+        .list-item-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .list-item-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 5px;
+            display: inline-block;
+        }
+
+        .list-item-name:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .list-item-details {
+            display: flex;
+            gap: 15px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            flex-wrap: wrap;
+        }
+
+        .list-item-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .list-status-btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: none;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .list-status-btn:hover {
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        /* Vista Tinder */
+        .tinder-view {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 70vh;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .tinder-view.active {
+            display: flex;
+        }
+
+        .tinder-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 2px solid transparent;
+            text-align: center;
+            position: relative;
+            transition: transform 0.3s;
+        }
+
+        .tinder-card[data-status="jugando"] { border-color: var(--accent-jugando); }
+        .tinder-card[data-status="contactado"] { border-color: var(--accent-success); }
+        .tinder-card[data-status="no interesado"] { border-color: var(--accent-danger); }
+        .tinder-card[data-status="sin wsp"] { border-color: var(--accent-neutral); }
+        .tinder-card[data-status="sin revisar"] { border-color: #9ca3af; }
+
+        .tinder-header {
+            margin-bottom: 30px;
+        }
+
+        .tinder-name {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        .tinder-name:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .tinder-origin {
+            background: var(--bg-secondary);
+            padding: 6px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .tinder-info {
+            margin: 30px 0;
+            font-size: 1.2rem;
+        }
+
+        .tinder-phone {
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+            color: var(--text-secondary);
+        }
+
+        .tinder-whatsapp {
+            background: #25D366;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 12px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+            margin-bottom: 30px;
+        }
+
+        .tinder-whatsapp:hover {
+            background: #128C7E;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(37, 211, 102, 0.3);
+        }
+
+        .tinder-actions {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .tinder-action-btn {
+            padding: 15px;
+            border-radius: 12px;
+            border: none;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+        }
+
+        .tinder-action-btn:hover {
+            transform: translateY(-3px);
+            opacity: 0.9;
+        }
+
+        .tinder-action-btn.siguiente {
+            background: var(--accent-primary);
+            grid-column: span 3;
+        }
+
+        .tinder-action-btn.atras {
+            background: var(--accent-neutral);
+        }
+
+        .tinder-action-btn.jugando {
+            background: var(--accent-jugando);
+        }
+
+        .tinder-action-btn.contactado {
+            background: var(--accent-success);
+        }
+
+        .tinder-action-btn.no-interesado {
+            background: var(--accent-danger);
+        }
+
+        .tinder-action-btn.sin-wsp {
+            background: var(--accent-neutral);
+        }
+
+        .tinder-action-btn.sin-revisar {
+            background: #9ca3af;
+        }
+
+        .tinder-controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .tinder-counter {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-secondary);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        /* Paginación */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .page-btn {
+            padding: 10px 15px;
+            background: var(--bg-secondary);
+            border: none;
+            border-radius: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .page-btn:hover {
+            background: var(--hover-color);
+        }
+
+        .page-btn.active {
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Modal de exportación */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .modal.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal h3 {
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            color: var(--accent-primary);
+        }
+
+        .export-options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .export-option {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .export-option:hover {
+            border-color: var(--accent-primary);
+            transform: translateY(-2px);
+        }
+
+        .export-option.selected {
+            border-color: var(--accent-primary);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        /* Notificaciones */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            z-index: 3000;
+            transform: translateX(150%);
+            transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            max-width: 400px;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success { background: var(--accent-success); }
+        .notification.info { background: var(--accent-primary); }
+        .notification.warning { background: var(--accent-warning); }
+        .notification.error { background: var(--accent-danger); }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .cards-view {
+                grid-template-columns: 1fr;
+            }
+            
+            .navbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .stats {
+                justify-content: center;
+            }
+            
+            .stat-box {
+                min-width: 100px;
+                padding: 8px 10px;
+            }
+            
+            .stat-value {
+                font-size: 1.1rem;
+            }
+            
+            .controls {
+                justify-content: center;
+            }
+            
+            .search-box {
+                min-width: 100%;
+            }
+            
+            .view-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .view-toggle {
+                justify-content: center;
+            }
+            
+            .list-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .list-item-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+            
+            .tinder-card {
+                padding: 25px;
+            }
+            
+            .tinder-name {
+                font-size: 1.6rem;
+            }
+            
+            .tinder-actions {
+                grid-template-columns: 1fr;
+            }
+            
+            .tinder-action-btn.siguiente {
+                grid-column: span 1;
+            }
+        }
+
+        /* Scrollbar personalizada */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-primary);
+        }
+    </style>
+</head>
+<body>
+    <!-- Pantalla de carga inicial -->
+    <div class="upload-screen" id="uploadScreen">
+        <div class="upload-card">
+            <i class="fas fa-address-book"></i>
+            <h1>Gestor de Contactos Masivo</h1>
+            <p style="color: var(--text-secondary); margin-bottom: 30px;">
+                Sube tus archivos VCF desde diferentes celulares y organízalos profesionalmente
+            </p>
+            
+            <div class="file-upload-area" id="dropArea">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <h3>Arrastra y suelta archivos VCF</h3>
+                <p>o haz clic para seleccionar</p>
+                <input type="file" id="vcfFileInput" multiple accept=".vcf,.vcard" style="display: none;">
+            </div>
+            
+            <input type="text" class="origin-input" id="originName" placeholder="Nombre del origen (ej: Celular Ventas)">
+            
+            <div class="file-list" id="fileList"></div>
+            
+            <button class="btn-primary" id="processFiles">
+                <i class="fas fa-play"></i> Procesar Archivos y Comenzar
+            </button>
+        </div>
+    </div>
+
+    <!-- Interfaz principal (oculta inicialmente) -->
+    <div class="container" id="mainInterface" style="display: none;">
+        <!-- Barra de navegación -->
+        <div class="navbar">
+            <div class="stats">
+                <div class="stat-box stat-total active" data-filter="all">
+                    <div class="stat-value" id="totalContacts">0</div>
+                    <div>Total</div>
+                </div>
+                <div class="stat-box stat-unreviewed" data-filter="sin revisar">
+                    <div class="stat-value" id="unreviewedContacts">0</div>
+                    <div>Sin revisar</div>
+                </div>
+                <div class="stat-box stat-contactado" data-filter="contactado">
+                    <div class="stat-value" id="contactedContacts">0</div>
+                    <div>Contactado</div>
+                </div>
+                <div class="stat-box stat-jugando" data-filter="jugando">
+                    <div class="stat-value" id="playingContacts">0</div>
+                    <div>Jugando</div>
+                </div>
+                <div class="stat-box stat-no-interesado" data-filter="no interesado">
+                    <div class="stat-value" id="notInterestedContacts">0</div>
+                    <div>No interesado</div>
+                </div>
+                <div class="stat-box stat-sin-wsp" data-filter="sin wsp">
+                    <div class="stat-value" id="noWhatsappContacts">0</div>
+                    <div>Sin WSP</div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button class="btn btn-success" id="exportBtn">
+                    <i class="fas fa-file-export"></i> Exportar
+                </button>
+                <button class="btn btn-danger" id="clearDataBtn">
+                    <i class="fas fa-trash"></i> Borrar
+                </button>
+                <button class="btn btn-warning" id="addMoreBtn">
+                    <i class="fas fa-plus"></i> Agregar
+                </button>
+            </div>
+        </div>
+
+        <!-- Barra de progreso -->
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-header">
+                <div class="progress-title">Progreso de revisión</div>
+                <div class="progress-percentage" id="progressPercentage">0%</div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+            <div class="progress-stats">
+                <span id="reviewedCount">0 revisados</span>
+                <span id="totalCount">0 totales</span>
+            </div>
+        </div>
+
+        <!-- Controles de vista y búsqueda -->
+        <div class="view-controls">
+            <div class="search-box">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" class="search-input" id="searchInput" placeholder="Buscar por nombre o número...">
+            </div>
+            
+            <div class="view-toggle">
+                <button class="view-btn active" data-view="cards">
+                    <i class="fas fa-th-large"></i> Tarjetas
+                </button>
+                <button class="view-btn" data-view="list">
+                    <i class="fas fa-list"></i> Lista
+                </button>
+                <button class="view-btn" data-view="tinder">
+                    <i class="fas fa-fire"></i> Revisión
+                </button>
+            </div>
+        </div>
+
+        <!-- Vista de tarjetas -->
+        <div class="cards-view active" id="cardsView"></div>
+
+        <!-- Vista de lista -->
+        <div class="list-view" id="listView"></div>
+
+        <!-- Vista Tinder -->
+        <div class="tinder-view" id="tinderView">
+            <div class="tinder-card" id="tinderCard">
+                <div class="tinder-counter" id="tinderCounter">1/0</div>
+                <div class="tinder-header">
+                    <div class="tinder-name" id="tinderName">No hay contactos</div>
+                    <div class="tinder-origin" id="tinderOrigin">-</div>
+                </div>
+                <div class="tinder-info">
+                    <div class="tinder-phone" id="tinderPhone">-</div>
+                    <a href="#" class="tinder-whatsapp" id="tinderWhatsapp" target="_blank">
+                        <i class="fab fa-whatsapp"></i> Enviar WhatsApp
+                    </a>
+                </div>
+                <div class="tinder-actions">
+                    <button class="tinder-action-btn atras" id="tinderBack">
+                        <i class="fas fa-undo"></i> Atrás
+                    </button>
+                    <button class="tinder-action-btn sin-wsp" data-status="sin wsp">
+                        <i class="fas fa-ban"></i> Sin WSP
+                    </button>
+                    <button class="tinder-action-btn no-interesado" data-status="no interesado">
+                        <i class="fas fa-times"></i> No Interesado
+                    </button>
+                    <button class="tinder-action-btn jugando" data-status="jugando">
+                        <i class="fas fa-gamepad"></i> Jugando
+                    </button>
+                    <button class="tinder-action-btn contactado" data-status="contactado">
+                        <i class="fas fa-check"></i> Contactado
+                    </button>
+                    <button class="tinder-action-btn sin-revisar" data-status="sin revisar">
+                        <i class="fas fa-clock"></i> Sin Revisar
+                    </button>
+                    <button class="tinder-action-btn siguiente" id="tinderNext">
+                        <i class="fas fa-arrow-right"></i> Siguiente
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Paginación -->
+        <div class="pagination" id="pagination">
+            <!-- Se generará dinámicamente -->
+        </div>
+    </div>
+
+    <!-- Modal de exportación -->
+    <div class="modal" id="exportModal">
+        <div class="modal-content">
+            <h3>Exportar Contactos</h3>
+            <p id="exportWarning" style="color: var(--text-secondary); margin-bottom: 20px;">
+                <!-- Mensaje se actualizará dinámicamente -->
+            </p>
+            
+            <div class="export-options">
+                <div class="export-option selected" data-format="excel">
+                    <i class="fas fa-file-excel"></i>
+                    <strong>Exportar a Excel</strong>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 5px;">
+                        Formato optimizado para Google Sheets
+                    </p>
+                </div>
+                <div class="export-option" data-format="vcf">
+                    <i class="fas fa-address-card"></i>
+                    <strong>Exportar a VCF</strong>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 5px;">
+                        Archivo único con todos los contactos
+                    </p>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 25px;">
+                <button class="btn btn-danger" id="cancelExport" style="flex: 1;">
+                    Cancelar
+                </button>
+                <button class="btn btn-success" id="confirmExport" style="flex: 2;">
+                    <i class="fas fa-download"></i> Export
