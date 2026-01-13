@@ -520,7 +520,16 @@
             const savedData = localStorage.getItem('contactManagerData');
             if (savedData) {
                 try {
-                    AppState.contacts = JSON.parse(savedData);
+                    const parsedData = JSON.parse(savedData);
+                    // BUG FIX: Ensure loaded data is an array
+                    if (Array.isArray(parsedData)) {
+                        AppState.contacts = parsedData;
+                    } else {
+                        console.warn('Los datos guardados estaban corruptos y han sido reiniciados.');
+                        AppState.contacts = [];
+                        localStorage.removeItem('contactManagerData');
+                    }
+
                     if (AppState.contacts.length > 0) {
                         elements.uploadScreen.classList.add('hidden');
                         setTimeout(() => {
@@ -529,7 +538,11 @@
                            render();
                         }, 500);
                     }
-                } catch (e) { console.error('Error al cargar datos:', e); }
+                } catch (e) { 
+                    console.error('Error al cargar datos:', e); 
+                    AppState.contacts = [];
+                    localStorage.removeItem('contactManagerData');
+                }
             }
         }
         function saveData() {
@@ -565,7 +578,6 @@
                 allNewContacts.push(...parseVCF(text, origin));
             }
             
-            // CORRECTED DUPLICATE DETECTION LOGIC
             const getContactKey = (contact) => `${(contact.name || '').toLowerCase().trim()}_${contact.phone || ''}`;
 
             const existingContactsMap = new Map(
@@ -577,13 +589,12 @@
 
             for (const contact of allNewContacts) {
                 const key = getContactKey(contact);
-                if (key.endsWith('_')) continue; // Ignore contacts without name and phone
+                if (!contact.name || !contact.phone) continue;
 
                 if (existingContactsMap.has(key)) {
                     duplicates.push(contact);
                 } else {
                     uniqueNewContacts.push(contact);
-                    // Add to map to also catch duplicates within the same import session
                     existingContactsMap.set(key, contact);
                 }
             }
@@ -815,7 +826,7 @@
             }
             $('#progressContainer').style.display = 'block';
             const reviewed = total - AppState.contacts.filter(c => c.status === 'sin revisar').length;
-            const percentage = Math.round((reviewed / total) * 100);
+            const percentage = total > 0 ? Math.round((reviewed / total) * 100) : 0;
             elements.progressFill.style.width = `${percentage}%`;
             elements.progressPercentage.textContent = `${percentage}%`;
             elements.reviewedCount.textContent = `${reviewed} revisados`;
