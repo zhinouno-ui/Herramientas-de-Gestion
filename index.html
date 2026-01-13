@@ -38,7 +38,7 @@
       display:flex;
       flex-wrap:wrap;
       gap:26px;
-      max-width:900px;
+      max-width:980px;
       width:100%;
       justify-content:center;
     }
@@ -55,8 +55,8 @@
       text-align:center;
     }
     .card:hover{
-      transform:translateY(-5px);
-      box-shadow:0 0 25px #0009;
+      transform:translateY(-6px);
+      box-shadow:0 0 28px #0009;
       border-color:var(--accent-soft);
     }
 
@@ -77,23 +77,23 @@
       font-size:14px;
       color:var(--muted);
       margin-bottom:18px;
+      line-height:1.4;
     }
 
     a.btn{
       background:var(--accent);
       color:#0d130f;
-      padding:10px 16px;
+      padding:10px 18px;
       display:inline-block;
       border-radius:10px;
       font-weight:700;
       text-decoration:none;
     }
-
   </style>
 </head>
 <body>
 
-  <div style="width:100%;max-width:900px;">
+  <div style="width:100%;max-width:980px;">
     <h1>Panel de Herramientas</h1>
 
     <div class="container">
@@ -102,7 +102,9 @@
       <div class="card" onclick="location.href='data-match.html'">
         <div class="icon">📊</div>
         <div class="title">Comparador de cargas Agente – Chunior</div>
-        <div class="desc">Recomendable nombrar los csv y filtrar por turnos y fechas</div>
+        <div class="desc">
+          Recomendable nombrar correctamente los CSV y filtrar por turnos y fechas.
+        </div>
         <a class="btn" href="data-match.html">Ingresar</a>
       </div>
 
@@ -110,8 +112,20 @@
       <div class="card" onclick="location.href='users-analysis.html'">
         <div class="icon">🔍</div>
         <div class="title">Recuperación de Usuarios</div>
-        <div class="desc">Compara usuarios que dejaron de jugar en el lapso que vayas a filtrar.</div>
+        <div class="desc">
+          Compara usuarios que dejaron de jugar dentro del rango de fechas seleccionado.
+        </div>
         <a class="btn" href="users-analysis.html">Ingresar</a>
+      </div>
+
+      <!-- CARD 3 -->
+      <div class="card" onclick="location.href='nexo.html'">
+        <div class="icon">🔗</div>
+        <div class="title">Nexo</div>
+        <div class="desc">
+          Herramienta de gestión de contactos para revinculación.
+        </div>
+        <a class="btn" href="nexo.html">Ingresar</a>
       </div>
 
     </div>
