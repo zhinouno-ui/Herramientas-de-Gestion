@@ -1,0 +1,1069 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Contactos Masivo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: #334155;
+            --accent-primary: #3b82f6;
+            --accent-success: #10b981;
+            --accent-warning: #f59e0b;
+            --accent-danger: #ef4444;
+            --accent-neutral: #6b7280;
+            --accent-jugando: #8b5cf6;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --border-color: #475569;
+            --hover-color: #475569;
+            --selection-bg: rgba(59, 130, 246, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Pantalla de inicio */
+        .upload-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1e1b4b 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .upload-screen.hidden {
+            opacity: 0;
+            transform: scale(0.95);
+            pointer-events: none;
+        }
+
+        .upload-card {
+            background: var(--bg-secondary);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            border: 2px solid var(--accent-primary);
+        }
+
+        .upload-card h1 {
+            margin-bottom: 30px;
+            font-size: 2.2rem;
+            background: linear-gradient(90deg, var(--accent-primary), #8b5cf6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .upload-card i {
+            font-size: 4rem;
+            color: var(--accent-primary);
+            margin-bottom: 20px;
+        }
+
+        .file-upload-area {
+            border: 3px dashed var(--border-color);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--accent-primary);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .origin-input {
+            width: 100%;
+            padding: 12px 15px;
+            margin-top: 20px;
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+        
+        .file-list {
+            margin-top: 20px;
+            max-height: 150px;
+            overflow-y: auto;
+            text-align: left;
+        }
+        .file-item {
+            background: var(--bg-card);
+            padding: 10px 15px;
+            margin: 5px 0;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+        .file-item span:last-child {
+            color: var(--text-secondary);
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, var(--accent-primary), #6366f1);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+        }
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Barra de navegación */
+        .navbar {
+            background: var(--bg-secondary);
+            padding: 15px 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .stats { display: flex; gap: 10px; flex-wrap: wrap; flex: 1; }
+        .stat-box { background: var(--bg-card); padding: 10px 15px; border-radius: 10px; min-width: 120px; text-align: center; cursor: pointer; transition: all 0.3s; border: 2px solid transparent; }
+        .stat-box:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); }
+        .stat-box.active { border-color: var(--accent-primary); }
+        .stat-value { font-size: 1.3rem; font-weight: 700; }
+        .stat-total .stat-value { color: var(--accent-primary); }
+        .stat-unreviewed .stat-value { color: #9ca3af; }
+        .stat-contactado .stat-value { color: var(--accent-success); }
+        .stat-jugando .stat-value { color: var(--accent-jugando); }
+        .stat-no-interesado .stat-value { color: var(--accent-danger); }
+        .stat-sin-wsp .stat-value { color: var(--accent-neutral); }
+        .controls { display: flex; gap: 10px; flex-wrap: wrap; }
+        .btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-success { background: var(--accent-success); color: white; }
+        .btn-danger { background: var(--accent-danger); color: white; }
+        .btn-warning { background: var(--accent-warning); color: white; }
+        .btn:hover { transform: translateY(-2px); opacity: 0.9; }
+
+        /* Barra de progreso */
+        .progress-container { background: var(--bg-secondary); padding: 15px 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); }
+        .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .progress-percentage { color: var(--accent-primary); }
+        .progress-bar { height: 12px; background: var(--bg-card); border-radius: 6px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent-primary), #8b5cf6); border-radius: 6px; transition: width 0.5s ease; }
+        .progress-stats { display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--text-secondary); }
+
+        /* Controles de vista y búsqueda */
+        .view-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
+        .search-box { flex: 1; min-width: 300px; position: relative; }
+        .search-input { width: 100%; padding: 12px 15px 12px 45px; background: var(--bg-card); border: 2px solid var(--border-color); border-radius: 10px; color: var(--text-primary); font-size: 1rem; }
+        .search-input:focus { outline: none; border-color: var(--accent-primary); }
+        .search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); }
+        .view-toggle { display: flex; gap: 5px; background: var(--bg-card); padding: 5px; border-radius: 10px; }
+        .view-btn { padding: 10px 20px; background: transparent; border: none; color: var(--text-secondary); border-radius: 8px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 8px; }
+        .view-btn.active { background: var(--accent-primary); color: white; }
+
+        /* Vistas de contactos */
+        .cards-view, .list-view, .tinder-view { display: none; }
+        .cards-view.active, .list-view.active, .tinder-view.active { display: grid; }
+        .list-view.active { display: flex; flex-direction: column; gap: 10px; }
+        .tinder-view.active { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70vh; }
+        .cards-view { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+
+        .contact-card {
+            padding: 15px 20px;
+        }
+
+        .list-item {
+             padding: 10px 20px;
+        }
+
+        .contact-card, .list-item {
+            background: var(--bg-card);
+            border-radius: 15px;
+            transition: all 0.3s;
+            border-left: 5px solid;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .contact-card:hover, .list-item:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); }
+        .contact-card[data-status="jugando"], .list-item[data-status="jugando"] { border-left-color: var(--accent-jugando); }
+        .contact-card[data-status="contactado"], .list-item[data-status="contactado"] { border-left-color: var(--accent-success); }
+        .contact-card[data-status="no interesado"], .list-item[data-status="no interesado"] { border-left-color: var(--accent-danger); }
+        .contact-card[data-status="sin wsp"], .list-item[data-status="sin wsp"] { border-left-color: var(--accent-neutral); }
+        .contact-card[data-status="sin revisar"], .list-item[data-status="sin revisar"] { border-left-color: #9ca3af; }
+        .contact-card.selected, .list-item.selected { background-color: var(--selection-bg); border-left-color: var(--accent-primary); }
+
+        .contact-name, .list-item-name, .contact-phone { cursor: pointer; padding: 5px; border-radius: 6px; transition: background 0.2s; display: inline-block; }
+        .contact-name:hover, .list-item-name:hover, .contact-phone:hover { background: rgba(255, 255, 255, 0.1); }
+        .inline-edit-input { background: var(--bg-secondary); border: 1px solid var(--accent-primary); color: var(--text-primary); border-radius: 4px; padding: 5px; font-size: inherit; width: 90%; }
+        
+        .contact-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+        .contact-info { flex: 1; }
+        .contact-actions { display: flex; align-items: center; gap: 8px; }
+        .origin-tag { font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap; }
+
+        .delete-contact-btn { background: transparent; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1rem; padding: 5px; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .delete-contact-btn:hover { background: var(--accent-danger); color: white; }
+
+        .whatsapp-btn { background: #25D366; color: white; padding: 8px 15px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; width: fit-content; transition: all 0.3s; margin-top: 10px; }
+        .whatsapp-btn:hover { background: #128C7E; transform: translateY(-2px); }
+
+        .list-item-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .status-btn { background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-secondary); border-radius: 6px; padding: 6px 10px; cursor: pointer; transition: all 0.2s; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 5px; }
+        .status-btn:hover { background: var(--hover-color); color: var(--text-primary); }
+        
+        /* Vista Tinder */
+        .tinder-card { background: var(--bg-card); border-radius: 20px; padding: 40px; max-width: 500px; width: 90%; text-align: center; position: relative; transition: opacity 0.3s ease, transform 0.3s ease; }
+        .tinder-card.fading { opacity: 0; transform: scale(0.95); }
+        .tinder-name { font-size: 2rem; }
+        .tinder-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px; }
+        .tinder-action-btn { padding: 15px; border-radius: 12px; border: none; color: white; cursor: pointer; transition: all 0.3s; }
+        .tinder-action-btn:hover { transform: translateY(-3px); opacity: 0.9; }
+        .tinder-action-btn.siguiente { background: var(--accent-primary); grid-column: span 3; }
+        .tinder-counter { position: absolute; top: 20px; right: 20px; background: var(--bg-secondary); padding: 8px 15px; border-radius: 20px; font-weight: 600; }
+        
+        /* Acciones en lote */
+        .bulk-actions-bar {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-secondary);
+            padding: 15px 25px;
+            border-radius: 15px;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: bottom 0.4s ease-in-out;
+            z-index: 1500;
+        }
+        .bulk-actions-bar.active { bottom: 20px; }
+        .bulk-actions-bar .status-select { min-width: 150px; padding: 8px; border-radius: 8px; background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color); }
+
+        /* Checkbox personalizado */
+        .contact-selection { display: flex; align-items: center; gap: 15px; }
+        .custom-checkbox { width: 20px; height: 20px; background: var(--bg-primary); border: 2px solid var(--border-color); border-radius: 5px; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: all 0.2s; }
+        .custom-checkbox i { color: white; font-size: 12px; opacity: 0; transform: scale(0.5); transition: all 0.2s; }
+        .contact-checkbox:checked + .custom-checkbox { background: var(--accent-primary); border-color: var(--accent-primary); }
+        .contact-checkbox:checked + .custom-checkbox i { opacity: 1; transform: scale(1); }
+        .contact-checkbox { display: none; }
+
+        /* Modal */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); display: flex; justify-content: center; align-items: center; z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+        .modal.active { opacity: 1; pointer-events: all; }
+        .modal-content { background: var(--bg-secondary); padding: 30px; border-radius: 20px; max-width: 500px; width: 90%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); }
+        .modal h3 { margin-bottom: 20px; font-size: 1.5rem; color: var(--accent-primary); }
+        .export-option, .duplicate-option { background: var(--bg-card); padding: 15px; border-radius: 10px; cursor: pointer; transition: all 0.3s; border: 2px solid transparent; }
+        .export-option:hover, .duplicate-option:hover { border-color: var(--accent-primary); transform: translateY(-2px); }
+        .export-option.selected, .duplicate-option.selected { border-color: var(--accent-primary); background: var(--selection-bg); }
+
+        /* Notificaciones */
+        .notification { position: fixed; top: 20px; right: 20px; padding: 15px 25px; border-radius: 10px; color: white; font-weight: 600; z-index: 3000; transform: translateX(150%); transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55); max-width: 400px; }
+        .notification.show { transform: translateX(0); }
+        .notification.success { background: var(--accent-success); }
+        .notification.info { background: var(--accent-primary); }
+        .notification.warning { background: var(--accent-warning); }
+        .notification.error { background: var(--accent-danger); }
+
+        /* Paginación y otros */
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 30px; flex-wrap: wrap; }
+        .page-btn { padding: 10px 15px; background: var(--bg-secondary); border: none; border-radius: 8px; color: var(--text-primary); cursor: pointer; transition: all 0.3s; }
+        .page-btn:hover { background: var(--hover-color); }
+        .page-btn.active { background: var(--accent-primary); color: white; }
+        .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Scrollbar personalizada */
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-primary); }
+
+        @media (max-width: 768px) {
+            .cards-view { grid-template-columns: 1fr; }
+            .navbar, .view-controls { flex-direction: column; align-items: stretch; }
+            .bulk-actions-bar { flex-direction: column; width: 90%; bottom: -200px; gap: 10px; padding: 15px; }
+            .bulk-actions-bar.active { bottom: 10px; }
+            .list-item { flex-direction: column; align-items: flex-start; gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="upload-screen" id="uploadScreen">
+        <div class="upload-card">
+            <i class="fas fa-address-book"></i>
+            <h1>Gestor de Contactos Masivo</h1>
+            <p style="color: var(--text-secondary); margin-bottom: 30px;">Importa, limpia y categoriza tus contactos sin esfuerzo.</p>
+            <div class="file-upload-area" id="dropArea">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <h3>Arrastra y suelta archivos VCF</h3>
+                <p>o haz clic para seleccionar</p>
+                <input type="file" id="vcfFileInput" multiple accept=".vcf,.vcard" style="display: none;">
+            </div>
+            <div class="file-list" id="fileList"></div>
+            <input type="text" class="origin-input" id="originName" placeholder="Nombre del origen (ej: Celular Ventas)">
+            <button class="btn-primary" id="processFiles"><i class="fas fa-play"></i> Procesar y Comenzar</button>
+        </div>
+    </div>
+
+    <div class="container" id="mainInterface" style="display: none;">
+        <div class="navbar">
+            <div class="stats">
+                <div class="stat-box stat-total active" data-filter="all"><div class="stat-value" id="totalContacts">0</div><div>Total</div></div>
+                <div class="stat-box stat-unreviewed" data-filter="sin revisar"><div class="stat-value" id="unreviewedContacts">0</div><div>Sin revisar</div></div>
+                <div class="stat-box stat-contactado" data-filter="contactado"><div class="stat-value" id="contactedContacts">0</div><div>Contactado</div></div>
+                <div class="stat-box stat-jugando" data-filter="jugando"><div class="stat-value" id="playingContacts">0</div><div>Jugando</div></div>
+                <div class="stat-box stat-no-interesado" data-filter="no interesado"><div class="stat-value" id="notInterestedContacts">0</div><div>No interesado</div></div>
+                <div class="stat-box stat-sin-wsp" data-filter="sin wsp"><div class="stat-value" id="noWhatsappContacts">0</div><div>Sin WSP</div></div>
+            </div>
+            <div class="controls">
+                <button class="btn btn-success" id="exportBtn"><i class="fas fa-file-export"></i> Exportar</button>
+                <button class="btn btn-danger" id="clearDataBtn"><i class="fas fa-trash"></i> Borrar Todo</button>
+                <button class="btn btn-warning" id="addMoreBtn"><i class="fas fa-plus"></i> Agregar Más</button>
+            </div>
+        </div>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-header"><div class="progress-title">Progreso de revisión</div><div class="progress-percentage" id="progressPercentage">0%</div></div>
+            <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width: 0%"></div></div>
+            <div class="progress-stats"><span id="reviewedCount">0 revisados</span><span id="totalCount">0 totales</span></div>
+        </div>
+
+        <div class="view-controls">
+            <div class="search-box"><i class="fas fa-search search-icon"></i><input type="text" class="search-input" id="searchInput" placeholder="Buscar por nombre o número..."></div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <label for="selectAllCheckbox" class="custom-checkbox" style="display: none;"><i class="fas fa-check"></i></label>
+                <input type="checkbox" id="selectAllCheckbox" class="contact-checkbox">
+                <div class="view-toggle">
+                    <button class="view-btn active" data-view="cards"><i class="fas fa-th-large"></i> Tarjetas</button>
+                    <button class="view-btn" data-view="list"><i class="fas fa-list"></i> Lista</button>
+                    <button class="view-btn" data-view="tinder"><i class="fas fa-fire"></i> Revisión</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="cards-view active" id="cardsView"></div>
+        <div class="list-view" id="listView"></div>
+        <div class="tinder-view" id="tinderView">
+            <div class="tinder-card" id="tinderCard">
+                <div class="tinder-counter" id="tinderCounter">1/0</div>
+                <div class="tinder-header"><div class="tinder-name" id="tinderName">No hay contactos</div><div id="tinderOrigin" style="color: var(--text-secondary);"></div></div>
+                <div class="tinder-info"><div class="tinder-phone" id="tinderPhone">-</div><a href="#" class="whatsapp-btn" id="tinderWhatsapp" target="_blank"><i class="fab fa-whatsapp"></i> Enviar WhatsApp</a></div>
+                <div class="tinder-actions">
+                    <button class="tinder-action-btn" id="tinderBack" style="background: var(--accent-neutral);"><i class="fas fa-undo"></i> Atrás</button>
+                    <button class="tinder-action-btn" data-status="sin wsp" style="background: var(--accent-neutral);"><i class="fas fa-ban"></i> Sin WSP</button>
+                    <button class="tinder-action-btn" data-status="no interesado" style="background: var(--accent-danger);"><i class="fas fa-times"></i> No Interesado</button>
+                    <button class="tinder-action-btn" data-status="jugando" style="background: var(--accent-jugando);"><i class="fas fa-gamepad"></i> Jugando</button>
+                    <button class="tinder-action-btn" data-status="contactado" style="background: var(--accent-success);"><i class="fas fa-check"></i> Contactado</button>
+                    <button class="tinder-action-btn" data-status="sin revisar" style="background: #9ca3af;"><i class="fas fa-clock"></i> Sin Revisar</button>
+                    <button class="tinder-action-btn siguiente" id="tinderNext"><i class="fas fa-arrow-right"></i> Siguiente</button>
+                </div>
+            </div>
+        </div>
+        <div class="pagination" id="pagination"></div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" id="exportModal">
+        <div class="modal-content">
+            <h3>Exportar Contactos</h3>
+            <div style="display: flex; flex-direction: column; gap: 15px; margin: 20px 0;">
+                <div class="export-option selected" data-type="filtered"><strong id="exportFilteredCount"></strong><p>Exportar la vista actual</p></div>
+                <div class="export-option" data-type="all"><strong id="exportAllCount"></strong><p>Exportar todos los contactos</p></div>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <h4>Formato:</h4>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <div class="export-option selected" data-format="excel" style="flex:1; text-align: center;"><i class="fas fa-file-excel"></i> Excel (CSV)</div>
+                    <div class="export-option" data-format="vcf" style="flex:1; text-align: center;"><i class="fas fa-address-card"></i> VCF</div>
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 25px;">
+                <button class="btn" id="cancelExport" style="flex: 1; background: var(--bg-card);">Cancelar</button>
+                <button class="btn btn-success" id="confirmExport" style="flex: 2;"><i class="fas fa-download"></i> Exportar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="duplicateModal">
+        <div class="modal-content">
+            <h3><i class="fas fa-exclamation-triangle" style="color: var(--accent-warning);"></i> Se encontraron duplicados</h3>
+            <p style="color: var(--text-secondary); margin: 15px 0;">Se han encontrado <strong id="duplicateCount">0</strong> contactos que ya existen en tu lista. ¿Qué deseas hacer?</p>
+            <div style="display: flex; flex-direction: column; gap: 15px; margin: 20px 0;">
+                <div class="duplicate-option selected" data-action="skip"><strong>Omitir Duplicados</strong><p>No importar los contactos que ya existen.</p></div>
+                <div class="duplicate-option" data-action="overwrite"><strong>Sobrescribir</strong><p>Actualizar los contactos existentes con la nueva información.</p></div>
+                <div class="duplicate-option" data-action="keep"><strong>Mantener Ambos</strong><p>Importar los duplicados como contactos nuevos.</p></div>
+            </div>
+            <button class="btn btn-primary" id="confirmDuplicateAction" style="width: 100%;">Continuar</button>
+        </div>
+    </div>
+
+    <!-- Bulk Actions Bar -->
+    <div class="bulk-actions-bar" id="bulkActionsBar">
+        <strong id="bulkSelectedCount">0 seleccionados</strong>
+        <select class="status-select" id="bulkStatusSelect"></select>
+        <button class="btn btn-danger" id="bulkDeleteBtn"><i class="fas fa-trash"></i> Eliminar</button>
+        <button class="btn" id="bulkCancelBtn" style="background: var(--bg-card);"><i class="fas fa-times"></i></button>
+    </div>
+    
+    <div class="notification" id="notification"></div>
+
+    <script>
+    (function() {
+        'use strict';
+
+        const AppState = {
+            contacts: [],
+            filteredContacts: [],
+            filesToProcess: [],
+            currentView: 'cards',
+            currentPage: 1,
+            itemsPerPage: 50,
+            currentFilter: 'all',
+            tinderIndex: 0,
+            selectedContacts: new Set(),
+        };
+
+        const STATUS_OPTIONS = [
+            { id: 'sin revisar', label: 'Sin Revisar', color: '#9ca3af', icon: 'fas fa-clock' },
+            { id: 'jugando', label: 'Jugando', color: '#8b5cf6', icon: 'fas fa-gamepad' },
+            { id: 'contactado', label: 'Contactado', color: '#10b981', icon: 'fas fa-check' },
+            { id: 'no interesado', label: 'No Interesado', color: '#ef4444', icon: 'fas fa-times' },
+            { id: 'sin wsp', label: 'Sin WSP', color: '#6b7280', icon: 'fas fa-ban' }
+        ];
+
+        const $ = (selector) => document.querySelector(selector);
+        const $$ = (selector) => document.querySelectorAll(selector);
+
+        const elements = {
+            uploadScreen: $('#uploadScreen'),
+            mainInterface: $('#mainInterface'),
+            vcfFileInput: $('#vcfFileInput'),
+            fileList: $('#fileList'),
+            dropArea: $('#dropArea'),
+            originName: $('#originName'),
+            processFiles: $('#processFiles'),
+            cardsView: $('#cardsView'),
+            listView: $('#listView'),
+            tinderView: $('#tinderView'),
+            tinderCard: $('#tinderCard'),
+            searchInput: $('#searchInput'),
+            pagination: $('#pagination'),
+            notification: $('#notification'),
+            progressFill: $('#progressFill'),
+            progressPercentage: $('#progressPercentage'),
+            reviewedCount: $('#reviewedCount'),
+            totalCount: $('#totalCount'),
+            bulkActionsBar: $('#bulkActionsBar'),
+            bulkSelectedCount: $('#bulkSelectedCount'),
+            bulkStatusSelect: $('#bulkStatusSelect'),
+            selectAllCheckbox: $('#selectAllCheckbox'),
+            selectAllLabel: $('label[for="selectAllCheckbox"]'),
+        };
+
+        function showNotification(message, type = 'info') {
+            elements.notification.textContent = message;
+            elements.notification.className = `notification ${type} show`;
+            setTimeout(() => elements.notification.classList.remove('show'), 3000);
+        }
+
+        // --- Almacenamiento ---
+        function loadData() {
+            const savedData = localStorage.getItem('contactManagerData');
+            if (savedData) {
+                try {
+                    AppState.contacts = JSON.parse(savedData);
+                    if (AppState.contacts.length > 0) {
+                        elements.uploadScreen.classList.add('hidden');
+                        setTimeout(() => {
+                           elements.uploadScreen.style.display = 'none';
+                           elements.mainInterface.style.display = 'block';
+                           render();
+                        }, 500);
+                    }
+                } catch (e) { console.error('Error al cargar datos:', e); }
+            }
+        }
+        function saveData() {
+            localStorage.setItem('contactManagerData', JSON.stringify(AppState.contacts));
+        }
+
+        // --- Lógica de VCF y Duplicados ---
+        function addFilesToList(files) {
+            AppState.filesToProcess.push(...files);
+            renderFileList();
+        }
+
+        function renderFileList() {
+            elements.fileList.innerHTML = AppState.filesToProcess.map(file => `
+                <div class="file-item">
+                    <span>${file.name}</span>
+                    <span>(${(file.size / 1024).toFixed(1)} KB)</span>
+                </div>
+            `).join('');
+        }
+        
+        async function processFiles() {
+            if (AppState.filesToProcess.length === 0) return showNotification('Selecciona al menos un archivo VCF', 'warning');
+            const origin = elements.originName.value.trim();
+            if (!origin) return showNotification('Ingresa un nombre para el origen', 'warning');
+
+            elements.processFiles.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+            elements.processFiles.disabled = true;
+
+            let allNewContacts = [];
+            for (const file of AppState.filesToProcess) {
+                const text = await file.text();
+                allNewContacts.push(...parseVCF(text, origin));
+            }
+            
+            // CORRECTED DUPLICATE DETECTION LOGIC
+            const getContactKey = (contact) => `${(contact.name || '').toLowerCase().trim()}_${contact.phone || ''}`;
+
+            const existingContactsMap = new Map(
+                AppState.contacts.map(c => [getContactKey(c), c])
+            );
+            
+            const duplicates = [];
+            const uniqueNewContacts = [];
+
+            for (const contact of allNewContacts) {
+                const key = getContactKey(contact);
+                if (key.endsWith('_')) continue; // Ignore contacts without name and phone
+
+                if (existingContactsMap.has(key)) {
+                    duplicates.push(contact);
+                } else {
+                    uniqueNewContacts.push(contact);
+                    // Add to map to also catch duplicates within the same import session
+                    existingContactsMap.set(key, contact);
+                }
+            }
+
+            let finalNewContacts = uniqueNewContacts;
+
+            if (duplicates.length > 0) {
+                const action = await handleDuplicates(duplicates);
+                switch (action) {
+                    case 'overwrite':
+                        duplicates.forEach(dup => {
+                            const key = getContactKey(dup);
+                            const existingIndex = AppState.contacts.findIndex(c => getContactKey(c) === key);
+                            if (existingIndex > -1) {
+                                const originalId = AppState.contacts[existingIndex].id;
+                                AppState.contacts[existingIndex] = { ...dup, id: originalId, lastUpdated: new Date().toISOString() };
+                            }
+                        });
+                        break;
+                    case 'keep':
+                        finalNewContacts.push(...duplicates);
+                        break;
+                    case 'skip':
+                    default:
+                        break;
+                }
+            }
+            AppState.contacts.push(...finalNewContacts);
+            
+            AppState.filesToProcess = [];
+            renderFileList();
+            elements.originName.value = '';
+            elements.processFiles.innerHTML = '<i class="fas fa-play"></i> Procesar y Comenzar';
+            elements.processFiles.disabled = false;
+
+            saveData();
+            showNotification(`${allNewContacts.length} contactos procesados`, 'success');
+            
+            elements.uploadScreen.classList.add('hidden');
+            setTimeout(() => {
+                elements.uploadScreen.style.display = 'none';
+                elements.mainInterface.style.display = 'block';
+                render();
+            }, 500);
+        }
+
+        function parseVCF(text, origin) {
+            const contacts = [];
+            const vcards = text.split(/END:VCARD/i).filter(v => v.trim());
+            for (let vcard of vcards) {
+                const nameMatch = vcard.match(/FN(?:;CHARSET=UTF-8)?:(.+)/i);
+                const telMatch = vcard.match(/TEL[^:]*:(.+)/i);
+                if (nameMatch || telMatch) {
+                    contacts.push({
+                        id: `id_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                        name: nameMatch ? nameMatch[1].trim() : 'Sin nombre',
+                        phone: telMatch ? telMatch[1].replace(/\D/g, '') : '',
+                        origin,
+                        status: 'sin revisar',
+                        lastUpdated: new Date().toISOString()
+                    });
+                }
+            }
+            return contacts;
+        }
+
+        function handleDuplicates(duplicates) {
+            return new Promise(resolve => {
+                $('#duplicateCount').textContent = duplicates.length;
+                const modal = $('#duplicateModal');
+                modal.classList.add('active');
+
+                const options = $$('.duplicate-option');
+                options.forEach(opt => opt.onclick = () => {
+                    options.forEach(o => o.classList.remove('selected'));
+                    opt.classList.add('selected');
+                });
+
+                $('#confirmDuplicateAction').onclick = () => {
+                    const action = $('.duplicate-option.selected').dataset.action;
+                    modal.classList.remove('active');
+                    resolve(action);
+                };
+            });
+        }
+        
+        // --- Renderizado y UI ---
+        function render() {
+            filterContacts();
+            updateStats();
+            updateProgress();
+            updateView();
+            updateBulkActionsBar();
+        }
+
+        function filterContacts() {
+            const term = elements.searchInput.value.toLowerCase();
+            let result = AppState.currentFilter === 'all'
+                ? [...AppState.contacts]
+                : AppState.contacts.filter(c => c.status === AppState.currentFilter);
+            
+            if (term) {
+                result = result.filter(c => c.name.toLowerCase().includes(term) || (c.phone && c.phone.includes(term)));
+            }
+            AppState.filteredContacts = result;
+            if(AppState.currentPage > Math.ceil(result.length / AppState.itemsPerPage)) {
+                AppState.currentPage = 1;
+            }
+        }
+
+        function updateView() {
+            $$('.cards-view, .list-view, .tinder-view').forEach(v => v.classList.remove('active'));
+            elements.selectAllLabel.style.display = ['cards', 'list'].includes(AppState.currentView) ? 'flex' : 'none';
+            $(`.${AppState.currentView}-view`).classList.add('active');
+
+            switch (AppState.currentView) {
+                case 'cards': renderPaginatedView(createCard); break;
+                case 'list': renderPaginatedView(createListItem); break;
+                case 'tinder': renderTinderView(); break;
+            }
+            $('#pagination').style.display = AppState.currentView === 'tinder' ? 'none' : 'flex';
+        }
+
+        function renderPaginatedView(createFn) {
+            const viewEl = $(`#${AppState.currentView}View`);
+            viewEl.innerHTML = '';
+            const startIndex = (AppState.currentPage - 1) * AppState.itemsPerPage;
+            const pageContacts = AppState.filteredContacts.slice(startIndex, startIndex + AppState.itemsPerPage);
+            pageContacts.forEach(c => viewEl.appendChild(createFn(c)));
+            renderPagination();
+        }
+        
+        function createStatusButtons(contact) {
+            let buttonsHTML = '<div class="list-item-actions">';
+            STATUS_OPTIONS.forEach(opt => {
+                const isActive = contact.status === opt.id;
+                const activeStyle = isActive ? `style="background-color: ${opt.color}; color: white; border-color: ${opt.color};"` : '';
+                buttonsHTML += `<button class="status-btn" data-status="${opt.id}" title="${opt.label}" ${activeStyle}><i class="${opt.icon}"></i> ${opt.label}</button>`;
+            });
+            buttonsHTML += '</div>';
+            return buttonsHTML;
+        }
+
+        function createContactDOM(contact, type) {
+            const el = document.createElement('div');
+            el.className = type === 'card' ? 'contact-card' : 'list-item';
+            el.dataset.id = contact.id;
+            el.dataset.status = contact.status;
+            if (AppState.selectedContacts.has(contact.id)) el.classList.add('selected');
+
+            el.innerHTML = `
+                <div style="display: flex; gap: 15px; align-items: flex-start;">
+                    <div class="contact-selection">
+                        <input type="checkbox" id="check-${contact.id}" class="contact-checkbox" ${AppState.selectedContacts.has(contact.id) ? 'checked' : ''}>
+                        <label for="check-${contact.id}" class="custom-checkbox"><i class="fas fa-check"></i></label>
+                    </div>
+                    <div style="flex: 1;">
+                        <div class="contact-header">
+                            <div class="contact-info">
+                                <span class="contact-name" data-field="name">${contact.name}</span>
+                                <span class="contact-phone" data-field="phone">${contact.phone || 'Sin número'}</span>
+                            </div>
+                            <div class="contact-actions">
+                                <span class="origin-tag">${contact.origin}</span>
+                                <button class="delete-contact-btn" title="Eliminar Contacto"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                        ${contact.phone ? `<a href="https://wa.me/${contact.phone}" target="_blank" class="whatsapp-btn" onclick="event.stopPropagation();"><i class="fab fa-whatsapp"></i></a>` : ''}
+                        ${type === 'list' ? createStatusButtons(contact) : ''}
+                    </div>
+                </div>
+            `;
+            return el;
+        }
+
+        function createCard(contact) { return createContactDOM(contact, 'card'); }
+        function createListItem(contact) { return createContactDOM(contact, 'list'); }
+
+        function renderTinderView() {
+            const card = elements.tinderCard;
+            card.classList.add('fading');
+            
+            setTimeout(() => {
+                if (AppState.filteredContacts.length === 0) {
+                    $('#tinderName').textContent = 'No hay contactos';
+                    $('#tinderOrigin').textContent = '';
+                    $('#tinderPhone').textContent = '-';
+                    $('#tinderWhatsapp').href = '#';
+                    $('#tinderCounter').textContent = '0/0';
+                    card.classList.remove('fading');
+                    return;
+                }
+                if (AppState.tinderIndex >= AppState.filteredContacts.length) AppState.tinderIndex = 0;
+                
+                const contact = AppState.filteredContacts[AppState.tinderIndex];
+                $('#tinderName').textContent = contact.name;
+                $('#tinderOrigin').textContent = contact.origin;
+                $('#tinderPhone').textContent = contact.phone || 'Sin número';
+                $('#tinderWhatsapp').href = contact.phone ? `https://wa.me/${contact.phone}` : '#';
+                $('#tinderCounter').textContent = `${AppState.tinderIndex + 1}/${AppState.filteredContacts.length}`;
+                card.classList.remove('fading');
+            }, 300);
+        }
+
+        function renderPagination() {
+            const totalPages = Math.ceil(AppState.filteredContacts.length / AppState.itemsPerPage);
+            elements.pagination.innerHTML = totalPages <= 1 ? '' : `
+                <button class="page-btn" ${AppState.currentPage === 1 ? 'disabled' : ''} data-page="${AppState.currentPage - 1}"><i class="fas fa-chevron-left"></i></button>
+                <span>Página ${AppState.currentPage} de ${totalPages}</span>
+                <button class="page-btn" ${AppState.currentPage === totalPages ? 'disabled' : ''} data-page="${AppState.currentPage + 1}"><i class="fas fa-chevron-right"></i></button>
+            `;
+        }
+        
+        // --- Actualizaciones de Estado y Estadísticas ---
+        function updateStats() {
+            $('#totalContacts').textContent = AppState.contacts.length;
+            $('#unreviewedContacts').textContent = AppState.contacts.filter(c => c.status === 'sin revisar').length;
+            $('#contactedContacts').textContent = AppState.contacts.filter(c => c.status === 'contactado').length;
+            $('#playingContacts').textContent = AppState.contacts.filter(c => c.status === 'jugando').length;
+            $('#notInterestedContacts').textContent = AppState.contacts.filter(c => c.status === 'no interesado').length;
+            $('#noWhatsappContacts').textContent = AppState.contacts.filter(c => c.status === 'sin wsp').length;
+        }
+
+        function updateProgress() {
+            const total = AppState.contacts.length;
+            if (total === 0) {
+                $('#progressContainer').style.display = 'none';
+                return;
+            }
+            $('#progressContainer').style.display = 'block';
+            const reviewed = total - AppState.contacts.filter(c => c.status === 'sin revisar').length;
+            const percentage = Math.round((reviewed / total) * 100);
+            elements.progressFill.style.width = `${percentage}%`;
+            elements.progressPercentage.textContent = `${percentage}%`;
+            elements.reviewedCount.textContent = `${reviewed} revisados`;
+            elements.totalCount.textContent = `${total} totales`;
+        }
+        
+        function updateContact(id, field, value) {
+            const contact = AppState.contacts.find(c => c.id === id);
+            if (contact && contact[field] !== value) {
+                contact[field] = value;
+                contact.lastUpdated = new Date().toISOString();
+                saveData();
+                render();
+                updateStats();
+                updateProgress();
+            }
+        }
+
+        // --- Acciones en Lote ---
+        function updateBulkActionsBar() {
+            const count = AppState.selectedContacts.size;
+            elements.bulkActionsBar.classList.toggle('active', count > 0);
+            elements.bulkSelectedCount.textContent = `${count} seleccionados`;
+            const pageContacts = AppState.filteredContacts.slice((AppState.currentPage - 1) * AppState.itemsPerPage, AppState.currentPage * AppState.itemsPerPage);
+            const allOnPageSelected = pageContacts.length > 0 && pageContacts.every(c => AppState.selectedContacts.has(c.id));
+            elements.selectAllCheckbox.checked = allOnPageSelected;
+        }
+        
+        // --- Event Listeners ---
+        function setupEventListeners() {
+            elements.dropArea.onclick = () => elements.vcfFileInput.click();
+            elements.vcfFileInput.onchange = (e) => addFilesToList(Array.from(e.target.files));
+            elements.processFiles.onclick = processFiles;
+            elements.searchInput.oninput = () => render();
+
+            // Drag and Drop
+            elements.dropArea.addEventListener('dragover', (e) => { e.preventDefault(); e.target.style.borderColor = 'var(--accent-primary)'; });
+            elements.dropArea.addEventListener('dragleave', (e) => { e.target.style.borderColor = 'var(--border-color)'; });
+            elements.dropArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.target.style.borderColor = 'var(--border-color)';
+                addFilesToList(Array.from(e.dataTransfer.files));
+            });
+
+            // Navegación y vistas
+            $$('.stat-box').forEach(b => b.onclick = (e) => {
+                $$('.stat-box').forEach(sb => sb.classList.remove('active'));
+                const box = e.target.closest('.stat-box');
+                box.classList.add('active');
+                AppState.currentFilter = box.dataset.filter;
+                render();
+            });
+            $$('.view-btn').forEach(b => b.onclick = (e) => {
+                $$('.view-btn').forEach(vb => vb.classList.remove('active'));
+                const btn = e.target.closest('.view-btn');
+                btn.classList.add('active');
+                AppState.currentView = btn.dataset.view;
+                AppState.tinderIndex = 0;
+                AppState.selectedContacts.clear();
+                updateView();
+            });
+
+            // Tinder
+            $('#tinderNext').onclick = () => { AppState.tinderIndex++; renderTinderView(); };
+            $('#tinderBack').onclick = () => { AppState.tinderIndex = (AppState.tinderIndex - 1 + AppState.filteredContacts.length) % AppState.filteredContacts.length; renderTinderView(); };
+            $$('.tinder-action-btn[data-status]').forEach(btn => btn.onclick = () => {
+                if (AppState.filteredContacts.length === 0) return;
+                const contact = AppState.filteredContacts[AppState.tinderIndex];
+                updateContact(contact.id, 'status', btn.dataset.status);
+                showNotification(`Estado cambiado a: ${btn.textContent.trim()}`, 'success');
+                setTimeout(() => { AppState.tinderIndex++; renderTinderView(); }, 300);
+            });
+
+            // Paginación
+            elements.pagination.onclick = (e) => {
+                const page = e.target.closest('.page-btn')?.dataset.page;
+                if (page) { AppState.currentPage = parseInt(page); updateView(); }
+            };
+
+            // Acciones globales
+            $('#addMoreBtn').onclick = () => {
+                elements.mainInterface.style.display = 'none';
+                elements.uploadScreen.style.display = 'flex';
+                elements.uploadScreen.classList.remove('hidden');
+            };
+            $('#clearDataBtn').onclick = () => {
+                if (confirm('¿Estás seguro de que quieres borrar TODOS los contactos? Esta acción no se puede deshacer.')) {
+                    AppState.contacts = [];
+                    localStorage.removeItem('contactManagerData');
+                    location.reload();
+                }
+            };
+            
+            // Listener unificado para acciones en tarjetas/listas
+            $('#cardsView, #listView').addEventListener('click', (e) => {
+                const target = e.target;
+                const contactEl = target.closest('[data-id]');
+                if (!contactEl) return;
+
+                // Acción: Eliminar contacto
+                if (target.closest('.delete-contact-btn')) {
+                    const contactId = contactEl.dataset.id;
+                    const contact = AppState.contacts.find(c => c.id === contactId);
+                    if (confirm(`¿Estás seguro de que quieres eliminar a ${contact.name}?`)) {
+                        AppState.contacts = AppState.contacts.filter(c => c.id !== contactId);
+                        AppState.selectedContacts.delete(contactId);
+                        saveData();
+                        render();
+                        showNotification('Contacto eliminado.', 'success');
+                    }
+                    return;
+                }
+
+                // Acción: Cambiar estado desde la lista
+                if (target.closest('.status-btn')) {
+                    const contactId = contactEl.dataset.id;
+                    const newStatus = target.closest('.status-btn').dataset.status;
+                    updateContact(contactId, 'status', newStatus);
+                    return;
+                }
+
+                // Acción: Seleccionar/deseleccionar
+                if (!target.closest('a') && !target.closest('[data-field]')) {
+                     const id = contactEl.dataset.id;
+                     const checkbox = $(`#check-${id}`);
+                     checkbox.checked = !checkbox.checked;
+                     if (checkbox.checked) AppState.selectedContacts.add(id);
+                     else AppState.selectedContacts.delete(id);
+                     contactEl.classList.toggle('selected', checkbox.checked);
+                     updateBulkActionsBar();
+                }
+            });
+
+            // Edición en línea
+            $('#cardsView, #listView').ondblclick = (e) => {
+                const target = e.target.closest('[data-field]');
+                if (!target || target.querySelector('input')) return;
+                const id = target.closest('[data-id]').dataset.id;
+                const field = target.dataset.field;
+                const originalValue = target.textContent;
+                target.innerHTML = `<input class="inline-edit-input" type="text" value="${originalValue}">`;
+                const input = target.querySelector('input');
+                input.focus();
+                input.select();
+                
+                const save = () => {
+                    const newValue = input.value.trim();
+                    if (newValue && newValue !== originalValue) {
+                         updateContact(id, field, newValue);
+                    } else {
+                         target.textContent = originalValue;
+                    }
+                };
+                input.onblur = save;
+                input.onkeydown = (ev) => { if (ev.key === 'Enter') input.blur(); if (ev.key === 'Escape') { target.textContent = originalValue; input.onblur = null; input.blur(); }};
+            };
+
+            // Acciones en lote
+            elements.selectAllCheckbox.onchange = (e) => {
+                const pageContacts = AppState.filteredContacts.slice((AppState.currentPage - 1) * AppState.itemsPerPage, AppState.currentPage * AppState.itemsPerPage);
+                pageContacts.forEach(c => {
+                    if (e.target.checked) AppState.selectedContacts.add(c.id);
+                    else AppState.selectedContacts.delete(c.id);
+                });
+                renderPaginatedView(AppState.currentView === 'cards' ? createCard : createListItem);
+                updateBulkActionsBar();
+            };
+            $('#bulkDeleteBtn').onclick = () => {
+                if(confirm(`¿Eliminar ${AppState.selectedContacts.size} contactos seleccionados?`)){
+                    AppState.contacts = AppState.contacts.filter(c => !AppState.selectedContacts.has(c.id));
+                    AppState.selectedContacts.clear();
+                    saveData();
+                    render();
+                }
+            };
+             $('#bulkStatusSelect').onchange = (e) => {
+                const newStatus = e.target.value;
+                AppState.selectedContacts.forEach(id => updateContact(id, 'status', newStatus));
+                AppState.selectedContacts.clear();
+                render();
+            };
+            $('#bulkCancelBtn').onclick = () => {
+                AppState.selectedContacts.clear();
+                render();
+            };
+
+            // Exportar
+            $('#exportBtn').onclick = () => {
+                $('#exportFilteredCount').textContent = `${AppState.filteredContacts.length} contactos`;
+                $('#exportAllCount').textContent = `${AppState.contacts.length} contactos`;
+                $('#exportModal').classList.add('active');
+            };
+            $('#cancelExport').onclick = () => $('#exportModal').classList.remove('active');
+            $('#confirmExport').onclick = () => {
+                const type = $('.export-option[data-type].selected').dataset.type;
+                const format = $('.export-option[data-format].selected').dataset.format;
+                const contactsToExport = type === 'all' ? AppState.contacts : AppState.filteredContacts;
+                if (format === 'excel') exportToExcel(contactsToExport); else exportToVCF(contactsToExport);
+                $('#exportModal').classList.remove('active');
+            };
+            $$('#exportModal .export-option').forEach(opt => opt.onclick = (e) => {
+                const option = e.target.closest('.export-option');
+                const group = option.dataset.type ? '[data-type]' : '[data-format]';
+                $$(`#exportModal .export-option${group}`).forEach(o => o.classList.remove('selected'));
+                option.classList.add('selected');
+            });
+        }
+        
+        function exportToExcel(contacts) {
+            let csvContent = "Nombre,Teléfono,Origen,Estado,Fecha Actualización\n";
+            contacts.forEach(c => {
+                const row = [`"${c.name.replace(/"/g, '""')}"`, c.phone, `"${c.origin}"`, c.status, new Date(c.lastUpdated).toLocaleDateString('es-ES')];
+                csvContent += row.join(',') + '\n';
+            });
+            downloadFile(csvContent, `contactos_${new Date().toISOString().split('T')[0]}.csv`, 'text/csv;charset=utf-8;');
+            showNotification('Exportación a Excel completada', 'success');
+        }
+
+        function exportToVCF(contacts) {
+            let vcfContent = '';
+            contacts.forEach(c => {
+                vcfContent += `BEGIN:VCARD\nVERSION:3.0\nFN:${c.name}\n`;
+                if (c.phone) vcfContent += `TEL;TYPE=CELL:${c.phone}\n`;
+                vcfContent += `NOTE:Origen: ${c.origin}, Estado: ${c.status}\nEND:VCARD\n\n`;
+            });
+            downloadFile(vcfContent, `contactos_${new Date().toISOString().split('T')[0]}.vcf`, 'text/vcard;charset=utf-8');
+            showNotification('Exportación a VCF completada', 'success');
+        }
+
+        function downloadFile(content, fileName, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // --- Inicialización ---
+        function init() {
+            elements.bulkStatusSelect.innerHTML = STATUS_OPTIONS.map(opt => `<option value="${opt.id}">${opt.label}</option>`).join('');
+            setupEventListeners();
+            loadData();
+        }
+
+        init();
+    })();
+    </script>
+</body>
+</html>
