@@ -2,165 +2,376 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Toolboard</title>
+  <title>Toolboard Pro | Gestión de Contactos y Cargas</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    :root{
-      --bg:#0b0f17;
-      --card:#131a24;
-      --accent:#9aff5c;
-      --accent-soft:#c8ff9b;
-      --muted:#9aa5b7;
-      --border:#1c2533;
-    }
-    *{box-sizing:border-box;font-family:Inter,Roboto,Arial}
-    body{
-      margin:0;
-      padding:40px 20px;
-      background:var(--bg);
-      color:white;
-      min-height:100vh;
-      display:flex;
-      justify-content:center;
-      align-items:flex-start;
+    :root {
+      --bg: #0b0f17;
+      --card: #131a24;
+      --accent: #9aff5c;
+      --accent-soft: #c8ff9b;
+      --muted: #9aa5b7;
+      --border: #1c2533;
+      --text: #ffffff;
     }
 
-    h1{
-      text-align:center;
-      margin-bottom:35px;
-      font-size:26px;
-      color:var(--accent);
-      font-weight:700;
-      text-shadow:0 0 8px #9aff5c55;
+    * {
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
     }
 
-    .container{
-      display:flex;
-      flex-wrap:wrap;
-      gap:26px;
-      max-width:980px;
-      width:100%;
-      justify-content:center;
+    body {
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 60px 20px;
+      line-height: 1.5;
     }
 
-    .card{
-      background:var(--card);
-      width:320px;
-      border-radius:16px;
-      padding:24px;
-      border:1px solid var(--border);
-      box-shadow:0 0 18px #0006;
-      transition:.25s;
-      cursor:pointer;
-      text-align:center;
-    }
-    .card:hover{
-      transform:translateY(-4px);
-      box-shadow:0 0 24px #0008;
-      border-color:var(--accent-soft);
+    h1 {
+      text-align: center;
+      margin-bottom: 50px;
+      font-size: clamp(28px, 5vw, 40px);
+      color: var(--accent);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: -1.5px;
+      text-shadow: 0 0 20px rgba(154, 255, 92, 0.3);
+      font-style: italic;
     }
 
-    .icon{
-      font-size:42px;
-      margin-bottom:14px;
-      color:var(--accent-soft);
-      text-shadow:0 0 6px #9aff5c55;
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      max-width: 1100px;
+      width: 100%;
+      justify-content: center;
     }
 
-    .title{
-      font-size:18px;
-      font-weight:700;
-      margin-bottom:8px;
+    .card {
+      background: var(--card);
+      width: 340px;
+      border-radius: 24px;
+      padding: 32px;
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
 
-    .desc{
-      font-size:14px;
-      color:var(--muted);
-      margin-bottom:14px;
-      line-height:1.4;
+    .card:hover {
+      transform: translateY(-10px);
+      border-color: var(--accent-soft);
+      box-shadow: 0 20px 40px rgba(154, 255, 92, 0.1);
     }
 
-    .note{
-      font-size:12px;
-      color:#7f8aa3;
-      margin-bottom:14px;
+    .tag {
+      position: absolute;
+      top: 18px;
+      left: 18px; /* Cambiado a la izquierda para no chocar con el icono info */
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      background: rgba(154, 255, 92, 0.1);
+      color: var(--accent);
+      padding: 5px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(154, 255, 92, 0.2);
+      letter-spacing: 0.5px;
     }
 
-    a.btn{
-      background:var(--accent);
-      color:#0d130f;
-      padding:10px 18px;
-      display:inline-block;
-      border-radius:10px;
-      font-weight:700;
-      text-decoration:none;
-      margin:4px;
+    .icon-row {
+      display: flex;
+      justify-content: flex-end; /* Icono de info siempre a la derecha */
+      align-items: flex-start;
+      margin-bottom: 12px;
+      min-height: 28px;
     }
 
-    a.btn.secondary{
-      background:transparent;
-      color:var(--accent-soft);
-      border:1px solid var(--border);
-      font-size:12px;
-      padding:8px 14px;
+    .icon-main {
+      font-size: 48px;
+      margin-bottom: 20px;
+      filter: drop-shadow(0 0 10px rgba(154, 255, 92, 0.2));
+      display: block;
     }
+
+    .info-trigger {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      transition: all 0.2s;
+      cursor: help;
+    }
+
+    .info-trigger:hover {
+      background: var(--accent);
+      color: #000;
+      border-color: var(--accent);
+      transform: scale(1.1);
+    }
+
+    .title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      line-height: 1.3;
+      color: white;
+    }
+
+    .desc {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 24px;
+      line-height: 1.6;
+      flex-grow: 1;
+    }
+
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .btn {
+      background: var(--accent);
+      color: #0d130f;
+      padding: 14px;
+      border-radius: 14px;
+      font-weight: 700;
+      text-decoration: none;
+      font-size: 14px;
+      text-align: center;
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(154, 255, 92, 0.2);
+    }
+
+    .btn:hover {
+      background: var(--accent-soft);
+      transform: scale(1.02);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid rgba(154, 255, 92, 0.3);
+      padding: 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      text-decoration: none;
+      text-align: center;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-outline:hover {
+      background: rgba(154, 255, 92, 0.05);
+      border-color: var(--accent);
+    }
+
+    /* Modal Styling */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-content {
+      background: var(--card);
+      max-width: 550px;
+      width: 100%;
+      border-radius: 28px;
+      padding: 40px;
+      border: 1px solid var(--border);
+      position: relative;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+      animation: modalFade 0.3s ease;
+    }
+
+    @keyframes modalFade {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 24px;
+    }
+
+    .modal-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--accent);
+      margin-bottom: 20px;
+    }
+
+    .modal-body {
+      color: var(--text);
+      font-size: 15px;
+      line-height: 1.7;
+      text-align: justify;
+    }
+
+    footer {
+      margin-top: 80px;
+      font-size: 13px;
+      color: #334155;
+      text-align: center;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card {
+      animation: fadeInUp 0.6s cubic-bezier(0.165, 0.84, 0.44, 1) backwards;
+    }
+
+    .card:nth-child(1) { animation-delay: 0.1s; }
+    .card:nth-child(2) { animation-delay: 0.2s; }
+    .card:nth-child(3) { animation-delay: 0.3s; }
   </style>
 </head>
 <body>
 
-  <div style="width:100%;max-width:980px;">
-    <h1>Panel de Herramientas</h1>
+  <h1>Panel de Herramientas</h1>
 
-    <div class="container">
+  <div class="container">
 
-      <!-- CARD 1 -->
-      <div class="card" onclick="location.href='data-match.html'">
-        <div class="icon">📊</div>
-        <div class="title">Comparador de cargas</div>
-        <div class="desc">
-          Comparación de CSV por agente, fechas y turnos.
-        </div>
-        <div class="note">
-          Soporta archivos CSV normalizados.
-        </div>
+    <!-- CARD 1 -->
+    <div class="card" onclick="location.href='data-match.html'">
+      <div class="tag">Actualizado</div>
+      <div class="icon-row">
+        <div class="info-trigger" onclick="event.stopPropagation(); showModal('comparador')">i</div>
+      </div>
+      <div class="icon-main">📊</div>
+      <div class="title">Comparador de cargas Agente – Chunior</div>
+      <div class="desc">
+        Cruce masivo entre Chunior y Backoffice. Detecta errores de carga pegando movimientos o subiendo reportes XLS.
+      </div>
+      <div class="actions">
         <a class="btn" href="data-match.html">Ingresar</a>
       </div>
+    </div>
 
-      <!-- CARD 2 -->
-      <div class="card" onclick="location.href='users-analysis.html'">
-        <div class="icon">🔍</div>
-        <div class="title">Recuperación de usuarios</div>
-        <div class="desc">
-          Detecta usuarios inactivos según rango de fechas.
-        </div>
-        <div class="note">
-          Lectura directa desde CSV exportado.
-        </div>
+    <!-- CARD 2 -->
+    <div class="card" onclick="location.href='users-analysis.html'">
+      <div class="icon-row">
+        <div class="info-trigger" onclick="event.stopPropagation(); showModal('recuperacion')">i</div>
+      </div>
+      <div class="icon-main">🔍</div>
+      <div class="title">Recuperación de Usuarios</div>
+      <div class="desc">
+        Identifica fugas filtrando archivos XLS entre fechas. Genera listas de usuarios que dejaron de cargar para revinculación.
+      </div>
+      <div class="actions">
         <a class="btn" href="users-analysis.html">Ingresar</a>
       </div>
+    </div>
 
-      <!-- CARD 3 -->
-      <div class="card" onclick="location.href='nexo.html'">
-        <div class="icon">🔗</div>
-        <div class="title">Nexo</div>
-        <div class="desc">
-          Gestión de contactos para revinculación.
-        </div>
-        <div class="note">
-          Importa VCF y ahora también CSV sincronizado.
-        </div>
-        <a class="btn" href="nexo.html">Ingresar</a><br>
-        <a
-          class="btn secondary"
-          href="https://docs.google.com/spreadsheets/d/1v9i5vUHUTYxuj4sF0GeZWifMtRKQ4GFMlU_UqjDaBuY/edit?usp=sharing"
-          target="_blank"
-        >
-          Plantilla usuarios por CSV
+    <!-- CARD 3 -->
+    <div class="card" onclick="location.href='nexo.html'">
+      <div class="tag">Nuevo</div>
+      <div class="icon-row">
+        <div class="info-trigger" onclick="event.stopPropagation(); showModal('nexo')">i</div>
+      </div>
+      <div class="icon-main">🔗</div>
+      <div class="title">Nexo (Gestor Masivo)</div>
+      <div class="desc">
+        Gestión total de contactos VCF/CSV. Organiza usuarios recuperados y unifica bases para exportar en Excel o VCard.
+      </div>
+      <div class="actions">
+        <a class="btn" href="nexo.html">Ingresar</a>
+        <a href="https://docs.google.com/spreadsheets/d/1v9i5vUHUTYxuj4sF0GeZWifMtRKQ4GFMlU_UqjDaBuY/edit?usp=sharing" target="_blank" class="btn-outline" onclick="event.stopPropagation()">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          Plantilla CSV
         </a>
       </div>
+    </div>
 
+  </div>
+
+  <footer>
+    <p>© 2025 Toolboard Pro • Inteligencia y Eficiencia</p>
+  </footer>
+
+  <!-- Modal -->
+  <div id="infoModal" class="modal" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <span class="modal-close" onclick="closeModal()">&times;</span>
+      <div id="modalTitle" class="modal-title"></div>
+      <div id="modalBody" class="modal-body"></div>
     </div>
   </div>
+
+  <script>
+    const info = {
+      comparador: {
+        title: "Comparador de Cargas (Agente vs Chunior)",
+        body: "Herramienta optimizada para auditar entradas de dinero. Permite comparar los movimientos de Chunior (pegando el texto directamente) contra los reportes XLS descargados de Agentes o Backoffice. Detecta discrepancias de saldos, errores de carga y falta de registros en segundos, asegurando que cada movimiento esté donde debe estar."
+      },
+      recuperacion: {
+        title: "Recuperación de Usuarios",
+        body: "Este sistema automatiza la detección de usuarios inactivos. Al subir dos archivos XLS de diferentes fechas, la herramienta filtra y devuelve un listado de los usuarios que realizaron cargas en la primera fecha pero dejaron de hacerlo en la segunda. Es fundamental para identificar fugas de jugadores y preparar bases de datos limpias para campañas de revinculación estratégica."
+      },
+      nexo: {
+        title: "Nexo: El Gestor de Contactos Masivo",
+        body: "El Nexo es una potente herramienta web diseñada para importar y organizar grandes volúmenes de contactos desde archivos VCF y CSV. Detecta automáticamente los usuarios de tus archivos de contactos y ofrece una interfaz intuitiva para clasificar quiénes fueron recuperados, quiénes ya tienen mensaje enviado y quiénes no poseen WhatsApp. Permite realizar acciones en lote, limpiar listas duplicadas y exportar los resultados depurados de nuevo a formatos CSV (Excel) y VCF para unificar tus bases de datos. Toda la información se procesa localmente para garantizar tu privacidad."
+      }
+    };
+
+    function showModal(key) {
+      document.getElementById('modalTitle').innerText = info[key].title;
+      document.getElementById('modalBody').innerText = info[key].body;
+      document.getElementById('infoModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('infoModal').style.display = 'none';
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+    });
+  </script>
 
 </body>
 </html>
