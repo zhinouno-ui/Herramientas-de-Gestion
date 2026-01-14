@@ -55,8 +55,8 @@
       text-align:center;
     }
     .card:hover{
-      transform:translateY(-6px);
-      box-shadow:0 0 28px #0009;
+      transform:translateY(-4px);
+      box-shadow:0 0 24px #0008;
       border-color:var(--accent-soft);
     }
 
@@ -76,8 +76,14 @@
     .desc{
       font-size:14px;
       color:var(--muted);
-      margin-bottom:18px;
+      margin-bottom:14px;
       line-height:1.4;
+    }
+
+    .note{
+      font-size:12px;
+      color:#7f8aa3;
+      margin-bottom:14px;
     }
 
     a.btn{
@@ -88,6 +94,15 @@
       border-radius:10px;
       font-weight:700;
       text-decoration:none;
+      margin:4px;
+    }
+
+    a.btn.secondary{
+      background:transparent;
+      color:var(--accent-soft);
+      border:1px solid var(--border);
+      font-size:12px;
+      padding:8px 14px;
     }
   </style>
 </head>
@@ -101,9 +116,12 @@
       <!-- CARD 1 -->
       <div class="card" onclick="location.href='data-match.html'">
         <div class="icon">📊</div>
-        <div class="title">Comparador de cargas Agente – Chunior</div>
+        <div class="title">Comparador de cargas</div>
         <div class="desc">
-          Recomendable nombrar correctamente los CSV y filtrar por turnos y fechas.
+          Comparación de CSV por agente, fechas y turnos.
+        </div>
+        <div class="note">
+          Soporta archivos CSV normalizados.
         </div>
         <a class="btn" href="data-match.html">Ingresar</a>
       </div>
@@ -111,9 +129,12 @@
       <!-- CARD 2 -->
       <div class="card" onclick="location.href='users-analysis.html'">
         <div class="icon">🔍</div>
-        <div class="title">Recuperación de Usuarios</div>
+        <div class="title">Recuperación de usuarios</div>
         <div class="desc">
-          Compara usuarios que dejaron de jugar dentro del rango de fechas seleccionado.
+          Detecta usuarios inactivos según rango de fechas.
+        </div>
+        <div class="note">
+          Lectura directa desde CSV exportado.
         </div>
         <a class="btn" href="users-analysis.html">Ingresar</a>
       </div>
@@ -123,9 +144,19 @@
         <div class="icon">🔗</div>
         <div class="title">Nexo</div>
         <div class="desc">
-          Herramienta de gestión de contactos para revinculación.
+          Gestión de contactos para revinculación.
         </div>
-        <a class="btn" href="nexo.html">Ingresar</a>
+        <div class="note">
+          Importa VCF y ahora también CSV sincronizado.
+        </div>
+        <a class="btn" href="nexo.html">Ingresar</a><br>
+        <a
+          class="btn secondary"
+          href="https://docs.google.com/spreadsheets/d/1v9i5vUHUTYxuj4sF0GeZWifMtRKQ4GFMlU_UqjDaBuY/edit?usp=sharing"
+          target="_blank"
+        >
+          Plantilla usuarios por CSV
+        </a>
       </div>
 
     </div>
