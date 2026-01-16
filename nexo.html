@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -449,19 +448,6 @@
         </div>
     </div>
 
-    <div class="modal" id="duplicateModal">
-        <div class="modal-content">
-            <h3><i class="fas fa-exclamation-triangle" style="color: var(--accent-warning);"></i> Se encontraron duplicados</h3>
-            <p style="color: var(--text-secondary); margin: 15px 0;">Se han encontrado <strong id="duplicateCount">0</strong> contactos que ya existen en tu lista. ¿Qué deseas hacer?</p>
-            <div style="display: flex; flex-direction: column; gap: 15px; margin: 20px 0;">
-                <div class="duplicate-option selected" data-action="skip"><strong>Omitir Duplicados</strong><p>No importar los contactos que ya existen.</p></div>
-                <div class="duplicate-option" data-action="overwrite"><strong>Sobrescribir</strong><p>Actualizar los contactos existentes con la nueva información.</p></div>
-                <div class="duplicate-option" data-action="keep"><strong>Mantener Ambos</strong><p>Importar los duplicados como contactos nuevos.</p></div>
-            </div>
-            <button class="btn btn-primary" id="confirmDuplicateAction" style="width: 100%;">Continuar</button>
-        </div>
-    </div>
-
     <!-- Bulk Actions Bar -->
     <div class="bulk-actions-bar" id="bulkActionsBar">
         <strong id="bulkSelectedCount">0 seleccionados</strong>
@@ -523,7 +509,6 @@
             bulkStatusSelect: $('#bulkStatusSelect'),
             selectAllCheckbox: $('#selectAllCheckbox'),
             selectAllLabel: $('label[for="selectAllCheckbox"]'),
-            // Modal "Agregar Más"
             addMoreModal: $('#addMoreModal'),
             fileInputModal: $('#fileInputModal'),
             fileListModal: $('#fileListModal'),
@@ -538,7 +523,6 @@
             setTimeout(() => elements.notification.classList.remove('show'), 3000);
         }
 
-        // --- Almacenamiento ---
         function loadData() {
             const savedData = localStorage.getItem('contactManagerData');
             if (savedData) {
@@ -547,7 +531,6 @@
                     if (Array.isArray(parsedData)) {
                         AppState.contacts = parsedData;
                     } else {
-                        console.warn('Los datos guardados estaban corruptos y han sido reiniciados.');
                         AppState.contacts = [];
                     }
 
@@ -560,7 +543,7 @@
                         }, 500);
                     }
                 } catch (e) { 
-                    console.error('Error al cargar datos, reiniciando:', e); 
+                    console.error('Error al cargar datos:', e); 
                     AppState.contacts = [];
                     localStorage.removeItem('contactManagerData');
                 }
@@ -570,7 +553,6 @@
             localStorage.setItem('contactManagerData', JSON.stringify(AppState.contacts));
         }
 
-        // --- Lógica de Archivos y Duplicados ---
         function addFilesToList(files) {
             AppState.filesToProcess.push(...files);
             renderFileList();
@@ -608,7 +590,7 @@
                         const text = await file.text();
                         allNewVCFContacts.push(...parseVCF(text, origin));
                     }
-                    await handleVCFContacts(allNewVCFContacts);
+                    await handleNewContacts(allNewVCFContacts);
                 }
 
                 for (const file of csvFiles) {
@@ -616,6 +598,7 @@
                     await processCSVData(text, origin);
                 }
                 
+                deduplicateContacts();
                 showNotification(`Proceso completado.`, 'success');
 
             } catch (error) {
@@ -647,47 +630,58 @@
             }
         }
         
-        async function handleVCFContacts(newContacts) {
-             const getContactKey = (contact) => `${(contact.name || '').toLowerCase().trim()}_${contact.phone || ''}`;
-            const existingContactsMap = new Map(AppState.contacts.map(c => [getContactKey(c), c]));
+        const getContactKey = (contact) => {
+            const name = (contact.name || '').toLowerCase().trim();
+            const phone = (contact.phone || '').replace(/\D/g, '');
+            if (!name && !phone) return null;
+            return phone || name; // Prioritize phone for uniqueness
+        };
+        
+        async function handleNewContacts(newContacts) {
+            let updatedCount = 0;
+            let skippedCount = 0;
+            let addedCount = 0;
+
+            const existingContactsMap = new Map();
+            AppState.contacts.forEach(c => {
+                const key = getContactKey(c);
+                if (key) {
+                    existingContactsMap.set(key, c);
+                }
+            });
+
+            const newUniqueContactsMap = new Map();
+            for (const newContact of newContacts) {
+                const key = getContactKey(newContact);
+                if (key) {
+                    newUniqueContactsMap.set(key, newContact);
+                }
+            }
             
-            const duplicates = [];
-            const uniqueNewContacts = [];
-
-            for (const contact of newContacts) {
-                const key = getContactKey(contact);
+            for (const [key, newContact] of newUniqueContactsMap.entries()) {
                 if (existingContactsMap.has(key)) {
-                    duplicates.push(contact);
+                    const existingContact = existingContactsMap.get(key);
+                    
+                    if (existingContact.status === 'sin revisar') {
+                        Object.assign(existingContact, newContact, { id: existingContact.id });
+                        updatedCount++;
+                    } else {
+                        skippedCount++;
+                    }
                 } else {
-                    uniqueNewContacts.push(contact);
-                    existingContactsMap.set(key, contact); // Prevent duplicates within the same import
+                    AppState.contacts.push(newContact);
+                    existingContactsMap.set(key, newContact);
+                    addedCount++;
                 }
             }
-
-            let finalNewContacts = uniqueNewContacts;
-
-            if (duplicates.length > 0) {
-                const action = await handleDuplicates(duplicates);
-                switch (action) {
-                    case 'overwrite':
-                        duplicates.forEach(dup => {
-                            const key = getContactKey(dup);
-                            const existingIndex = AppState.contacts.findIndex(c => getContactKey(c) === key);
-                            if (existingIndex > -1) {
-                                const originalContact = AppState.contacts[existingIndex];
-                                AppState.contacts[existingIndex] = { ...originalContact, ...dup, id: originalContact.id, lastUpdated: new Date().toISOString() };
-                            }
-                        });
-                        break;
-                    case 'keep':
-                        finalNewContacts.push(...duplicates);
-                        break;
-                    case 'skip':
-                    default:
-                        break;
-                }
+            
+            let details = [];
+            if (addedCount > 0) details.push(`${addedCount} nuevos`);
+            if (updatedCount > 0) details.push(`${updatedCount} actualizados`);
+            if (skippedCount > 0) details.push(`${skippedCount} omitidos (ya revisados)`);
+            if (details.length > 0) {
+                showNotification(`Importación: ${details.join(', ')}.`, 'info');
             }
-            AppState.contacts.push(...finalNewContacts);
         }
 
         function parseVCF(text, origin) {
@@ -726,127 +720,142 @@
             }
             return contacts;
         }
+
+        async function processPlanillaCSV(lines, origin) {
+            const data = lines.slice(1);
+            const contactsToProcess = [];
+            
+            const statusMap = {
+                'MENSAJE ENVIADO': 'contactado',
+                'PROMO ENVIADA': 'contactado',
+                'NO ESTA EN WSP': 'sin wsp',
+                'A CONTACTAR': 'sin revisar',
+                'EN CONTACTO': 'jugando',
+                'ESTA CARGANDO': 'jugando',
+                'ELIMINADO': 'no interesado',
+            };
+    
+            data.forEach(line => {
+                const regex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/;
+                const row = line.split(regex).map(v => v.trim().replace(/^"|"$/g, ''));
+
+                let name = row[0];
+                if (!name || name.toUpperCase() === '#ERROR!') return;
+                
+                let appStatus = 'sin revisar';
+                const rawLine = line.toUpperCase();
+
+                if (rawLine.includes('NO ESTA EN WSP')) {
+                    appStatus = 'sin wsp';
+                } else if (rawLine.includes('ESTA CARGANDO')) {
+                    appStatus = 'jugando';
+                } else if (name.toLowerCase().startsWith('eliminado')) {
+                    appStatus = 'no interesado';
+                    name = name.substring(9).trim();
+                } else {
+                    const statusColB = (row[1] || '').toUpperCase();
+                    const statusColD = (row[3] || '').toUpperCase();
+                    let foundKey = Object.keys(statusMap).find(key => statusColB.includes(key));
+                    if (!foundKey) foundKey = Object.keys(statusMap).find(key => statusColD.includes(key));
+                    if (foundKey) appStatus = statusMap[foundKey];
+                }
+
+                if (name) {
+                    contactsToProcess.push({
+                        id: `id_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                        name, phone: '', origin: origin, status: appStatus,
+                        lastUpdated: new Date().toISOString()
+                    });
+                }
+            });
+            
+            if (contactsToProcess.length > 0) {
+                await handleNewContacts(contactsToProcess);
+            }
+        }
+
+        async function processGenericCSV(lines, origin) {
+            const headers = lines[0].toLowerCase().split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+            const nameIndex = headers.indexOf('nombre');
+            const phoneIndex = headers.indexOf('teléfono');
+            
+            if (nameIndex === -1) {
+                return showNotification('El CSV debe tener una columna "Nombre".', 'error');
+            }
+
+            const newContacts = [];
+            const data = lines.slice(1);
+
+            data.forEach(line => {
+                if (!line.trim()) return;
+                const row = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.trim().replace(/^"|"$/g, ''));
+                
+                const name = row[nameIndex];
+                if (!name) return;
+
+                newContacts.push({
+                    id: `id_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    name: name,
+                    phone: phoneIndex > -1 ? (row[phoneIndex] || '').replace(/\D/g, '') : '',
+                    origin: origin,
+                    status: 'sin revisar',
+                    lastUpdated: new Date().toISOString()
+                });
+            });
+
+            if(newContacts.length > 0) {
+                await handleNewContacts(newContacts);
+            }
+        }
         
         async function processCSVData(text, origin = 'CSV Import') {
             try {
-                const lines = text.replace(/\r/g, '').split('\n').filter(line => line.trim());
-                if (lines.length < 2) return showNotification('El archivo CSV está vacío o no tiene encabezado.', 'warning');
+                const lines = text.split(/\r?\n(?=(?:(?:[^"]*"){2})*[^"]*$)/).filter(line => line && line.trim());
+                if (lines.length < 1) return showNotification('El archivo CSV está vacío.', 'warning');
                 
-                const data = lines.slice(1);
-                
-                const statusMap = {
-                    'MENSAJE ENVIADO': 'contactado',
-                    'NO ESTA EN WSP': 'sin wsp',
-                    'A CONTACTAR': 'sin revisar',
-                    'EN CONTACTO': 'jugando',
-                    'ESTA CARGANDO': 'jugando',
-                    'ELIMINADO': 'no interesado',
-                };
-        
-                let updatedCount = 0, addedCount = 0;
-                
-                const contactsMap = new Map(AppState.contacts.map(c => [c.name, c]));
-                const newContactsFromCSV = [];
-                const newContactNames = new Set();
-        
-                data.forEach(line => {
-                    const rawLine = line.toUpperCase();
-                    // Usar una expresión regular para manejar mejor las comillas
-                    const regex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/;
-                    const row = line.split(regex).map(v => v.trim().replace(/^"|"$/g, ''));
+                const header = lines[0].toLowerCase().replace(/"/g, '');
 
-                    let name = row[0];
-                    if (!name || name.toUpperCase() === '#ERROR!') return;
-                    
-                    let appStatus = 'sin revisar';
-
-                    // Lógica de detección de estado robusta
-                    if (rawLine.includes('NO ESTA EN WSP')) {
-                        appStatus = 'sin wsp';
-                    } else if (rawLine.includes('ESTA CARGANDO')) {
-                        appStatus = 'jugando';
-                    } else if (name.toLowerCase().startsWith('eliminado')) {
-                        appStatus = 'no interesado';
-                        name = name.substring(9).trim(); // Limpiar el nombre
-                    } else {
-                        const statusColB = (row[1] || '').toUpperCase();
-                        const statusColD = (row[3] || '').toUpperCase();
-                        let foundKey = Object.keys(statusMap).find(key => statusColB.includes(key));
-                        if (!foundKey) {
-                            foundKey = Object.keys(statusMap).find(key => statusColD.includes(key));
-                        }
-                        if (foundKey) {
-                            appStatus = statusMap[foundKey];
-                        }
-                    }
-
-                    if (!name) return; // Si después de limpiar el nombre no queda nada, saltar
-
-                    const existingContact = contactsMap.get(name);
-        
-                    if (existingContact) {
-                        if (existingContact.status !== appStatus) {
-                            existingContact.status = appStatus;
-                            existingContact.lastUpdated = new Date().toISOString();
-                            updatedCount++;
-                        }
-                    } else if (!newContactNames.has(name)) {
-                        newContactsFromCSV.push({
-                            id: `id_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                            name,
-                            phone: '',
-                            origin: origin,
-                            status: appStatus,
-                            lastUpdated: new Date().toISOString()
-                        });
-                        newContactNames.add(name);
-                        addedCount++;
-                    }
-                });
-                
-                if (newContactsFromCSV.length > 0) {
-                    AppState.contacts.push(...newContactsFromCSV);
-                }
-        
-                const details = [];
-                if (addedCount > 0) details.push(`${addedCount} añadidos`);
-                if (updatedCount > 0) details.push(`${updatedCount} actualizados`);
-                
-                if (details.length > 0) {
-                    showNotification(`CSV procesado: ${details.join(', ')}.`, 'success');
+                if (header.includes('nombre') && header.includes('teléfono')) {
+                    await processGenericCSV(lines, origin);
+                } else if (header.includes('usuarios') && header.includes('estado de revision')) {
+                    await processPlanillaCSV(lines, origin);
                 } else {
-                    showNotification('CSV procesado. No se encontraron nuevos contactos o cambios.','info');
+                     showNotification('Formato CSV no reconocido. Usando como genérico.', 'warning');
+                     await processGenericCSV(lines, origin);
                 }
-        
             } catch (error) {
-                console.error("Error al procesar el archivo CSV:", error);
-                showNotification("Hubo un error al leer el archivo CSV. Verifique el formato.", "error");
+                console.error("Error al procesar CSV:", error);
+                showNotification("Error al leer el archivo CSV.", "error");
                 throw error;
             }
         }
 
+        function deduplicateContacts() {
+            const uniqueContactsMap = new Map();
+            const originalCount = AppState.contacts.length;
 
-        function handleDuplicates(duplicates) {
-            return new Promise(resolve => {
-                $('#duplicateCount').textContent = duplicates.length;
-                const modal = $('#duplicateModal');
-                modal.classList.add('active');
+            for (const contact of AppState.contacts) {
+                const key = getContactKey(contact);
+                if (!key) continue;
 
-                const options = $$('.duplicate-option');
-                options.forEach(opt => opt.onclick = () => {
-                    options.forEach(o => o.classList.remove('selected'));
-                    opt.classList.add('selected');
-                });
+                if (uniqueContactsMap.has(key)) {
+                    const existingContact = uniqueContactsMap.get(key);
+                    if (existingContact.status === 'sin revisar' && contact.status !== 'sin revisar') {
+                        uniqueContactsMap.set(key, contact);
+                    }
+                } else {
+                    uniqueContactsMap.set(key, contact);
+                }
+            }
 
-                $('#confirmDuplicateAction').onclick = () => {
-                    const action = $('.duplicate-option.selected').dataset.action;
-                    modal.classList.remove('active');
-                    resolve(action);
-                };
-            });
+            const newContacts = Array.from(uniqueContactsMap.values());
+            const removedCount = originalCount - newContacts.length;
+            if (removedCount > 0) {
+                AppState.contacts = newContacts;
+                showNotification(`${removedCount} duplicado(s) interno(s) eliminado(s).`, 'info');
+            }
         }
         
-        // --- Renderizado y UI ---
         function render() {
             filterContacts();
             updateStats();
@@ -973,7 +982,6 @@
             `;
         }
         
-        // --- Actualizaciones de Estado y Estadísticas ---
         function updateStats() {
             $('#totalContacts').textContent = AppState.contacts.length;
             $('#unreviewedContacts').textContent = AppState.contacts.filter(c => c.status === 'sin revisar').length;
@@ -1008,7 +1016,6 @@
             }
         }
 
-        // --- Acciones en Lote ---
         function updateBulkActionsBar() {
             const count = AppState.selectedContacts.size;
             elements.bulkActionsBar.classList.toggle('active', count > 0);
@@ -1018,20 +1025,16 @@
             elements.selectAllCheckbox.checked = allOnPageSelected;
         }
         
-        // --- Event Listeners ---
         function setupEventListeners() {
-            // Pantalla inicial
             elements.dropArea.onclick = () => elements.fileInput.click();
             elements.fileInput.onchange = (e) => addFilesToList(Array.from(e.target.files));
             elements.processFiles.onclick = () => processFiles(false);
 
-            // Modal "Agregar Más"
             elements.dropAreaModal.onclick = () => elements.fileInputModal.click();
             elements.fileInputModal.onchange = (e) => addFilesToList(Array.from(e.target.files));
             elements.processFilesModal.onclick = () => processFiles(true);
             $('#cancelAddMore').onclick = () => elements.addMoreModal.classList.remove('active');
 
-            // Drag and Drop (ambas zonas)
             [elements.dropArea, elements.dropAreaModal].forEach(area => {
                 area.addEventListener('dragover', (e) => { e.preventDefault(); area.style.borderColor = 'var(--accent-primary)'; });
                 area.addEventListener('dragleave', (e) => { area.style.borderColor = 'var(--border-color)'; });
@@ -1042,10 +1045,8 @@
                 });
             });
 
-            // Búsqueda
             elements.searchInput.oninput = () => { AppState.currentPage = 1; render(); };
 
-            // Navegación y vistas
             $$('.stat-box').forEach(b => b.onclick = (e) => {
                 $$('.stat-box').forEach(sb => sb.classList.remove('active'));
                 const box = e.target.closest('.stat-box');
@@ -1064,7 +1065,6 @@
                 updateView();
             });
 
-            // Tinder
             $('#tinderNext').onclick = () => { AppState.tinderIndex++; renderTinderView(); };
             $('#tinderBack').onclick = () => { AppState.tinderIndex = (AppState.tinderIndex - 1 + AppState.filteredContacts.length) % AppState.filteredContacts.length; renderTinderView(); };
             $$('.tinder-action-btn[data-status]').forEach(btn => btn.onclick = () => {
@@ -1075,13 +1075,11 @@
                 setTimeout(() => { AppState.tinderIndex++; renderTinderView(); }, 300);
             });
 
-            // Paginación
             elements.pagination.onclick = (e) => {
                 const page = e.target.closest('.page-btn')?.dataset.page;
                 if (page) { AppState.currentPage = parseInt(page); updateView(); }
             };
 
-            // Acciones globales
             $('#addMoreBtn').onclick = () => {
                 AppState.filesToProcess = [];
                 renderFileList();
@@ -1094,30 +1092,20 @@
                 AppState.currentPage = 1;
                 AppState.currentFilter = 'all';
                 saveData();
-                
                 $$('.stat-box').forEach(sb => sb.classList.remove('active'));
                 $('.stat-box[data-filter="all"]').classList.add('active');
-                
                 render();
                 showNotification('Todos los contactos han sido eliminados.', 'success');
             };
             
-            // Listener unificado para acciones en tarjetas/listas
             const unifiedEventHandler = (e) => {
                 const target = e.target;
                 const contactEl = target.closest('[data-id]');
                 if (!contactEl) return;
                 const contactId = contactEl.dataset.id;
 
-                // Acción de borrar (sin confirmación)
                 if (target.closest('.delete-contact-btn')) {
                     e.stopPropagation();
-                    const contact = AppState.contacts.find(c => c.id === contactId);
-                    if (!contact) {
-                        console.error(`Contacto con ID ${contactId} no encontrado.`);
-                        showNotification('Error: no se pudo encontrar el contacto.', 'error');
-                        return;
-                    }
                     AppState.contacts = AppState.contacts.filter(c => c.id !== contactId);
                     AppState.selectedContacts.delete(contactId);
                     saveData();
@@ -1126,7 +1114,6 @@
                     return;
                 }
 
-                // Acción de cambiar estado
                 if (target.closest('.status-btn')) {
                     e.stopPropagation();
                     const newStatus = target.closest('.status-btn').dataset.status;
@@ -1134,7 +1121,6 @@
                     return;
                 }
                 
-                // Acción de copiar
                 if(target.closest('[data-field]')) {
                     const text = target.textContent;
                     navigator.clipboard.writeText(text).then(() => {
@@ -1143,11 +1129,9 @@
                     return;
                 }
                 
-                // Acción de seleccionar (solo con el checkbox)
                 if (target.closest('.custom-checkbox')) {
                      const checkbox = $(`#check-${contactId}`);
-                     // El comportamiento por defecto del label ya cambia el estado del checkbox
-                     setTimeout(() => { // Usamos timeout para esperar a que el estado del checkbox se actualice
+                     setTimeout(() => {
                         if (checkbox.checked) {
                             AppState.selectedContacts.add(contactId);
                         } else {
@@ -1172,7 +1156,7 @@
                 
                 const save = () => {
                     const newValue = input.value.trim();
-                    target.textContent = originalValue; // Restore immediately in case of invalid input
+                    target.textContent = originalValue;
                     if (newValue && newValue !== originalValue) {
                          updateContact(id, field, newValue);
                     }
@@ -1186,8 +1170,6 @@
                 el.addEventListener('dblclick', unifiedDblClickHandler);
             });
 
-
-            // Acciones en lote
             elements.selectAllCheckbox.onchange = (e) => {
                 const pageContacts = AppState.filteredContacts.slice((AppState.currentPage - 1) * AppState.itemsPerPage, AppState.currentPage * AppState.itemsPerPage);
                 pageContacts.forEach(c => {
@@ -1198,13 +1180,14 @@
                 updateBulkActionsBar();
             };
             $('#bulkDeleteBtn').onclick = () => {
-                if(AppState.selectedContacts.size === 0) return;
-                const selectedCount = AppState.selectedContacts.size;
-                AppState.contacts = AppState.contacts.filter(c => !AppState.selectedContacts.has(c.id));
-                AppState.selectedContacts.clear();
-                saveData();
-                render();
-                showNotification(`${selectedCount} contactos eliminados.`, 'success');
+                if(AppState.selectedContacts.size > 0) {
+                    const selectedCount = AppState.selectedContacts.size;
+                    AppState.contacts = AppState.contacts.filter(c => !AppState.selectedContacts.has(c.id));
+                    AppState.selectedContacts.clear();
+                    saveData();
+                    render();
+                    showNotification(`${selectedCount} contactos eliminados.`, 'success');
+                }
             };
              $('#bulkStatusSelect').onchange = (e) => {
                 const newStatus = e.target.value;
@@ -1228,7 +1211,6 @@
                 render();
             };
 
-            // Exportar
             $('#exportBtn').onclick = () => {
                 $('#exportFilteredCount').textContent = `${AppState.filteredContacts.length} contactos`;
                 $('#exportAllCount').textContent = `${AppState.contacts.length} contactos`;
@@ -1242,7 +1224,7 @@
                 
                 if (format === 'excel') exportToExcel(contactsToExport);
                 else if (format === 'vcf') exportToVCF(contactsToExport);
-                else if (format === 'sheet') exportToSheetFormat(AppState.contacts); // Exporta todos para el formato planilla
+                else if (format === 'sheet') exportToSheetFormat(AppState.contacts);
 
                 $('#exportModal').classList.remove('active');
             };
@@ -1254,11 +1236,8 @@
             });
         }
         
-        // --- Funciones de Exportación ---
         function formatCsvField(value) {
-            if (value === null || value === undefined) {
-                return '""';
-            }
+            if (value === null || value === undefined) return '""';
             const stringValue = String(value);
             if (stringValue.includes(',') || stringValue.includes('\n') || stringValue.includes('"')) {
                 return `"${stringValue.replace(/"/g, '""')}"`;
@@ -1297,7 +1276,7 @@
             const headers = "usuarios,estado de revision,,estado actual,\"VISTO, RESPONDIDO?\",RECUPERADO,TURNO DE LAS CARGAS,interesado en jugar?,ya contactados,recuperados!,actualmente cargando,TURNO MAÑANA,TURNO TARDE,TURNO NOCHE,contactos a borrar\n";
             
             const statusToSheetStatus = (status) => {
-                const map = { 'contactado': 'MENSAJE ENVIADO', 'sin wsp': 'NO ESTA EN WSP', 'sin revisar': 'A CONTACTAR', 'jugando': 'EN CONTACTO', 'no interesado': 'ELIMINADO' };
+                const map = { 'contactado': 'promo enviada', 'sin wsp': 'NO ESTA EN WSP', 'sin revisar': 'A CONTACTAR', 'jugando': 'EN CONTACTO', 'no interesado': 'ELIMINADO' };
                 return map[status] || 'SIN REVISAR';
             };
 
@@ -1318,9 +1297,9 @@
                 const row = [
                     mainContact ? formatCsvField(mainContact.name) : '',
                     mainContact ? formatCsvField(statusToSheetStatus(mainContact.status)) : '',
-                    '', // Columna C vacía
+                    '',
                     mainContact ? formatCsvField(statusToSheetStatus(mainContact.status)) : '',
-                    'NO', 'NO', '', 'NO', // Defaults para E, F, G, H
+                    'NO', 'NO', '', 'NO',
                     formatCsvField(yaContactados[i]),
                     formatCsvField(recuperados[i]),
                     formatCsvField(actualmenteCargando[i]),
@@ -1347,7 +1326,6 @@
             document.body.removeChild(link);
         }
 
-        // --- Inicialización ---
         function init() {
             try {
                 elements.bulkStatusSelect.innerHTML = `<option value="" disabled selected>Cambiar estado</option>` + STATUS_OPTIONS.map(opt => `<option value="${opt.id}">${opt.label}</option>`).join('');
@@ -1355,7 +1333,7 @@
                 loadData();
             } catch (e) {
                 console.error("Error fatal en la inicialización:", e);
-                document.body.innerHTML = "<h1>Error Crítico</h1><p>La aplicación no pudo iniciarse. Por favor, borra la caché y los datos del sitio e inténtalo de nuevo. Si el problema persiste, contacta al soporte.</p>";
+                document.body.innerHTML = "<h1>Error Crítico</h1><p>La aplicación no pudo iniciarse. Por favor, borra la caché y los datos del sitio e inténtalo de nuevo.</p>";
             }
         }
 
