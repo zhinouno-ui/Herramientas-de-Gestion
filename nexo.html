@@ -630,47 +630,69 @@
             }
         }
         
-        const getContactKey = (contact) => {
-            const name = (contact.name || '').toLowerCase().trim();
-            const phone = (contact.phone || '').replace(/\D/g, '');
-            if (!name && !phone) return null;
-            return phone || name; // Prioritize phone for uniqueness
-        };
+        const normalizePhone = (phone) => (phone || '').replace(/\D/g, '');
+        const normalizeName = (name) => (name || '').toLowerCase().trim();
+
+        const getContactKeys = (contact) => ({
+            phoneKey: normalizePhone(contact.phone),
+            nameKey: normalizeName(contact.name)
+        });
         
         async function handleNewContacts(newContacts) {
             let updatedCount = 0;
             let skippedCount = 0;
             let addedCount = 0;
 
-            const existingContactsMap = new Map();
+            const existingContactsByPhone = new Map();
+            const existingContactsByName = new Map();
             AppState.contacts.forEach(c => {
-                const key = getContactKey(c);
-                if (key) {
-                    existingContactsMap.set(key, c);
-                }
+                const { phoneKey, nameKey } = getContactKeys(c);
+                if (phoneKey) existingContactsByPhone.set(phoneKey, c);
+                if (nameKey) existingContactsByName.set(nameKey, c);
             });
 
             const newUniqueContactsMap = new Map();
             for (const newContact of newContacts) {
-                const key = getContactKey(newContact);
+                const { phoneKey, nameKey } = getContactKeys(newContact);
+                const key = phoneKey || nameKey;
                 if (key) {
                     newUniqueContactsMap.set(key, newContact);
                 }
             }
             
-            for (const [key, newContact] of newUniqueContactsMap.entries()) {
-                if (existingContactsMap.has(key)) {
-                    const existingContact = existingContactsMap.get(key);
+            for (const newContact of newUniqueContactsMap.values()) {
+                const { phoneKey, nameKey } = getContactKeys(newContact);
+                let existingContact = phoneKey ? existingContactsByPhone.get(phoneKey) : null;
+                if (!existingContact && nameKey) {
+                    existingContact = existingContactsByName.get(nameKey);
+                }
                     
-                    if (existingContact.status === 'sin revisar') {
-                        Object.assign(existingContact, newContact, { id: existingContact.id });
+                if (existingContact) {
+                    const existingStatus = existingContact.status || 'sin revisar';
+                    const incomingStatus = newContact.status || 'sin revisar';
+                    let changed = false;
+
+                    if (!existingContact.phone && phoneKey) {
+                        existingContact.phone = phoneKey;
+                        changed = true;
+                        existingContactsByPhone.set(phoneKey, existingContact);
+                    }
+
+                    if (existingStatus === 'sin revisar' && incomingStatus !== 'sin revisar') {
+                        existingContact.status = incomingStatus;
+                        changed = true;
+                    }
+
+                    if (changed) {
+                        existingContact.lastUpdated = new Date().toISOString();
                         updatedCount++;
                     } else {
                         skippedCount++;
                     }
                 } else {
                     AppState.contacts.push(newContact);
-                    existingContactsMap.set(key, newContact);
+                    if (phoneKey) existingContactsByPhone.set(phoneKey, newContact);
+                    if (nameKey) existingContactsByName.set(nameKey, newContact);
                     addedCount++;
                 }
             }
@@ -741,6 +763,7 @@
 
                 let name = row[0];
                 if (!name || name.toUpperCase() === '#ERROR!') return;
+                const phone = (row[2] || '').replace(/\D/g, '');
                 
                 let appStatus = 'sin revisar';
                 const rawLine = line.toUpperCase();
@@ -763,7 +786,7 @@
                 if (name) {
                     contactsToProcess.push({
                         id: `id_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                        name, phone: '', origin: origin, status: appStatus,
+                        name, phone, origin: origin, status: appStatus,
                         lastUpdated: new Date().toISOString()
                     });
                 }
@@ -835,7 +858,8 @@
             const originalCount = AppState.contacts.length;
 
             for (const contact of AppState.contacts) {
-                const key = getContactKey(contact);
+                const { phoneKey, nameKey } = getContactKeys(contact);
+                const key = phoneKey || nameKey;
                 if (!key) continue;
 
                 if (uniqueContactsMap.has(key)) {
@@ -1273,7 +1297,7 @@
         }
 
         function exportToSheetFormat(contacts) {
-            const headers = "usuarios,estado de revision,,estado actual,\"VISTO, RESPONDIDO?\",RECUPERADO,TURNO DE LAS CARGAS,interesado en jugar?,ya contactados,recuperados!,actualmente cargando,TURNO MAÑANA,TURNO TARDE,TURNO NOCHE,contactos a borrar\n";
+            const headers = "usuarios,estado de revision,telefono,estado actual,\"VISTO, RESPONDIDO?\",RECUPERADO,TURNO DE LAS CARGAS,interesado en jugar?,ya contactados,recuperados!,actualmente cargando,TURNO MAÑANA,TURNO TARDE,TURNO NOCHE,contactos a borrar\n";
             
             const statusToSheetStatus = (status) => {
                 const map = { 'contactado': 'promo enviada', 'sin wsp': 'NO ESTA EN WSP', 'sin revisar': 'A CONTACTAR', 'jugando': 'EN CONTACTO', 'no interesado': 'ELIMINADO' };
@@ -1297,7 +1321,7 @@
                 const row = [
                     mainContact ? formatCsvField(mainContact.name) : '',
                     mainContact ? formatCsvField(statusToSheetStatus(mainContact.status)) : '',
-                    '',
+                    mainContact ? formatCsvField(mainContact.phone) : '',
                     mainContact ? formatCsvField(statusToSheetStatus(mainContact.status)) : '',
                     'NO', 'NO', '', 'NO',
                     formatCsvField(yaContactados[i]),
