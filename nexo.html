@@ -637,6 +637,41 @@
             phoneKey: normalizePhone(contact.phone),
             nameKey: normalizeName(contact.name)
         });
+
+        const statusRank = (status) => {
+            const normalized = (status || 'sin revisar').toLowerCase().trim();
+            if (normalized === 'sin revisar') return 0;
+            return 1;
+        };
+
+        const mergeContactData = (existingContact, incomingContact) => {
+            const incomingPhone = normalizePhone(incomingContact.phone);
+            const existingPhone = normalizePhone(existingContact.phone);
+            let changed = false;
+
+            if (!existingPhone && incomingPhone) {
+                existingContact.phone = incomingPhone;
+                changed = true;
+            }
+
+            if (!normalizeName(existingContact.name) && normalizeName(incomingContact.name)) {
+                existingContact.name = incomingContact.name;
+                changed = true;
+            }
+
+            const existingStatus = existingContact.status || 'sin revisar';
+            const incomingStatus = incomingContact.status || 'sin revisar';
+            if (statusRank(incomingStatus) > statusRank(existingStatus)) {
+                existingContact.status = incomingStatus;
+                changed = true;
+            }
+
+            if (changed) {
+                existingContact.lastUpdated = new Date().toISOString();
+            }
+
+            return changed;
+        };
         
         async function handleNewContacts(newContacts) {
             let updatedCount = 0;
@@ -668,23 +703,10 @@
                 }
                     
                 if (existingContact) {
-                    const existingStatus = existingContact.status || 'sin revisar';
-                    const incomingStatus = newContact.status || 'sin revisar';
-                    let changed = false;
-
-                    if (!existingContact.phone && phoneKey) {
-                        existingContact.phone = phoneKey;
-                        changed = true;
-                        existingContactsByPhone.set(phoneKey, existingContact);
-                    }
-
-                    if (existingStatus === 'sin revisar' && incomingStatus !== 'sin revisar') {
-                        existingContact.status = incomingStatus;
-                        changed = true;
-                    }
-
+                    const changed = mergeContactData(existingContact, newContact);
                     if (changed) {
-                        existingContact.lastUpdated = new Date().toISOString();
+                        if (phoneKey) existingContactsByPhone.set(phoneKey, existingContact);
+                        if (nameKey) existingContactsByName.set(nameKey, existingContact);
                         updatedCount++;
                     } else {
                         skippedCount++;
@@ -744,6 +766,9 @@
         }
 
         async function processPlanillaCSV(lines, origin) {
+            const header = lines[0].toLowerCase().replace(/"/g, '');
+            const headerColumns = header.split(',').map(col => col.trim());
+            const phoneColumnIndex = headerColumns.indexOf('telefono');
             const data = lines.slice(1);
             const contactsToProcess = [];
             
@@ -763,7 +788,8 @@
 
                 let name = row[0];
                 if (!name || name.toUpperCase() === '#ERROR!') return;
-                const phone = (row[2] || '').replace(/\D/g, '');
+                const phoneSource = phoneColumnIndex > -1 ? row[phoneColumnIndex] : row[2];
+                const phone = (phoneSource || '').replace(/\D/g, '');
                 
                 let appStatus = 'sin revisar';
                 const rawLine = line.toUpperCase();
@@ -864,9 +890,7 @@
 
                 if (uniqueContactsMap.has(key)) {
                     const existingContact = uniqueContactsMap.get(key);
-                    if (existingContact.status === 'sin revisar' && contact.status !== 'sin revisar') {
-                        uniqueContactsMap.set(key, contact);
-                    }
+                    mergeContactData(existingContact, contact);
                 } else {
                     uniqueContactsMap.set(key, contact);
                 }
