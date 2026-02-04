@@ -529,7 +529,14 @@
                 try {
                     const parsedData = JSON.parse(savedData);
                     if (Array.isArray(parsedData)) {
-                        AppState.contacts = parsedData;
+                        AppState.contacts = parsedData.map(contact => {
+                            const normalized = { ...contact };
+                            const fallbackPhone = normalized.phone || normalized.telefono || normalized.tel;
+                            normalized.phone = (fallbackPhone || '').replace(/\D/g, '');
+                            normalized.name = normalized.name || normalized.nombre || normalized.usuarios || '';
+                            normalized.status = normalized.status || normalized.estado || 'sin revisar';
+                            return normalized;
+                        });
                     } else {
                         AppState.contacts = [];
                     }
@@ -630,11 +637,47 @@
             }
         }
         
-        const getContactKey = (contact) => {
-            const name = (contact.name || '').toLowerCase().trim();
-            const phone = (contact.phone || '').replace(/\D/g, '');
-            if (!name && !phone) return null;
-            return phone || name; // Prioritize phone for uniqueness
+        const normalizePhone = (phone) => (phone || '').replace(/\D/g, '');
+        const normalizeName = (name) => (name || '').toLowerCase().trim();
+
+        const getContactKeys = (contact) => ({
+            phoneKey: normalizePhone(contact.phone),
+            nameKey: normalizeName(contact.name)
+        });
+
+        const statusRank = (status) => {
+            const normalized = (status || 'sin revisar').toLowerCase().trim();
+            if (normalized === 'sin revisar') return 0;
+            return 1;
+        };
+
+        const mergeContactData = (existingContact, incomingContact) => {
+            const incomingPhone = normalizePhone(incomingContact.phone);
+            const existingPhone = normalizePhone(existingContact.phone);
+            let changed = false;
+
+            if (!existingPhone && incomingPhone) {
+                existingContact.phone = incomingPhone;
+                changed = true;
+            }
+
+            if (!normalizeName(existingContact.name) && normalizeName(incomingContact.name)) {
+                existingContact.name = incomingContact.name;
+                changed = true;
+            }
+
+            const existingStatus = existingContact.status || 'sin revisar';
+            const incomingStatus = incomingContact.status || 'sin revisar';
+            if (statusRank(incomingStatus) > statusRank(existingStatus)) {
+                existingContact.status = incomingStatus;
+                changed = true;
+            }
+
+            if (changed) {
+                existingContact.lastUpdated = new Date().toISOString();
+            }
+
+            return changed;
         };
         
         async function handleNewContacts(newContacts) {
@@ -642,35 +685,43 @@
             let skippedCount = 0;
             let addedCount = 0;
 
-            const existingContactsMap = new Map();
+            const existingContactsByPhone = new Map();
+            const existingContactsByName = new Map();
             AppState.contacts.forEach(c => {
-                const key = getContactKey(c);
-                if (key) {
-                    existingContactsMap.set(key, c);
-                }
+                const { phoneKey, nameKey } = getContactKeys(c);
+                if (phoneKey) existingContactsByPhone.set(phoneKey, c);
+                if (nameKey) existingContactsByName.set(nameKey, c);
             });
 
             const newUniqueContactsMap = new Map();
             for (const newContact of newContacts) {
-                const key = getContactKey(newContact);
+                const { phoneKey, nameKey } = getContactKeys(newContact);
+                const key = phoneKey || nameKey;
                 if (key) {
                     newUniqueContactsMap.set(key, newContact);
                 }
             }
             
-            for (const [key, newContact] of newUniqueContactsMap.entries()) {
-                if (existingContactsMap.has(key)) {
-                    const existingContact = existingContactsMap.get(key);
+            for (const newContact of newUniqueContactsMap.values()) {
+                const { phoneKey, nameKey } = getContactKeys(newContact);
+                let existingContact = phoneKey ? existingContactsByPhone.get(phoneKey) : null;
+                if (!existingContact && nameKey) {
+                    existingContact = existingContactsByName.get(nameKey);
+                }
                     
-                    if (existingContact.status === 'sin revisar') {
-                        Object.assign(existingContact, newContact, { id: existingContact.id });
+                if (existingContact) {
+                    const changed = mergeContactData(existingContact, newContact);
+                    if (changed) {
+                        if (phoneKey) existingContactsByPhone.set(phoneKey, existingContact);
+                        if (nameKey) existingContactsByName.set(nameKey, existingContact);
                         updatedCount++;
                     } else {
                         skippedCount++;
                     }
                 } else {
                     AppState.contacts.push(newContact);
-                    existingContactsMap.set(key, newContact);
+                    if (phoneKey) existingContactsByPhone.set(phoneKey, newContact);
+                    if (nameKey) existingContactsByName.set(nameKey, newContact);
                     addedCount++;
                 }
             }
@@ -722,6 +773,9 @@
         }
 
         async function processPlanillaCSV(lines, origin) {
+            const header = lines[0].toLowerCase().replace(/"/g, '');
+            const headerColumns = header.split(',').map(col => col.trim());
+            const phoneColumnIndex = headerColumns.indexOf('telefono');
             const data = lines.slice(1);
             const contactsToProcess = [];
             
@@ -741,6 +795,8 @@
 
                 let name = row[0];
                 if (!name || name.toUpperCase() === '#ERROR!') return;
+                const phoneSource = phoneColumnIndex > -1 ? row[phoneColumnIndex] : row[2];
+                const phone = (phoneSource || '').replace(/\D/g, '');
                 
                 let appStatus = 'sin revisar';
                 const rawLine = line.toUpperCase();
@@ -763,7 +819,7 @@
                 if (name) {
                     contactsToProcess.push({
                         id: `id_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                        name, phone: '', origin: origin, status: appStatus,
+                        name, phone, origin: origin, status: appStatus,
                         lastUpdated: new Date().toISOString()
                     });
                 }
@@ -835,14 +891,13 @@
             const originalCount = AppState.contacts.length;
 
             for (const contact of AppState.contacts) {
-                const key = getContactKey(contact);
+                const { phoneKey, nameKey } = getContactKeys(contact);
+                const key = phoneKey || nameKey;
                 if (!key) continue;
 
                 if (uniqueContactsMap.has(key)) {
                     const existingContact = uniqueContactsMap.get(key);
-                    if (existingContact.status === 'sin revisar' && contact.status !== 'sin revisar') {
-                        uniqueContactsMap.set(key, contact);
-                    }
+                    mergeContactData(existingContact, contact);
                 } else {
                     uniqueContactsMap.set(key, contact);
                 }
@@ -1273,7 +1328,7 @@
         }
 
         function exportToSheetFormat(contacts) {
-            const headers = "usuarios,estado de revision,,estado actual,\"VISTO, RESPONDIDO?\",RECUPERADO,TURNO DE LAS CARGAS,interesado en jugar?,ya contactados,recuperados!,actualmente cargando,TURNO MAÑANA,TURNO TARDE,TURNO NOCHE,contactos a borrar\n";
+            const headers = "usuarios,estado de revision,telefono,estado actual,\"VISTO, RESPONDIDO?\",RECUPERADO,TURNO DE LAS CARGAS,interesado en jugar?,ya contactados,recuperados!,actualmente cargando,TURNO MAÑANA,TURNO TARDE,TURNO NOCHE,contactos a borrar\n";
             
             const statusToSheetStatus = (status) => {
                 const map = { 'contactado': 'promo enviada', 'sin wsp': 'NO ESTA EN WSP', 'sin revisar': 'A CONTACTAR', 'jugando': 'EN CONTACTO', 'no interesado': 'ELIMINADO' };
@@ -1294,10 +1349,11 @@
 
             for (let i = 0; i < maxLength; i++) {
                 const mainContact = contacts[i];
+                const phoneValue = mainContact ? normalizePhone(mainContact.phone || mainContact.telefono || mainContact.tel || '') : '';
                 const row = [
                     mainContact ? formatCsvField(mainContact.name) : '',
                     mainContact ? formatCsvField(statusToSheetStatus(mainContact.status)) : '',
-                    '',
+                    formatCsvField(phoneValue),
                     mainContact ? formatCsvField(statusToSheetStatus(mainContact.status)) : '',
                     'NO', 'NO', '', 'NO',
                     formatCsvField(yaContactados[i]),
