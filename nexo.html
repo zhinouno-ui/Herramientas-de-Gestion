@@ -529,7 +529,14 @@
                 try {
                     const parsedData = JSON.parse(savedData);
                     if (Array.isArray(parsedData)) {
-                        AppState.contacts = parsedData;
+                        AppState.contacts = parsedData.map(contact => {
+                            const normalized = { ...contact };
+                            const fallbackPhone = normalized.phone || normalized.telefono || normalized.tel;
+                            normalized.phone = (fallbackPhone || '').replace(/\D/g, '');
+                            normalized.name = normalized.name || normalized.nombre || normalized.usuarios || '';
+                            normalized.status = normalized.status || normalized.estado || 'sin revisar';
+                            return normalized;
+                        });
                     } else {
                         AppState.contacts = [];
                     }
@@ -1342,10 +1349,11 @@
 
             for (let i = 0; i < maxLength; i++) {
                 const mainContact = contacts[i];
+                const phoneValue = mainContact ? normalizePhone(mainContact.phone || mainContact.telefono || mainContact.tel || '') : '';
                 const row = [
                     mainContact ? formatCsvField(mainContact.name) : '',
                     mainContact ? formatCsvField(statusToSheetStatus(mainContact.status)) : '',
-                    mainContact ? formatCsvField(mainContact.phone) : '',
+                    formatCsvField(phoneValue),
                     mainContact ? formatCsvField(statusToSheetStatus(mainContact.status)) : '',
                     'NO', 'NO', '', 'NO',
                     formatCsvField(yaContactados[i]),
