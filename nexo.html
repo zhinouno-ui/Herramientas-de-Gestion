@@ -182,987 +182,1810 @@
         .stat-unreviewed .stat-value { color: #9ca3af; }
         .stat-contactado .stat-value { color: var(--accent-success); }
         .stat-jugando .stat-value { color: var(--accent-jugando); }
+        .stat-sin-wsp .stat-value { color: var(--accent-warning); }
         .stat-no-interesado .stat-value { color: var(--accent-danger); }
-        .stat-sin-wsp .stat-value { color: var(--accent-neutral); }
-        .controls { display: flex; gap: 10px; flex-wrap: wrap; }
-        .btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; }
-        .btn-success { background: var(--accent-success); color: white; }
-        .btn-danger { background: var(--accent-danger); color: white; }
-        .btn-warning { background: var(--accent-warning); color: white; }
-        .btn:hover { transform: translateY(-2px); opacity: 0.9; }
+        .stat-duplicados .stat-value { color: var(--accent-warning); }
+        .stat-label { font-size: 0.75rem; color: var(--text-secondary); margin-top: 3px; }
 
-        /* Barra de progreso */
-        .progress-container { background: var(--bg-secondary); padding: 15px 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); }
-        .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .progress-percentage { color: var(--accent-primary); }
-        .progress-bar { height: 12px; background: var(--bg-card); border-radius: 6px; overflow: hidden; }
-        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent-primary), #8b5cf6); border-radius: 6px; transition: width 0.5s ease; }
-        .progress-stats { display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--text-secondary); }
-
-        /* Controles de vista y búsqueda */
-        .view-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
-        .search-box { flex: 1; min-width: 300px; position: relative; }
-        .search-input { width: 100%; padding: 12px 15px 12px 45px; background: var(--bg-card); border: 2px solid var(--border-color); border-radius: 10px; color: var(--text-primary); font-size: 1rem; }
-        .search-input:focus { outline: none; border-color: var(--accent-primary); }
-        .search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); }
-        .view-toggle { display: flex; gap: 5px; background: var(--bg-card); padding: 5px; border-radius: 10px; }
-        .view-btn { padding: 10px 20px; background: transparent; border: none; color: var(--text-secondary); border-radius: 8px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 8px; }
-        .view-btn.active { background: var(--accent-primary); color: white; }
-
-        /* Vistas de contactos */
-        .cards-view, .list-view, .tinder-view { display: none; }
-        .cards-view.active, .list-view.active, .tinder-view.active { display: grid; }
-        .list-view.active { display: flex; flex-direction: column; gap: 10px; }
-        .tinder-view.active { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70vh; }
-        .cards-view { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
-
-        .contact-card, .list-item {
-            background: var(--bg-card);
-            border-radius: 15px;
-            transition: all 0.3s;
-            border-left: 5px solid;
-            position: relative;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        .view-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
         }
-        .contact-card:hover, .list-item:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); }
-        .contact-card[data-status="jugando"], .list-item[data-status="jugando"] { border-left-color: var(--accent-jugando); }
-        .contact-card[data-status="contactado"], .list-item[data-status="contactado"] { border-left-color: var(--accent-success); }
-        .contact-card[data-status="no interesado"], .list-item[data-status="no interesado"] { border-left-color: var(--accent-danger); }
-        .contact-card[data-status="sin wsp"], .list-item[data-status="sin wsp"] { border-left-color: var(--accent-neutral); }
-        .contact-card[data-status="sin revisar"], .list-item[data-status="sin revisar"] { border-left-color: #9ca3af; }
-        .contact-card.selected, .list-item.selected { background-color: var(--selection-bg); border-left-color: var(--accent-primary); }
-        
-        .contact-card { padding: 15px 20px; }
-        .list-item { padding: 10px 20px; }
 
-        .contact-name, .contact-phone { cursor: pointer; padding: 5px; border-radius: 6px; transition: background 0.2s; display: block; word-break: break-word; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .contact-name:hover, .contact-phone:hover { background: rgba(255, 255, 255, 0.1); }
-        .inline-edit-input { background: var(--bg-secondary); border: 1px solid var(--accent-primary); color: var(--text-primary); border-radius: 4px; padding: 5px; font-size: inherit; width: 90%; }
-        
-        .contact-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
-        .contact-info { flex-grow: 1; flex-shrink: 1; min-width: 0; overflow: hidden;}
-        .contact-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-        .origin-tag { font-size: 0.85rem; color: var(--text-secondary); text-align: right; word-break: break-all; white-space: normal; }
-
-        .delete-contact-btn { background: transparent; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1rem; padding: 5px; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-        .delete-contact-btn:hover { background: var(--accent-danger); color: white; }
-
-        .whatsapp-btn { background: #25D366; color: white; padding: 8px 15px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; width: fit-content; transition: all 0.3s; margin-top: 10px; }
-        .whatsapp-btn:hover { background: #128C7E; transform: translateY(-2px); }
-
-        .list-item-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-        .status-btn { background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-secondary); border-radius: 6px; padding: 6px 10px; cursor: pointer; transition: all 0.2s; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 5px; }
-        .status-btn:hover { background: var(--hover-color); color: var(--text-primary); }
-        
-        /* Vista Tinder */
-        .tinder-card { background: var(--bg-card); border-radius: 20px; padding: 40px; max-width: 500px; width: 90%; text-align: center; position: relative; transition: opacity 0.3s ease, transform 0.3s ease; }
-        .tinder-card.fading { opacity: 0; transform: scale(0.95); }
-        .tinder-name { font-size: 2rem; }
-        .tinder-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px; }
-        .tinder-action-btn { padding: 15px; border-radius: 12px; border: none; color: white; cursor: pointer; transition: all 0.3s; }
-        .tinder-action-btn:hover { transform: translateY(-3px); opacity: 0.9; }
-        .tinder-action-btn.siguiente { background: var(--accent-primary); grid-column: span 3; }
-        .tinder-counter { position: absolute; top: 20px; right: 20px; background: var(--bg-secondary); padding: 8px 15px; border-radius: 20px; font-weight: 600; }
-        
-        /* Acciones en lote */
-        .bulk-actions-bar {
-            position: fixed;
-            bottom: -100px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--bg-secondary);
-            padding: 15px 25px;
-            border-radius: 15px;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
+        .btn {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
             display: flex;
             align-items: center;
-            gap: 20px;
-            transition: bottom 0.4s ease-in-out;
-            z-index: 1500;
+            gap: 8px;
         }
-        .bulk-actions-bar.active { bottom: 20px; }
-        .bulk-actions-bar .status-select { min-width: 150px; padding: 8px; border-radius: 8px; background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color); }
+        .btn:hover { background: var(--hover-color); transform: translateY(-2px); }
+        .btn.active { background: var(--accent-primary); color: white; }
+        .btn i { font-size: 1rem; }
+        .btn-danger { background: var(--accent-danger); color: white; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-success { background: var(--accent-success); color: white; }
+        .btn-success:hover { background: #059669; }
+        .btn-warning { background: var(--accent-warning); color: white; }
+        .btn-warning:hover { background: #d97706; }
 
-        /* Checkbox personalizado */
-        .contact-selection { display: flex; align-items: center; gap: 15px; }
-        .custom-checkbox { width: 20px; height: 20px; background: var(--bg-primary); border: 2px solid var(--border-color); border-radius: 5px; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: all 0.2s; padding: 5px; } /* Hitbox arreglado sin agrandar */
-        label.custom-checkbox { padding: 10px; margin: -10px; } /* Aumenta hitbox invisible */
-        .custom-checkbox i { color: white; font-size: 12px; opacity: 0; transform: scale(0.5); transition: all 0.2s; }
-        .contact-checkbox:checked + .custom-checkbox { background: var(--accent-primary); border-color: var(--accent-primary); }
-        .contact-checkbox:checked + .custom-checkbox i { opacity: 1; transform: scale(1); }
-        .contact-checkbox { display: none; }
+        /* Barra de búsqueda */
+        .search-bar {
+            background: var(--bg-secondary);
+            padding: 15px 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        .search-input {
+            flex: 1;
+            min-width: 250px;
+            padding: 10px 15px;
+            padding-left: 40px;
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            position: relative;
+        }
+        .search-input:focus { border-color: var(--accent-primary); outline: none; }
+        .search-icon { position: absolute; left: 35px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); pointer-events: none; }
 
-        /* Modal */
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); display: flex; justify-content: center; align-items: center; z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
-        .modal.active { opacity: 1; pointer-events: all; }
-        .modal-content { background: var(--bg-secondary); padding: 30px; border-radius: 20px; max-width: 500px; width: 90%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); }
-        .modal h3 { margin-bottom: 20px; font-size: 1.5rem; color: var(--accent-primary); }
-        .export-option, .duplicate-option { background: var(--bg-card); padding: 15px; border-radius: 10px; cursor: pointer; transition: all 0.3s; border: 2px solid transparent; }
-        .export-option:hover, .duplicate-option:hover { border-color: var(--accent-primary); transform: translateY(-2px); }
-        .export-option.selected, .duplicate-option.selected { border-color: var(--accent-primary); background: var(--selection-bg); }
-        #exportFormatOptions { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-top: 10px; }
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-select {
+            padding: 10px 15px;
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            cursor: pointer;
+            min-width: 150px;
+        }
+        .filter-select:focus { border-color: var(--accent-primary); outline: none; }
+
+        /* Barra de acciones masivas */
+        .bulk-actions-bar {
+            background: linear-gradient(90deg, var(--accent-primary), #6366f1);
+            padding: 15px 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            display: none;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);
+        }
+        .bulk-actions-bar.active { display: flex; }
+        .bulk-count { font-weight: 700; font-size: 1.1rem; }
+        .bulk-actions { display: flex; gap: 10px; margin-left: auto; flex-wrap: wrap; }
+
+        /* Vista de tarjetas */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .contact-card {
+            background: var(--bg-secondary);
+            border-radius: 15px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+            position: relative;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+        }
+        .contact-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            border-color: var(--accent-primary);
+        }
+        .contact-card.selected { border-color: var(--accent-primary); background: var(--selection-bg); }
+        .contact-card.duplicate { border-color: var(--accent-warning); }
+        .duplicate-badge {
+            position: absolute;
+            top: 10px;
+            right: 50px;
+            background: var(--accent-warning);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+        }
+
+        .card-checkbox {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .contact-card:hover .card-checkbox,
+        .contact-card.selected .card-checkbox {
+            opacity: 1;
+        }
+
+        .contact-card.selected::before {
+            content: '✓';
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            width: 24px;
+            height: 24px;
+            background: var(--accent-primary);
+            color: white;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1rem;
+            z-index: 1;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+            margin-top: 10px;
+        }
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            background: var(--bg-card);
+        }
+        .card-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            word-break: break-word;
+            flex: 1;
+        }
+
+        .card-details {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        .detail-item i { width: 20px; text-align: center; color: var(--accent-primary); }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status-sin-revisar { background: #374151; color: #9ca3af; }
+        .status-contactado { background: rgba(16, 185, 129, 0.2); color: var(--accent-success); }
+        .status-jugando { background: rgba(139, 92, 246, 0.2); color: var(--accent-jugando); }
+        .status-sin-wsp { background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); }
+        .status-no-interesado { background: rgba(239, 68, 68, 0.2); color: var(--accent-danger); }
+
+        .card-footer {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Vista de lista mejorada */
+        .list-view {
+            background: var(--bg-secondary);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .list-header {
+            background: var(--bg-card);
+            padding: 15px 20px;
+            display: grid;
+            grid-template-columns: 50px 2fr 1.5fr 1.2fr 1fr 120px 400px;
+            gap: 15px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .list-item {
+            padding: 15px 20px;
+            display: grid;
+            grid-template-columns: 50px 2fr 1.5fr 1.2fr 1fr 120px 400px;
+            gap: 15px;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .list-item:hover { background: var(--hover-color); }
+        .list-item.selected { 
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05));
+            border-left: 4px solid var(--accent-primary);
+        }
+        .list-item.duplicate { 
+            background: rgba(245, 158, 11, 0.08); 
+            border-right: 4px solid var(--accent-warning); 
+        }
+        .list-item.duplicate.selected {
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.15), rgba(245, 158, 11, 0.08));
+            border-left: 4px solid var(--accent-primary);
+            border-right: 4px solid var(--accent-warning);
+        }
+        .list-item:last-child { border-bottom: none; }
+        
+        .list-item-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .list-item-phone {
+            color: var(--text-secondary);
+            font-family: monospace;
+        }
+        
+        .list-item-origin {
+            color: var(--text-secondary);
+        }
+        
+        .list-item-date {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+        
+        .list-item-actions {
+            display: flex;
+            gap: 5px;
+            justify-content: flex-end;
+        }
+        
+        .list-item-actions .btn {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+
+        .status-buttons {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .status-btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 2px solid transparent;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .status-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .status-btn.active {
+            border-color: currentColor;
+        }
+
+        .status-btn.sin-revisar { color: #9ca3af; }
+        .status-btn.sin-revisar.active { background: #374151; color: #9ca3af; }
+        
+        .status-btn.contactado { color: var(--accent-success); }
+        .status-btn.contactado.active { background: rgba(16, 185, 129, 0.2); color: var(--accent-success); }
+        
+        .status-btn.jugando { color: var(--accent-jugando); }
+        .status-btn.jugando.active { background: rgba(139, 92, 246, 0.2); color: var(--accent-jugando); }
+        
+        .status-btn.sin-wsp { color: var(--accent-warning); }
+        .status-btn.sin-wsp.active { background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); }
+        
+        .status-btn.no-interesado { color: var(--accent-danger); }
+        .status-btn.no-interesado.active { background: rgba(239, 68, 68, 0.2); color: var(--accent-danger); }
+
+        /* Barra de progreso */
+        .progress-bar-container {
+            background: var(--bg-secondary);
+            padding: 15px 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .progress-title {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .progress-percentage {
+            color: var(--accent-primary);
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .progress-details {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-top: 5px;
+            text-align: right;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--bg-card);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-success));
+            transition: width 0.3s ease;
+        }
+
+        /* Paginación */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+        .pagination button {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        .pagination button:hover:not(:disabled) { background: var(--hover-color); transform: translateY(-2px); }
+        .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .pagination button.active { background: var(--accent-primary); color: white; }
+        .pagination .page-info { color: var(--text-secondary); font-size: 0.9rem; }
+
+        /* Modal de exportación */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: var(--bg-secondary);
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+        .modal-header {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+        .export-options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .export-option {
+            background: var(--bg-card);
+            padding: 15px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .export-option:hover { border-color: var(--accent-primary); transform: translateY(-2px); }
+        .export-option.selected { border-color: var(--accent-primary); background: var(--selection-bg); }
+        .export-option i { font-size: 1.5rem; color: var(--accent-primary); }
+        .export-option-text { flex: 1; }
+        .export-option-title { font-weight: 600; font-size: 1rem; margin-bottom: 3px; }
+        .export-option-desc { font-size: 0.85rem; color: var(--text-secondary); }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+        .modal-actions .btn { flex: 1; justify-content: center; }
 
         /* Notificaciones */
-        .notification { position: fixed; top: 20px; right: 20px; padding: 15px 25px; border-radius: 10px; color: white; font-weight: 600; z-index: 3000; transform: translateX(150%); transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55); max-width: 400px; }
-        .notification.show { transform: translateX(0); }
-        .notification.success { background: var(--accent-success); }
-        .notification.info { background: var(--accent-primary); }
-        .notification.warning { background: var(--accent-warning); }
-        .notification.error { background: var(--accent-danger); }
+        .notification {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            z-index: 3000;
+            animation: slideIn 0.3s ease;
+            max-width: 400px;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .notification.success { border-left: 4px solid var(--accent-success); }
+        .notification.error { border-left: 4px solid var(--accent-danger); }
+        .notification.info { border-left: 4px solid var(--accent-primary); }
+        .notification i { font-size: 1.5rem; }
+        .notification.success i { color: var(--accent-success); }
+        .notification.error i { color: var(--accent-danger); }
+        .notification.info i { color: var(--accent-primary); }
 
-        /* Paginación y otros */
-        .pagination { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 30px; flex-wrap: wrap; }
-        .page-btn { padding: 10px 15px; background: var(--bg-secondary); border: none; border-radius: 8px; color: var(--text-primary); cursor: pointer; transition: all 0.3s; }
-        .page-btn:hover { background: var(--hover-color); }
-        .page-btn.active { background: var(--accent-primary); color: white; }
-        .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        /* Historial */
+        .history-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .history-item {
+            background: var(--bg-card);
+            padding: 12px 15px;
+            margin: 8px 0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            border-left: 3px solid var(--accent-primary);
+        }
+        .history-time {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+        }
+        .history-action {
+            color: var(--text-primary);
+        }
 
-        /* Scrollbar personalizada */
-        ::-webkit-scrollbar { width: 10px; }
-        ::-webkit-scrollbar-track { background: var(--bg-secondary); }
-        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 5px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--accent-primary); }
+        /* Duplicados */
+        .duplicates-list {
+            max-height: 500px;
+            overflow-y: auto;
+            margin: 20px 0;
+        }
+        .duplicate-group {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--accent-warning);
+        }
+        .duplicate-group-header {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--accent-warning);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .duplicate-item {
+            background: var(--bg-secondary);
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        .duplicate-item-detail {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-left: 10px;
+        }
 
         @media (max-width: 768px) {
-            .cards-view { grid-template-columns: 1fr; }
-            .navbar, .view-controls { flex-direction: column; align-items: stretch; }
-            .bulk-actions-bar { flex-direction: column; width: 90%; bottom: -200px; gap: 10px; padding: 15px; }
-            .bulk-actions-bar.active { bottom: 10px; }
-            .list-item { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .navbar, .search-bar { flex-direction: column; align-items: stretch; }
+            .stats { justify-content: center; }
+            .list-header { display: none; }
+            .list-item {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            .cards-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
     <div class="upload-screen" id="uploadScreen">
         <div class="upload-card">
-            <i class="fas fa-address-book"></i>
+            <i class="fas fa-cloud-upload-alt"></i>
             <h1>Gestor de Contactos Masivo</h1>
-            <p style="color: var(--text-secondary); margin-bottom: 30px;">Importa, limpia y categoriza tus contactos sin esfuerzo.</p>
-            <div class="file-upload-area" id="dropArea">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <h3>Arrastra y suelta archivos de contactos"VCF"</h3>
-                <p> o Formato planilla "CSV"</p>
-                <input type="file" id="fileInput" multiple accept=".vcf,.vcard,.csv" style="display: none;">
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">Importa tus contactos desde archivos CSV</p>
+            <div class="file-upload-area" id="uploadArea">
+                <i class="fas fa-file-csv" style="font-size: 3rem; color: var(--accent-primary);"></i>
+                <p style="margin-top: 15px; color: var(--text-secondary);">Arrastra archivos CSV o VCF aquí o haz clic para seleccionar</p>
+                <input type="file" id="fileInput" accept=".csv,.vcf" multiple style="display: none;">
             </div>
             <div class="file-list" id="fileList"></div>
-            <input type="text" class="origin-input" id="originName" placeholder="Nombre del origen (ej: Celular Ventas)">
-            <button class="btn-primary" id="processFiles"><i class="fas fa-play"></i> Procesar y Comenzar</button>
+            <input type="text" id="originInput" class="origin-input" placeholder="Origen de los contactos (ej: Turno Mañana, Facebook, etc.)">
+            <button id="startBtn" class="btn-primary" disabled>Comenzar</button>
         </div>
     </div>
 
-    <div class="container" id="mainInterface" style="display: none;">
+    <div class="container" id="mainApp" style="display: none;">
+        <!-- Barra de navegación -->
         <div class="navbar">
             <div class="stats">
-                <div class="stat-box stat-total active" data-filter="all"><div class="stat-value" id="totalContacts">0</div><div>Total</div></div>
-                <div class="stat-box stat-unreviewed" data-filter="sin revisar"><div class="stat-value" id="unreviewedContacts">0</div><div>Sin revisar</div></div>
-                <div class="stat-box stat-contactado" data-filter="contactado"><div class="stat-value" id="contactedContacts">0</div><div>Contactado</div></div>
-                <div class="stat-box stat-jugando" data-filter="jugando"><div class="stat-value" id="playingContacts">0</div><div>Jugando</div></div>
-                <div class="stat-box stat-no-interesado" data-filter="no interesado"><div class="stat-value" id="notInterestedContacts">0</div><div>No interesado</div></div>
-                <div class="stat-box stat-sin-wsp" data-filter="sin wsp"><div class="stat-value" id="noWhatsappContacts">0</div><div>Sin WSP</div></div>
-            </div>
-            <div class="controls">
-                <button class="btn btn-success" id="exportBtn"><i class="fas fa-file-export"></i> Exportar</button>
-                <button class="btn btn-danger" id="clearDataBtn"><i class="fas fa-trash"></i> Borrar Todo</button>
-                <button class="btn btn-warning" id="addMoreBtn"><i class="fas fa-plus"></i> Agregar Más</button>
-            </div>
-        </div>
-
-        <div class="progress-container" id="progressContainer">
-            <div class="progress-header"><div class="progress-title">Progreso de revisión</div><div class="progress-percentage" id="progressPercentage">0%</div></div>
-            <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width: 0%"></div></div>
-            <div class="progress-stats"><span id="reviewedCount">0 revisados</span><span id="totalCount">0 totales</span></div>
-        </div>
-
-        <div class="view-controls">
-            <div class="search-box"><i class="fas fa-search search-icon"></i><input type="text" class="search-input" id="searchInput" placeholder="Buscar por nombre o número..."></div>
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <label for="selectAllCheckbox" class="custom-checkbox" style="display: none;"><i class="fas fa-check"></i></label>
-                <input type="checkbox" id="selectAllCheckbox" class="contact-checkbox">
-                <div class="view-toggle">
-                    <button class="view-btn active" data-view="cards"><i class="fas fa-th-large"></i> Tarjetas</button>
-                    <button class="view-btn" data-view="list"><i class="fas fa-list"></i> Lista</button>
-                    <button class="view-btn" data-view="tinder"><i class="fas fa-fire"></i> Revisión</button>
+                <div class="stat-box stat-total" data-filter="">
+                    <div class="stat-value" id="totalCount">0</div>
+                    <div class="stat-label">Total</div>
+                </div>
+                <div class="stat-box stat-unreviewed" data-filter="sin revisar">
+                    <div class="stat-value" id="unreviewedCount">0</div>
+                    <div class="stat-label">Sin Revisar</div>
+                </div>
+                <div class="stat-box stat-contactado" data-filter="contactado">
+                    <div class="stat-value" id="contactadoCount">0</div>
+                    <div class="stat-label">Contactado</div>
+                </div>
+                <div class="stat-box stat-jugando" data-filter="jugando">
+                    <div class="stat-value" id="jugandoCount">0</div>
+                    <div class="stat-label">Jugando</div>
+                </div>
+                <div class="stat-box stat-sin-wsp" data-filter="sin wsp">
+                    <div class="stat-value" id="sinWspCount">0</div>
+                    <div class="stat-label">Sin WSP</div>
+                </div>
+                <div class="stat-box stat-no-interesado" data-filter="no interesado">
+                    <div class="stat-value" id="noInteresadoCount">0</div>
+                    <div class="stat-label">No Interesado</div>
+                </div>
+                <div class="stat-box stat-duplicados" id="duplicatesStatBox">
+                    <div class="stat-value" id="duplicatesCount">0</div>
+                    <div class="stat-label">Duplicados</div>
                 </div>
             </div>
-        </div>
-
-        <div class="cards-view active" id="cardsView"></div>
-        <div class="list-view" id="listView"></div>
-        <div class="tinder-view" id="tinderView">
-            <div class="tinder-card" id="tinderCard">
-                <div class="tinder-counter" id="tinderCounter">1/0</div>
-                <div class="tinder-header"><div class="tinder-name" id="tinderName">No hay contactos</div><div id="tinderOrigin" style="color: var(--text-secondary);"></div></div>
-                <div class="tinder-info"><div class="tinder-phone" id="tinderPhone">-</div><a href="#" class="whatsapp-btn" id="tinderWhatsapp" target="_blank"><i class="fab fa-whatsapp"></i> Enviar WhatsApp</a></div>
-                <div class="tinder-actions">
-                    <button class="tinder-action-btn" id="tinderBack" style="background: var(--accent-neutral);"><i class="fas fa-undo"></i> Atrás</button>
-                    <button class="tinder-action-btn" data-status="sin wsp" style="background: var(--accent-neutral);"><i class="fas fa-ban"></i> Sin WSP</button>
-                    <button class="tinder-action-btn" data-status="no interesado" style="background: var(--accent-danger);"><i class="fas fa-times"></i> No Interesado</button>
-                    <button class="tinder-action-btn" data-status="jugando" style="background: var(--accent-jugando);"><i class="fas fa-gamepad"></i> Jugando</button>
-                    <button class="tinder-action-btn" data-status="contactado" style="background: var(--accent-success);"><i class="fas fa-check"></i> Contactado</button>
-                    <button class="tinder-action-btn" data-status="sin revisar" style="background: #9ca3af;"><i class="fas fa-clock"></i> Sin Revisar</button>
-                    <button class="tinder-action-btn siguiente" id="tinderNext"><i class="fas fa-arrow-right"></i> Siguiente</button>
-                </div>
+            <div class="view-actions">
+                <button id="viewCardsBtn" class="btn active"><i class="fas fa-th"></i> Tarjetas</button>
+                <button id="viewListBtn" class="btn"><i class="fas fa-list"></i> Lista</button>
+                <button id="exportBtn" class="btn"><i class="fas fa-download"></i> Exportar</button>
+                <button id="historyBtn" class="btn"><i class="fas fa-history"></i> Historial</button>
+                <button id="manageDuplicatesBtn" class="btn btn-warning"><i class="fas fa-clone"></i> Duplicados</button>
+                <button id="deleteAllBtn" class="btn btn-danger"><i class="fas fa-trash-alt"></i> Borrar Todo</button>
             </div>
         </div>
+
+        <!-- Barra de progreso de revisión -->
+        <div class="progress-bar-container" id="progressBarContainer">
+            <div class="progress-header">
+                <span class="progress-title">Progreso de revisión</span>
+                <div style="text-align: right;">
+                    <div class="progress-percentage" id="progressPercentage">0%</div>
+                    <div class="progress-details"><span id="reviewedCount">0</span> revisados de <span id="totalContactsCount">0</span> totales</div>
+                </div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Barra de búsqueda y filtros -->
+        <div class="search-bar" style="position: relative;">
+            <i class="fas fa-search" style="position: absolute; left: 35px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); pointer-events: none; z-index: 1;"></i>
+            <input type="text" id="searchInput" class="search-input" placeholder="Buscar por nombre, teléfono o origen..." style="padding-left: 70px;">
+            <div class="filter-group">
+                <select id="statusFilter" class="filter-select">
+                    <option value="">Todos los estados</option>
+                    <option value="sin revisar">Sin Revisar</option>
+                    <option value="contactado">Contactado</option>
+                    <option value="jugando">Jugando</option>
+                    <option value="sin wsp">Sin WhatsApp</option>
+                    <option value="no interesado">No Interesado</option>
+                </select>
+                <select id="originFilter" class="filter-select">
+                    <option value="">Todos los orígenes</option>
+                </select>
+                <button id="undoBtn" class="btn" title="Volver al último contacto editado (Ctrl+Z)">
+                    <i class="fas fa-undo"></i> Volver
+                </button>
+                <button id="addMoreBtn" class="btn btn-success"><i class="fas fa-file-upload"></i> Importar CSV</button>
+                <button id="addSingleBtn" class="btn btn-success"><i class="fas fa-user-plus"></i> Agregar Contacto</button>
+            </div>
+        </div>
+
+        <!-- Barra de acciones masivas -->
+        <div class="bulk-actions-bar" id="bulkActionsBar">
+            <span class="bulk-count"><span id="selectedCount">0</span> seleccionados</span>
+            <div class="bulk-actions">
+                <select id="bulkStatusSelect" class="filter-select" style="min-width: 180px;">
+                    <option value="" disabled selected>Cambiar estado</option>
+                </select>
+                <button id="bulkDeleteBtn" class="btn btn-danger"><i class="fas fa-trash"></i> Eliminar</button>
+                <button id="bulkCancelBtn" class="btn"><i class="fas fa-times"></i> Cancelar</button>
+            </div>
+        </div>
+
+        <!-- Vista de tarjetas -->
+        <div id="cardsView" class="cards-grid"></div>
+
+        <!-- Vista de lista -->
+        <div id="listView" class="list-view" style="display: none;"></div>
+
+        <!-- Paginación -->
         <div class="pagination" id="pagination"></div>
     </div>
 
-    <!-- Modals -->
+    <!-- Modal de exportación -->
     <div class="modal" id="exportModal">
         <div class="modal-content">
-            <h3>Exportar Contactos</h3>
-            <div style="display: flex; flex-direction: column; gap: 15px; margin: 20px 0;">
-                <div class="export-option selected" data-type="filtered"><strong id="exportFilteredCount"></strong><p>Exportar la vista actual</p></div>
-                <div class="export-option" data-type="all"><strong id="exportAllCount"></strong><p>Exportar todos los contactos</p></div>
-            </div>
-            <div style="margin-bottom: 20px;">
-                <h4>Formato:</h4>
-                <div id="exportFormatOptions">
-                    <div class="export-option selected" data-format="excel"><i class="fas fa-file-excel"></i> Excel (CSV)</div>
-                    <div class="export-option" data-format="vcf"><i class="fas fa-address-card"></i> VCF</div>
-                    <div class="export-option" data-format="sheet"><i class="fas fa-grip-horizontal"></i> Formato Planilla</div>
+            <div class="modal-header"><i class="fas fa-download"></i> Exportar Contactos</div>
+            <div class="export-options">
+                <div class="export-option selected" data-type="filtered">
+                    <i class="fas fa-filter"></i>
+                    <div class="export-option-text">
+                        <div class="export-option-title">Exportar filtrados</div>
+                        <div class="export-option-desc"><span id="exportFilteredCount">0</span> contactos visibles</div>
+                    </div>
+                </div>
+                <div class="export-option" data-type="all">
+                    <i class="fas fa-users"></i>
+                    <div class="export-option-text">
+                        <div class="export-option-title">Exportar todos</div>
+                        <div class="export-option-desc"><span id="exportAllCount">0</span> contactos totales</div>
+                    </div>
                 </div>
             </div>
-            <div style="display: flex; gap: 10px; margin-top: 25px;">
-                <button class="btn" id="cancelExport" style="flex: 1; background: var(--bg-card);">Cancelar</button>
-                <button class="btn btn-success" id="confirmExport" style="flex: 2;"><i class="fas fa-download"></i> Exportar</button>
+            <div class="export-options">
+                <div class="export-option selected" data-format="excel">
+                    <i class="fas fa-file-excel"></i>
+                    <div class="export-option-text">
+                        <div class="export-option-title">Excel (CSV)</div>
+                        <div class="export-option-desc">Compatible con Excel y Google Sheets</div>
+                    </div>
+                </div>
+                <div class="export-option" data-format="vcf">
+                    <i class="fas fa-address-card"></i>
+                    <div class="export-option-text">
+                        <div class="export-option-title">VCF (Contactos)</div>
+                        <div class="export-option-desc">Importable directamente a WhatsApp</div>
+                    </div>
+                </div>
+                <div class="export-option" data-format="sheet">
+                    <i class="fas fa-table"></i>
+                    <div class="export-option-text">
+                        <div class="export-option-title">Formato Planilla</div>
+                        <div class="export-option-desc">Formato personalizado con columnas especiales</div>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
-    
-    <div class="modal" id="addMoreModal">
-        <div class="modal-content">
-            <h3>Agregar Más Contactos</h3>
-            <div class="file-upload-area" id="dropAreaModal">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <h3>Arrastra y suelta archivos</h3>
-                <p>o haz clic para seleccionar</p>
-                <input type="file" id="fileInputModal" multiple accept=".vcf,.vcard,.csv" style="display: none;">
-            </div>
-            <div class="file-list" id="fileListModal"></div>
-            <input type="text" class="origin-input" id="originNameModal" placeholder="Nombre del origen (ej: Planilla Nueva)">
-            <div style="display: flex; gap: 10px; margin-top: 25px;">
-                <button class="btn" id="cancelAddMore" style="flex: 1; background: var(--bg-card);">Cancelar</button>
-                <button class="btn btn-primary" id="processFilesModal" style="flex: 2; margin: 0;"><i class="fas fa-play"></i> Procesar</button>
+            <div class="modal-actions">
+                <button id="cancelExport" class="btn"><i class="fas fa-times"></i> Cancelar</button>
+                <button id="confirmExport" class="btn btn-success"><i class="fas fa-download"></i> Exportar</button>
             </div>
         </div>
     </div>
 
-    <!-- Bulk Actions Bar -->
-    <div class="bulk-actions-bar" id="bulkActionsBar">
-        <strong id="bulkSelectedCount">0 seleccionados</strong>
-        <select class="status-select" id="bulkStatusSelect"></select>
-        <button class="btn btn-danger" id="bulkDeleteBtn"><i class="fas fa-trash"></i> Eliminar</button>
-        <button class="btn" id="bulkCancelBtn" style="background: var(--bg-card);"><i class="fas fa-times"></i></button>
+    <!-- Modal de duplicados -->
+    <div class="modal" id="duplicatesModal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header"><i class="fas fa-clone"></i> Gestionar Duplicados</div>
+            <div id="duplicatesContent">
+                <p style="color: var(--text-secondary); margin: 20px 0;">Detectando duplicados...</p>
+            </div>
+            <div class="modal-actions">
+                <button id="closeDuplicatesModal" class="btn"><i class="fas fa-times"></i> Cerrar</button>
+                <button id="mergeAllDuplicates" class="btn btn-success" style="display: none;"><i class="fas fa-compress-alt"></i> Fusionar Todos</button>
+            </div>
+        </div>
     </div>
-    
-    <div class="notification" id="notification"></div>
+
+    <!-- Modal de historial -->
+    <div class="modal" id="historyModal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header"><i class="fas fa-history"></i> Historial de Cambios</div>
+            <div class="history-list" id="historyList"></div>
+            <div class="modal-actions">
+                <button id="closeHistoryModal" class="btn"><i class="fas fa-times"></i> Cerrar</button>
+                <button id="clearHistoryBtn" class="btn btn-danger"><i class="fas fa-trash"></i> Borrar Historial</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de agregar contacto único -->
+    <div class="modal" id="addSingleModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header"><i class="fas fa-user-plus"></i> Agregar Contacto</div>
+            <div style="display: flex; flex-direction: column; gap: 15px; margin: 20px 0;">
+                <input type="text" id="singleName" class="origin-input" placeholder="Nombre del contacto" style="margin-top: 0;">
+                <input type="text" id="singlePhone" class="origin-input" placeholder="Teléfono (opcional)" style="margin-top: 0;">
+                <input type="text" id="singleOrigin" class="origin-input" placeholder="Origen (opcional)" style="margin-top: 0;">
+                <select id="singleStatus" class="filter-select">
+                    <option value="sin revisar">Sin Revisar</option>
+                    <option value="contactado">Contactado</option>
+                    <option value="jugando">Jugando</option>
+                    <option value="sin wsp">Sin WhatsApp</option>
+                    <option value="no interesado">No Interesado</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button id="cancelAddSingle" class="btn"><i class="fas fa-times"></i> Cancelar</button>
+                <button id="confirmAddSingle" class="btn btn-success"><i class="fas fa-plus"></i> Agregar</button>
+            </div>
+        </div>
+    </div>
 
     <script>
-    (function() {
-        'use strict';
+    (() => {
+        const $ = (sel) => document.querySelector(sel);
+        const $$ = (sel) => document.querySelectorAll(sel);
+
+        const STATUS_OPTIONS = [
+            { id: 'sin revisar', label: 'Sin Revisar', icon: 'fa-question-circle', color: '#9ca3af' },
+            { id: 'contactado', label: 'Contactado', icon: 'fa-check-circle', color: '#10b981' },
+            { id: 'jugando', label: 'Jugando', icon: 'fa-gamepad', color: '#8b5cf6' },
+            { id: 'sin wsp', label: 'Sin WhatsApp', icon: 'fa-ban', color: '#f59e0b' },
+            { id: 'no interesado', label: 'No Interesado', icon: 'fa-times-circle', color: '#ef4444' }
+        ];
 
         const AppState = {
             contacts: [],
             filteredContacts: [],
-            filesToProcess: [],
+            selectedContacts: new Set(),
             currentView: 'cards',
             currentPage: 1,
-            itemsPerPage: 50,
-            currentFilter: 'all',
-            tinderIndex: 0,
-            selectedContacts: new Set(),
+            itemsPerPage: 20,
+            searchTerm: '',
+            statusFilter: '',
+            originFilter: '',
+            sortBy: 'name',
+            sortOrder: 'asc',
+            duplicates: [],
+            history: [],
+            lastEditedContact: null,
+            undoStack: []
         };
-
-        const STATUS_OPTIONS = [
-            { id: 'sin revisar', label: 'Sin Revisar', color: '#9ca3af', icon: 'fas fa-clock' },
-            { id: 'jugando', label: 'Jugando', color: '#8b5cf6', icon: 'fas fa-gamepad' },
-            { id: 'contactado', label: 'Contactado', color: '#10b981', icon: 'fas fa-check' },
-            { id: 'no interesado', label: 'No Interesado', color: '#ef4444', icon: 'fas fa-times' },
-            { id: 'sin wsp', label: 'Sin WSP', color: '#6b7280', icon: 'fas fa-ban' }
-        ];
-
-        const $ = (selector) => document.querySelector(selector);
-        const $$ = (selector) => document.querySelectorAll(selector);
 
         const elements = {
             uploadScreen: $('#uploadScreen'),
-            mainInterface: $('#mainInterface'),
+            mainApp: $('#mainApp'),
             fileInput: $('#fileInput'),
+            uploadArea: $('#uploadArea'),
             fileList: $('#fileList'),
-            dropArea: $('#dropArea'),
-            originName: $('#originName'),
-            processFiles: $('#processFiles'),
+            originInput: $('#originInput'),
+            startBtn: $('#startBtn'),
             cardsView: $('#cardsView'),
             listView: $('#listView'),
-            tinderView: $('#tinderView'),
-            tinderCard: $('#tinderCard'),
             searchInput: $('#searchInput'),
-            pagination: $('#pagination'),
-            notification: $('#notification'),
-            progressFill: $('#progressFill'),
-            progressPercentage: $('#progressPercentage'),
-            reviewedCount: $('#reviewedCount'),
-            totalCount: $('#totalCount'),
+            statusFilter: $('#statusFilter'),
+            originFilter: $('#originFilter'),
+            viewCardsBtn: $('#viewCardsBtn'),
+            viewListBtn: $('#viewListBtn'),
+            exportBtn: $('#exportBtn'),
             bulkActionsBar: $('#bulkActionsBar'),
-            bulkSelectedCount: $('#bulkSelectedCount'),
+            selectedCount: $('#selectedCount'),
             bulkStatusSelect: $('#bulkStatusSelect'),
-            selectAllCheckbox: $('#selectAllCheckbox'),
-            selectAllLabel: $('label[for="selectAllCheckbox"]'),
-            addMoreModal: $('#addMoreModal'),
-            fileInputModal: $('#fileInputModal'),
-            fileListModal: $('#fileListModal'),
-            dropAreaModal: $('#dropAreaModal'),
-            originNameModal: $('#originNameModal'),
-            processFilesModal: $('#processFilesModal'),
+            pagination: $('#pagination'),
+            manageDuplicatesBtn: $('#manageDuplicatesBtn'),
+            duplicatesModal: $('#duplicatesModal'),
+            duplicatesStatBox: $('#duplicatesStatBox'),
+            addMoreBtn: $('#addMoreBtn'),
+            addSingleBtn: $('#addSingleBtn'),
+            historyBtn: $('#historyBtn'),
+            historyModal: $('#historyModal'),
+            deleteAllBtn: $('#deleteAllBtn'),
+            undoBtn: $('#undoBtn')
         };
 
-        function showNotification(message, type = 'info') {
-            elements.notification.textContent = message;
-            elements.notification.className = `notification ${type} show`;
-            setTimeout(() => elements.notification.classList.remove('show'), 3000);
+        let selectedFiles = [];
+
+        function normalizePhoneNumber(phone) {
+            if (!phone) return '';
+            return phone.toString().replace(/\D/g, '');
         }
 
-        function loadData() {
-            const savedData = localStorage.getItem('contactManagerData');
-            if (savedData) {
-                try {
-                    const parsedData = JSON.parse(savedData);
-                    if (Array.isArray(parsedData)) {
-                        AppState.contacts = parsedData;
-                    } else {
-                        AppState.contacts = [];
-                    }
+        function normalizeUsername(name) {
+            if (!name) return '';
+            return name.toString().toLowerCase().trim();
+        }
 
-                    if (AppState.contacts.length > 0) {
-                        elements.uploadScreen.classList.add('hidden');
-                        setTimeout(() => {
-                           elements.uploadScreen.style.display = 'none';
-                           elements.mainInterface.style.display = 'block';
-                           render();
-                        }, 500);
-                    }
-                } catch (e) { 
-                    console.error('Error al cargar datos:', e); 
-                    AppState.contacts = [];
-                    localStorage.removeItem('contactManagerData');
-                }
+        function addToHistory(action, details) {
+            const historyEntry = {
+                timestamp: new Date().toISOString(),
+                action: action,
+                details: details
+            };
+            AppState.history.unshift(historyEntry);
+            if (AppState.history.length > 50) {
+                AppState.history = AppState.history.slice(0, 50);
             }
-        }
-        function saveData() {
-            localStorage.setItem('contactManagerData', JSON.stringify(AppState.contacts));
+            saveHistory();
         }
 
-        function addFilesToList(files) {
-            AppState.filesToProcess.push(...files);
-            renderFileList();
-        }
-
-        function renderFileList() {
-            const listHTML = AppState.filesToProcess.map(file => `
-                <div class="file-item">
-                    <span>${file.name}</span>
-                    <span>(${(file.size / 1024).toFixed(1)} KB)</span>
-                </div>
-            `).join('');
-            elements.fileList.innerHTML = listHTML;
-            elements.fileListModal.innerHTML = listHTML;
-        }
-        
-       async function processFiles(isFromModal = false) {
-            if (AppState.filesToProcess.length === 0) return showNotification('Selecciona al menos un archivo', 'warning');
-            
-            const originInput = isFromModal ? elements.originNameModal : elements.originName;
-            const processButton = isFromModal ? elements.processFilesModal : elements.processFiles;
-
-            processButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
-            processButton.disabled = true;
-
+        function saveHistory() {
             try {
-                const vcfFiles = AppState.filesToProcess.filter(f => f.name.toLowerCase().endsWith('.vcf') || f.name.toLowerCase().endsWith('.vcard'));
-                const csvFiles = AppState.filesToProcess.filter(f => f.name.toLowerCase().endsWith('.csv'));
-                
-                const origin = originInput.value.trim() || (isFromModal ? "Importación Modal" : "Importación Inicial");
-
-                if (vcfFiles.length > 0) {
-                    let allNewVCFContacts = [];
-                    for (const file of vcfFiles) {
-                        const text = await file.text();
-                        allNewVCFContacts.push(...parseVCF(text, origin));
-                    }
-                    await handleNewContacts(allNewVCFContacts);
-                }
-
-                for (const file of csvFiles) {
-                    const text = await file.text();
-                    await processCSVData(text, origin);
-                }
-                
-                deduplicateContacts();
-                showNotification(`Proceso completado.`, 'success');
-
-            } catch (error) {
-                console.error("Error catastrófico durante el procesamiento de archivos:", error);
-                showNotification("Error grave al procesar los archivos. Revisa la consola para más detalles.", "error");
-            } finally {
-                AppState.filesToProcess = [];
-                renderFileList();
-                originInput.value = '';
-                processButton.innerHTML = isFromModal ? '<i class="fas fa-play"></i> Procesar' : '<i class="fas fa-play"></i> Procesar y Comenzar';
-                processButton.disabled = false;
-
-                saveData();
-                
-                if (elements.mainInterface.style.display === 'none') {
-                    elements.uploadScreen.classList.add('hidden');
-                    setTimeout(() => {
-                        elements.uploadScreen.style.display = 'none';
-                        elements.mainInterface.style.display = 'block';
-                        render();
-                    }, 500);
-                } else {
-                    render();
-                }
-
-                if(isFromModal) {
-                    elements.addMoreModal.classList.remove('active');
-                }
+                localStorage.setItem('contactsHistory', JSON.stringify(AppState.history));
+            } catch (e) {
+                console.error('Error al guardar historial:', e);
             }
         }
-        
-        const getContactKey = (contact) => {
-            const name = (contact.name || '').toLowerCase().trim();
-            const phone = (contact.phone || '').replace(/\D/g, '');
-            if (!name && !phone) return null;
-            return phone || name; // Prioritize phone for uniqueness
-        };
-        
-        async function handleNewContacts(newContacts) {
-            let updatedCount = 0;
-            let skippedCount = 0;
-            let addedCount = 0;
 
-            const existingContactsMap = new Map();
-            AppState.contacts.forEach(c => {
-                const key = getContactKey(c);
-                if (key) {
-                    existingContactsMap.set(key, c);
+        function loadHistory() {
+            try {
+                const saved = localStorage.getItem('contactsHistory');
+                if (saved) {
+                    AppState.history = JSON.parse(saved);
+                }
+            } catch (e) {
+                console.error('Error al cargar historial:', e);
+            }
+        }
+
+        function mergeContact(existing, newContact) {
+            const merged = { ...existing };
+            
+            merged.name = existing.name || newContact.name;
+            
+            if (newContact.phone && !existing.phone) {
+                merged.phone = newContact.phone;
+            } else if (existing.phone) {
+                merged.phone = existing.phone;
+            }
+            
+            if (newContact.origin && !existing.origin) {
+                merged.origin = newContact.origin;
+            } else if (existing.origin) {
+                merged.origin = existing.origin;
+            }
+            
+            const statusPriority = {
+                'jugando': 5,
+                'contactado': 4,
+                'sin wsp': 3,
+                'sin revisar': 2,
+                'no interesado': 1
+            };
+            
+            const existingPriority = statusPriority[existing.status] || 0;
+            const newPriority = statusPriority[newContact.status] || 0;
+            
+            if (newPriority > existingPriority) {
+                merged.status = newContact.status;
+                merged.lastUpdated = new Date().toISOString();
+            } else {
+                merged.status = existing.status;
+            }
+            
+            return merged;
+        }
+
+        function detectDuplicates() {
+            const nameMap = new Map();
+            const phoneMap = new Map();
+            const duplicateGroups = [];
+            const duplicateIds = new Set();
+
+            // Agrupar por nombre normalizado
+            AppState.contacts.forEach(contact => {
+                const normalizedName = normalizeUsername(contact.name);
+                if (!nameMap.has(normalizedName)) {
+                    nameMap.set(normalizedName, []);
+                }
+                nameMap.get(normalizedName).push(contact);
+            });
+
+            // Agrupar por teléfono
+            AppState.contacts.forEach(contact => {
+                if (contact.phone) {
+                    const normalizedPhone = normalizePhoneNumber(contact.phone);
+                    if (!phoneMap.has(normalizedPhone)) {
+                        phoneMap.set(normalizedPhone, []);
+                    }
+                    phoneMap.get(normalizedPhone).push(contact);
                 }
             });
 
-            const newUniqueContactsMap = new Map();
-            for (const newContact of newContacts) {
-                const key = getContactKey(newContact);
-                if (key) {
-                    newUniqueContactsMap.set(key, newContact);
+            // Detectar duplicados por nombre
+            nameMap.forEach((contacts, name) => {
+                if (contacts.length > 1) {
+                    duplicateGroups.push({
+                        type: 'nombre',
+                        name: contacts[0].name,
+                        contacts: contacts
+                    });
+                    contacts.forEach(c => duplicateIds.add(c.id));
                 }
-            }
-            
-            for (const [key, newContact] of newUniqueContactsMap.entries()) {
-                if (existingContactsMap.has(key)) {
-                    const existingContact = existingContactsMap.get(key);
-                    
-                    if (existingContact.status === 'sin revisar') {
-                        Object.assign(existingContact, newContact, { id: existingContact.id });
-                        updatedCount++;
-                    } else {
-                        skippedCount++;
+            });
+
+            // Detectar duplicados por teléfono
+            phoneMap.forEach((contacts, phone) => {
+                if (contacts.length > 1) {
+                    const uniqueNames = new Set(contacts.map(c => normalizeUsername(c.name)));
+                    if (uniqueNames.size > 1) {
+                        duplicateGroups.push({
+                            type: 'teléfono',
+                            name: `Teléfono: ${contacts[0].phone}`,
+                            contacts: contacts
+                        });
+                        contacts.forEach(c => duplicateIds.add(c.id));
                     }
-                } else {
-                    AppState.contacts.push(newContact);
-                    existingContactsMap.set(key, newContact);
-                    addedCount++;
                 }
-            }
+            });
+
+            AppState.duplicates = duplicateGroups;
             
-            let details = [];
-            if (addedCount > 0) details.push(`${addedCount} nuevos`);
-            if (updatedCount > 0) details.push(`${updatedCount} actualizados`);
-            if (skippedCount > 0) details.push(`${skippedCount} omitidos (ya revisados)`);
-            if (details.length > 0) {
-                showNotification(`Importación: ${details.join(', ')}.`, 'info');
-            }
+            // Marcar contactos duplicados
+            AppState.contacts.forEach(contact => {
+                contact.isDuplicate = duplicateIds.has(contact.id);
+            });
+
+            return duplicateGroups;
         }
 
-        function parseVCF(text, origin) {
+        function parseCSV(text) {
+            // Detectar si es VCF
+            if (text.trim().startsWith('BEGIN:VCARD')) {
+                return parseVCF(text);
+            }
+            
+            const lines = text.split('\n').filter(line => line.trim());
+            if (lines.length === 0) return [];
+            
+            const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, '').toLowerCase());
             const contacts = [];
-            const vcards = text.split(/END:VCARD/i).filter(v => v.trim());
-            for (let vcard of vcards) {
-                const lines = vcard.split(/\r\n|\r|\n/);
-                let name = 'Sin nombre';
-                let phone = '';
-
-                const fnLine = lines.find(line => line.toUpperCase().startsWith('FN:'));
-                const nLine = lines.find(line => line.toUpperCase().startsWith('N:'));
-                const telLine = lines.find(line => line.toUpperCase().startsWith('TEL'));
-
-                if (fnLine) {
-                    name = fnLine.substring(3).trim();
-                } else if (nLine) {
-                    const parts = nLine.substring(2).split(';').map(p => p.trim()).filter(Boolean);
-                    name = [parts[1], parts[0]].join(' ').trim();
-                }
+            
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
+                const contact = {};
                 
-                if (telLine) {
-                    phone = telLine.substring(telLine.indexOf(':') + 1).replace(/\D/g, '');
-                }
-
-                if (name !== 'Sin nombre' || phone) {
-                    contacts.push({
-                        id: `id_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                        name,
-                        phone,
-                        origin,
-                        status: 'sin revisar',
-                        lastUpdated: new Date().toISOString()
-                    });
+                headers.forEach((header, index) => {
+                    const value = values[index] || '';
+                    
+                    if (header.includes('nombre') || header.includes('usuario')) {
+                        contact.name = value;
+                    } else if (header.includes('tel') || header.includes('phone') || header.includes('número')) {
+                        contact.phone = normalizePhoneNumber(value);
+                    } else if (header.includes('estado') && !header.includes('revision')) {
+                        const lowerValue = value.toLowerCase();
+                        if (lowerValue.includes('promo enviada') || lowerValue.includes('contactado')) {
+                            contact.status = 'contactado';
+                        } else if (lowerValue.includes('no esta en wsp') || lowerValue.includes('sin wsp')) {
+                            contact.status = 'sin wsp';
+                        } else if (lowerValue.includes('en contacto') || lowerValue.includes('jugando')) {
+                            contact.status = 'jugando';
+                        } else if (lowerValue.includes('eliminado') || lowerValue.includes('no interesado')) {
+                            contact.status = 'no interesado';
+                        } else if (lowerValue.includes('a contactar') || lowerValue.includes('sin revisar')) {
+                            contact.status = 'sin revisar';
+                        }
+                    }
+                });
+                
+                if (contact.name) {
+                    contacts.push(contact);
                 }
             }
+            
             return contacts;
         }
 
-        async function processPlanillaCSV(lines, origin) {
-            const data = lines.slice(1);
-            const contactsToProcess = [];
-            
-            const statusMap = {
-                'MENSAJE ENVIADO': 'contactado',
-                'PROMO ENVIADA': 'contactado',
-                'NO ESTA EN WSP': 'sin wsp',
-                'A CONTACTAR': 'sin revisar',
-                'EN CONTACTO': 'jugando',
-                'ESTA CARGANDO': 'jugando',
-                'ELIMINADO': 'no interesado',
-            };
-    
-            data.forEach(line => {
-                const regex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/;
-                const row = line.split(regex).map(v => v.trim().replace(/^"|"$/g, ''));
+        function loadFiles() {
+            const origin = elements.originInput.value.trim() || 'Sin especificar';
+            let totalNewContacts = 0;
+            let totalMerged = 0;
+            let filesProcessed = 0;
 
-                let name = row[0];
-                if (!name || name.toUpperCase() === '#ERROR!') return;
-                
-                let appStatus = 'sin revisar';
-                const rawLine = line.toUpperCase();
-
-                if (rawLine.includes('NO ESTA EN WSP')) {
-                    appStatus = 'sin wsp';
-                } else if (rawLine.includes('ESTA CARGANDO')) {
-                    appStatus = 'jugando';
-                } else if (name.toLowerCase().startsWith('eliminado')) {
-                    appStatus = 'no interesado';
-                    name = name.substring(9).trim();
-                } else {
-                    const statusColB = (row[1] || '').toUpperCase();
-                    const statusColD = (row[3] || '').toUpperCase();
-                    let foundKey = Object.keys(statusMap).find(key => statusColB.includes(key));
-                    if (!foundKey) foundKey = Object.keys(statusMap).find(key => statusColD.includes(key));
-                    if (foundKey) appStatus = statusMap[foundKey];
-                }
-
-                if (name) {
-                    contactsToProcess.push({
-                        id: `id_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                        name, phone: '', origin: origin, status: appStatus,
-                        lastUpdated: new Date().toISOString()
+            selectedFiles.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const parsedContacts = parseCSV(e.target.result);
+                    
+                    parsedContacts.forEach(newContact => {
+                        const normalizedName = normalizeUsername(newContact.name);
+                        const normalizedPhone = normalizePhoneNumber(newContact.phone);
+                        
+                        const existingIndex = AppState.contacts.findIndex(c => 
+                            normalizeUsername(c.name) === normalizedName ||
+                            (normalizedPhone && normalizePhoneNumber(c.phone) === normalizedPhone)
+                        );
+                        
+                        if (existingIndex !== -1) {
+                            const oldContact = { ...AppState.contacts[existingIndex] };
+                            AppState.contacts[existingIndex] = mergeContact(
+                                AppState.contacts[existingIndex],
+                                {
+                                    ...newContact,
+                                    origin: origin,
+                                    status: newContact.status || 'sin revisar'
+                                }
+                            );
+                            addToHistory('Merge de contacto', `${newContact.name} actualizado`);
+                            totalMerged++;
+                        } else {
+                            const newId = Date.now() + Math.random();
+                            AppState.contacts.push({
+                                id: newId,
+                                name: newContact.name,
+                                phone: newContact.phone || '',
+                                origin: origin,
+                                status: newContact.status || 'sin revisar',
+                                lastUpdated: new Date().toISOString(),
+                                isDuplicate: false
+                            });
+                            addToHistory('Contacto agregado', newContact.name);
+                            totalNewContacts++;
+                        }
                     });
-                }
-            });
-            
-            if (contactsToProcess.length > 0) {
-                await handleNewContacts(contactsToProcess);
-            }
-        }
 
-        async function processGenericCSV(lines, origin) {
-            const headers = lines[0].toLowerCase().split(',').map(h => h.trim().replace(/^"|"$/g, ''));
-            const nameIndex = headers.indexOf('nombre');
-            const phoneIndex = headers.indexOf('teléfono');
-            
-            if (nameIndex === -1) {
-                return showNotification('El CSV debe tener una columna "Nombre".', 'error');
-            }
-
-            const newContacts = [];
-            const data = lines.slice(1);
-
-            data.forEach(line => {
-                if (!line.trim()) return;
-                const row = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.trim().replace(/^"|"$/g, ''));
-                
-                const name = row[nameIndex];
-                if (!name) return;
-
-                newContacts.push({
-                    id: `id_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                    name: name,
-                    phone: phoneIndex > -1 ? (row[phoneIndex] || '').replace(/\D/g, '') : '',
-                    origin: origin,
-                    status: 'sin revisar',
-                    lastUpdated: new Date().toISOString()
-                });
-            });
-
-            if(newContacts.length > 0) {
-                await handleNewContacts(newContacts);
-            }
-        }
-        
-        async function processCSVData(text, origin = 'CSV Import') {
-            try {
-                const lines = text.split(/\r?\n(?=(?:(?:[^"]*"){2})*[^"]*$)/).filter(line => line && line.trim());
-                if (lines.length < 1) return showNotification('El archivo CSV está vacío.', 'warning');
-                
-                const header = lines[0].toLowerCase().replace(/"/g, '');
-
-                if (header.includes('nombre') && header.includes('teléfono')) {
-                    await processGenericCSV(lines, origin);
-                } else if (header.includes('usuarios') && header.includes('estado de revision')) {
-                    await processPlanillaCSV(lines, origin);
-                } else {
-                     showNotification('Formato CSV no reconocido. Usando como genérico.', 'warning');
-                     await processGenericCSV(lines, origin);
-                }
-            } catch (error) {
-                console.error("Error al procesar CSV:", error);
-                showNotification("Error al leer el archivo CSV.", "error");
-                throw error;
-            }
-        }
-
-        function deduplicateContacts() {
-            const uniqueContactsMap = new Map();
-            const originalCount = AppState.contacts.length;
-
-            for (const contact of AppState.contacts) {
-                const key = getContactKey(contact);
-                if (!key) continue;
-
-                if (uniqueContactsMap.has(key)) {
-                    const existingContact = uniqueContactsMap.get(key);
-                    if (existingContact.status === 'sin revisar' && contact.status !== 'sin revisar') {
-                        uniqueContactsMap.set(key, contact);
+                    filesProcessed++;
+                    if (filesProcessed === selectedFiles.length) {
+                        detectDuplicates();
+                        saveData();
+                        elements.uploadScreen.classList.add('hidden');
+                        elements.mainApp.style.display = 'block';
+                        render();
+                        showNotification(
+                            `✅ ${totalNewContacts} contactos nuevos, ${totalMerged} actualizados`,
+                            'success'
+                        );
+                        selectedFiles = [];
+                        elements.fileInput.value = '';
+                        elements.fileList.innerHTML = '';
                     }
-                } else {
-                    uniqueContactsMap.set(key, contact);
-                }
-            }
-
-            const newContacts = Array.from(uniqueContactsMap.values());
-            const removedCount = originalCount - newContacts.length;
-            if (removedCount > 0) {
-                AppState.contacts = newContacts;
-                showNotification(`${removedCount} duplicado(s) interno(s) eliminado(s).`, 'info');
-            }
-        }
-        
-        function render() {
-            filterContacts();
-            updateStats();
-            updateProgress();
-            updateView();
-            updateBulkActionsBar();
-        }
-
-        function filterContacts() {
-            const term = elements.searchInput.value.toLowerCase();
-            let result = AppState.currentFilter === 'all'
-                ? [...AppState.contacts]
-                : AppState.contacts.filter(c => c.status === AppState.currentFilter);
-            
-            if (term) {
-                result = result.filter(c => c.name.toLowerCase().includes(term) || (c.phone && c.phone.includes(term)));
-            }
-            AppState.filteredContacts = result;
-            if(AppState.currentPage > Math.ceil(result.length / AppState.itemsPerPage)) {
-                AppState.currentPage = 1;
-            }
-        }
-
-        function updateView() {
-            $$('.cards-view, .list-view, .tinder-view').forEach(v => v.classList.remove('active'));
-            elements.selectAllLabel.style.display = ['cards', 'list'].includes(AppState.currentView) ? 'flex' : 'none';
-            $(`.${AppState.currentView}-view`).classList.add('active');
-
-            switch (AppState.currentView) {
-                case 'cards': renderPaginatedView(createCard); break;
-                case 'list': renderPaginatedView(createListItem); break;
-                case 'tinder': renderTinderView(); break;
-            }
-            $('#pagination').style.display = AppState.currentView === 'tinder' ? 'none' : 'flex';
-        }
-
-        function renderPaginatedView(createFn) {
-            const viewEl = $(`#${AppState.currentView}View`);
-            viewEl.innerHTML = '';
-            const startIndex = (AppState.currentPage - 1) * AppState.itemsPerPage;
-            const pageContacts = AppState.filteredContacts.slice(startIndex, startIndex + AppState.itemsPerPage);
-            pageContacts.forEach(c => viewEl.appendChild(createFn(c)));
-            renderPagination();
-        }
-        
-        function createStatusButtons(contact) {
-            let buttonsHTML = '<div class="list-item-actions">';
-            STATUS_OPTIONS.forEach(opt => {
-                const isActive = contact.status === opt.id;
-                const activeStyle = isActive ? `style="background-color: ${opt.color}; color: white; border-color: ${opt.color};"` : '';
-                buttonsHTML += `<button class="status-btn" data-status="${opt.id}" title="${opt.label}" ${activeStyle}><i class="${opt.icon}"></i> ${opt.label}</button>`;
+                };
+                reader.readAsText(file);
             });
-            buttonsHTML += '</div>';
-            return buttonsHTML;
         }
 
-        function createContactDOM(contact, type) {
-            const el = document.createElement('div');
-            el.className = type === 'card' ? 'contact-card' : 'list-item';
-            el.dataset.id = contact.id;
-            el.dataset.status = contact.status;
-            if (AppState.selectedContacts.has(contact.id)) el.classList.add('selected');
+        function saveData() {
+            try {
+                localStorage.setItem('contactsData', JSON.stringify(AppState.contacts));
+            } catch (e) {
+                console.error('Error al guardar datos:', e);
+                showNotification('⚠️ Error al guardar datos.', 'error');
+            }
+        }
 
-            el.innerHTML = `
-                <div style="display: flex; gap: 15px; align-items: flex-start; width: 100%;">
-                    <div class="contact-selection">
-                        <input type="checkbox" id="check-${contact.id}" class="contact-checkbox" ${AppState.selectedContacts.has(contact.id) ? 'checked' : ''}>
-                        <label for="check-${contact.id}" class="custom-checkbox"><i class="fas fa-check"></i></label>
-                    </div>
-                    <div style="flex: 1; min-width: 0;">
-                        <div class="contact-header">
-                            <div class="contact-info">
-                                <span class="contact-name" data-field="name">${contact.name}</span>
-                                <span class="contact-phone" data-field="phone">${contact.phone || 'Sin número'}</span>
-                            </div>
-                            <div class="contact-actions">
-                                <span class="origin-tag">${contact.origin}</span>
-                                <button class="delete-contact-btn" title="Eliminar Contacto"><i class="fas fa-trash"></i></button>
-                            </div>
+        function loadData() {
+            try {
+                const saved = localStorage.getItem('contactsData');
+                if (saved) {
+                    AppState.contacts = JSON.parse(saved);
+                    detectDuplicates();
+                    elements.uploadScreen.classList.add('hidden');
+                    elements.mainApp.style.display = 'block';
+                    render();
+                }
+            } catch (e) {
+                console.error('Error al cargar datos:', e);
+            }
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
+            notification.innerHTML = `<i class="fas ${icons[type]}"></i><span>${message}</span>`;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 4000);
+        }
+
+        function applyFilters() {
+            AppState.filteredContacts = AppState.contacts.filter(contact => {
+                const matchesSearch = !AppState.searchTerm || 
+                    contact.name.toLowerCase().includes(AppState.searchTerm.toLowerCase()) ||
+                    (contact.phone && contact.phone.includes(AppState.searchTerm)) ||
+                    (contact.origin && contact.origin.toLowerCase().includes(AppState.searchTerm.toLowerCase()));
+                
+                const matchesStatus = !AppState.statusFilter || contact.status === AppState.statusFilter;
+                const matchesOrigin = !AppState.originFilter || contact.origin === AppState.originFilter;
+                
+                return matchesSearch && matchesStatus && matchesOrigin;
+            });
+            
+            AppState.currentPage = 1;
+        }
+
+        function updateStats() {
+            $('#totalCount').textContent = AppState.contacts.length;
+            $('#unreviewedCount').textContent = AppState.contacts.filter(c => c.status === 'sin revisar').length;
+            $('#contactadoCount').textContent = AppState.contacts.filter(c => c.status === 'contactado').length;
+            $('#jugandoCount').textContent = AppState.contacts.filter(c => c.status === 'jugando').length;
+            $('#sinWspCount').textContent = AppState.contacts.filter(c => c.status === 'sin wsp').length;
+            $('#noInteresadoCount').textContent = AppState.contacts.filter(c => c.status === 'no interesado').length;
+            
+            const duplicateGroups = detectDuplicates();
+            const totalDuplicateEntries = duplicateGroups.reduce((sum, group) => sum + group.contacts.length, 0);
+            $('#duplicatesCount').textContent = totalDuplicateEntries;
+            
+            // Actualizar barra de progreso
+            const totalContacts = AppState.contacts.length;
+            const reviewedContacts = AppState.contacts.filter(c => c.status !== 'sin revisar').length;
+            const progressPercentage = totalContacts > 0 ? Math.round((reviewedContacts / totalContacts) * 100) : 0;
+            
+            $('#reviewedCount').textContent = reviewedContacts;
+            $('#totalContactsCount').textContent = totalContacts;
+            $('#progressPercentage').textContent = `${progressPercentage}%`;
+            $('#progressFill').style.width = `${progressPercentage}%`;
+            
+            const uniqueOrigins = [...new Set(AppState.contacts.map(c => c.origin).filter(Boolean))];
+            elements.originFilter.innerHTML = '<option value="">Todos los orígenes</option>' + 
+                uniqueOrigins.map(o => `<option value="${o}">${o}</option>`).join('');
+        }
+
+        function createCard(contact) {
+            const statusOption = STATUS_OPTIONS.find(s => s.id === contact.status) || STATUS_OPTIONS[0];
+            const escapedName = (contact.name || '').replace(/'/g, "\\'");
+            const escapedPhone = (contact.phone || '').replace(/'/g, "\\'");
+            
+            return `
+                <div class="contact-card ${AppState.selectedContacts.has(contact.id) ? 'selected' : ''} ${contact.isDuplicate ? 'duplicate' : ''}" data-id="${contact.id}">
+                    ${contact.isDuplicate ? '<span class="duplicate-badge"><i class="fas fa-exclamation-triangle"></i> DUP</span>' : ''}
+                    <input type="checkbox" class="card-checkbox" ${AppState.selectedContacts.has(contact.id) ? 'checked' : ''}>
+                    <div class="card-header">
+                        <div class="card-icon" style="color: ${statusOption.color};">
+                            <i class="fas ${statusOption.icon}"></i>
                         </div>
-                        ${contact.phone ? `<a href="https://wa.me/${contact.phone}" target="_blank" class="whatsapp-btn" onclick="event.stopPropagation();"><i class="fab fa-whatsapp"></i></a>` : ''}
-                        ${type === 'list' ? createStatusButtons(contact) : ''}
+                        <div style="flex: 1; display: flex; align-items: center; gap: 8px;">
+                            <span class="card-name" onclick="copyToClipboard('${escapedName}', event)" style="cursor: pointer; flex: 1;" title="Click para copiar">${contact.name}</span>
+                            <button class="btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="editContactField(${contact.id}, 'name', event)" title="Editar nombre">
+                                <i class="fas fa-pencil-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-details">
+                        ${contact.phone ? `
+                            <div class="detail-item">
+                                <i class="fas fa-phone"></i>
+                                <span onclick="copyToClipboard('${escapedPhone}', event)" style="cursor: pointer; flex: 1;" title="Click para copiar">${contact.phone}</span>
+                                <button class="btn" style="padding: 4px 8px; font-size: 0.7rem;" onclick="editContactField(${contact.id}, 'phone', event)" title="Editar">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </button>
+                                <button class="btn btn-success" style="padding: 4px 8px; font-size: 0.7rem;" onclick="openWhatsApp('${escapedPhone}', event)" title="WhatsApp">
+                                    <i class="fab fa-whatsapp"></i>
+                                </button>
+                            </div>
+                        ` : '<div class="detail-item"><i class="fas fa-phone"></i><span style="color: var(--text-secondary);">Sin teléfono</span></div>'}
+                        <div class="detail-item"><i class="fas fa-tag"></i><span>${contact.origin}</span></div>
+                        <div class="detail-item">
+                            <i class="fas fa-circle-notch"></i>
+                            <span class="status-badge status-${contact.status}" data-field="status">${statusOption.label}</span>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <span><i class="fas fa-calendar"></i> ${new Date(contact.lastUpdated).toLocaleDateString('es-ES')}</span>
+                        <button class="btn btn-danger" style="padding: 5px 10px; font-size: 0.75rem;" onclick="deleteContact(${contact.id}, event)"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
             `;
-            return el;
         }
 
-        function createCard(contact) { return createContactDOM(contact, 'card'); }
-        function createListItem(contact) { return createContactDOM(contact, 'list'); }
-
-        function renderTinderView() {
-            const card = elements.tinderCard;
-            card.classList.add('fading');
+        function createListItem(contact) {
+            const statusOption = STATUS_OPTIONS.find(s => s.id === contact.status) || STATUS_OPTIONS[0];
+            const escapedName = (contact.name || '').replace(/'/g, "\\'");
+            const escapedPhone = (contact.phone || '').replace(/'/g, "\\'");
             
-            setTimeout(() => {
-                if (AppState.filteredContacts.length === 0) {
-                    $('#tinderName').textContent = 'No hay contactos';
-                    $('#tinderOrigin').textContent = '';
-                    $('#tinderPhone').textContent = '-';
-                    $('#tinderWhatsapp').href = '#';
-                    $('#tinderCounter').textContent = '0/0';
-                    card.classList.remove('fading');
-                    return;
-                }
-                if (AppState.tinderIndex >= AppState.filteredContacts.length) AppState.tinderIndex = 0;
+            return `
+                <div class="list-item ${AppState.selectedContacts.has(contact.id) ? 'selected' : ''} ${contact.isDuplicate ? 'duplicate' : ''}" data-id="${contact.id}">
+                    <div><input type="checkbox" ${AppState.selectedContacts.has(contact.id) ? 'checked' : ''}></div>
+                    <div class="list-item-name">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span onclick="copyToClipboard('${escapedName}', event)" style="flex: 1; cursor: pointer;" title="Click para copiar">
+                                ${contact.isDuplicate ? '<i class="fas fa-exclamation-triangle" style="color: var(--accent-warning);"></i> ' : ''}${contact.name}
+                            </span>
+                            <button class="btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="editContactField(${contact.id}, 'name', event)" title="Editar">
+                                <i class="fas fa-pencil-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="list-item-phone">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span onclick="copyToClipboard('${escapedPhone}', event)" style="flex: 1; font-family: monospace; cursor: pointer;" title="Click para copiar">${contact.phone || 'Sin teléfono'}</span>
+                            ${contact.phone ? `
+                                <button class="btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="editContactField(${contact.id}, 'phone', event)" title="Editar">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                    <div class="list-item-origin">${contact.origin}</div>
+                    <div class="list-item-date">${new Date(contact.lastUpdated).toLocaleDateString('es-ES')}</div>
+                    <div style="text-align: center;">
+                        ${contact.phone ? `
+                            <button class="btn" style="padding: 8px; background: #25D366; color: white; width: 100%;" onclick="openWhatsApp('${escapedPhone}', event)" title="Abrir WhatsApp">
+                                <i class="fab fa-whatsapp" style="font-size: 1.2rem;"></i>
+                            </button>
+                        ` : '<span style="color: var(--text-secondary); font-size: 0.8rem;">-</span>'}
+                    </div>
+                    <div class="status-buttons">
+                        <button class="status-btn sin-revisar ${contact.status === 'sin revisar' ? 'active' : ''}" 
+                                onclick="changeContactStatus(${contact.id}, 'sin revisar', event)" 
+                                title="Sin Revisar">
+                            <i class="fas fa-circle"></i>
+                        </button>
+                        <button class="status-btn contactado ${contact.status === 'contactado' ? 'active' : ''}" 
+                                onclick="changeContactStatus(${contact.id}, 'contactado', event)" 
+                                title="Contactado">
+                            <i class="fas fa-check"></i>
+                        </button>
+                        <button class="status-btn jugando ${contact.status === 'jugando' ? 'active' : ''}" 
+                                onclick="changeContactStatus(${contact.id}, 'jugando', event)" 
+                                title="Jugando">
+                            <i class="fas fa-gamepad"></i>
+                        </button>
+                        <button class="status-btn sin-wsp ${contact.status === 'sin wsp' ? 'active' : ''}" 
+                                onclick="changeContactStatus(${contact.id}, 'sin wsp', event)" 
+                                title="Sin WhatsApp">
+                            <i class="fas fa-ban"></i>
+                        </button>
+                        <button class="status-btn no-interesado ${contact.status === 'no interesado' ? 'active' : ''}" 
+                                onclick="changeContactStatus(${contact.id}, 'no interesado', event)" 
+                                title="No Interesado">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <button class="btn btn-danger" style="padding: 6px 10px;" onclick="deleteContact(${contact.id}, event)" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderPaginatedView(renderFunc) {
+            const start = (AppState.currentPage - 1) * AppState.itemsPerPage;
+            const end = start + AppState.itemsPerPage;
+            const pageContacts = AppState.filteredContacts.slice(start, end);
+            
+            // Si no hay contactos en esta página pero hay filtrados, volver a página 1
+            if (pageContacts.length === 0 && AppState.filteredContacts.length > 0 && AppState.currentPage > 1) {
+                AppState.currentPage = 1;
+                renderPaginatedView(renderFunc);
+                return;
+            }
+            
+            if (AppState.currentView === 'cards') {
+                elements.cardsView.innerHTML = pageContacts.length > 0 
+                    ? pageContacts.map(renderFunc).join('') 
+                    : '<div style="text-align: center; padding: 50px; color: var(--text-secondary);">No se encontraron contactos</div>';
+            } else {
+                const listItems = pageContacts.map(renderFunc).join('');
+                elements.listView.innerHTML = `
+                    <div class="list-header">
+                        <div><input type="checkbox" id="selectAllCheckbox"></div>
+                        <div>Nombre</div>
+                        <div>Teléfono</div>
+                        <div>Origen</div>
+                        <div>Fecha</div>
+                        <div>WhatsApp</div>
+                        <div>Acciones</div>
+                    </div>
+                    ${listItems || '<div style="text-align: center; padding: 50px; color: var(--text-secondary); grid-column: 1 / -1;">No se encontraron contactos</div>'}
+                `;
                 
-                const contact = AppState.filteredContacts[AppState.tinderIndex];
-                $('#tinderName').textContent = contact.name;
-                $('#tinderOrigin').textContent = contact.origin;
-                $('#tinderPhone').textContent = contact.phone || 'Sin número';
-                $('#tinderWhatsapp').href = contact.phone ? `https://wa.me/${contact.phone}` : '#';
-                $('#tinderCounter').textContent = `${AppState.tinderIndex + 1}/${AppState.filteredContacts.length}`;
-                card.classList.remove('fading');
-            }, 300);
+                const selectAllCheckbox = $('#selectAllCheckbox');
+                if (selectAllCheckbox) {
+                    selectAllCheckbox.onchange = (e) => {
+                        const pageContacts = AppState.filteredContacts.slice(start, end);
+                        pageContacts.forEach(c => {
+                            if (e.target.checked) AppState.selectedContacts.add(c.id);
+                            else AppState.selectedContacts.delete(c.id);
+                        });
+                        renderPaginatedView(AppState.currentView === 'cards' ? createCard : createListItem);
+                        updateBulkActionsBar();
+                    };
+                }
+            }
+            
+            renderPagination();
         }
 
         function renderPagination() {
             const totalPages = Math.ceil(AppState.filteredContacts.length / AppState.itemsPerPage);
-            elements.pagination.innerHTML = totalPages <= 1 ? '' : `
-                <button class="page-btn" ${AppState.currentPage === 1 ? 'disabled' : ''} data-page="${AppState.currentPage - 1}"><i class="fas fa-chevron-left"></i></button>
-                <span>Página ${AppState.currentPage} de ${totalPages}</span>
-                <button class="page-btn" ${AppState.currentPage === totalPages ? 'disabled' : ''} data-page="${AppState.currentPage + 1}"><i class="fas fa-chevron-right"></i></button>
-            `;
-        }
-        
-        function updateStats() {
-            $('#totalContacts').textContent = AppState.contacts.length;
-            $('#unreviewedContacts').textContent = AppState.contacts.filter(c => c.status === 'sin revisar').length;
-            $('#contactedContacts').textContent = AppState.contacts.filter(c => c.status === 'contactado').length;
-            $('#playingContacts').textContent = AppState.contacts.filter(c => c.status === 'jugando').length;
-            $('#notInterestedContacts').textContent = AppState.contacts.filter(c => c.status === 'no interesado').length;
-            $('#noWhatsappContacts').textContent = AppState.contacts.filter(c => c.status === 'sin wsp').length;
+            let html = '';
+            
+            html += `<button ${AppState.currentPage === 1 ? 'disabled' : ''} onclick="changePage(${AppState.currentPage - 1})"><i class="fas fa-chevron-left"></i></button>`;
+            
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= AppState.currentPage - 2 && i <= AppState.currentPage + 2)) {
+                    html += `<button class="${i === AppState.currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+                } else if (i === AppState.currentPage - 3 || i === AppState.currentPage + 3) {
+                    html += '<span class="page-info">...</span>';
+                }
+            }
+            
+            html += `<button ${AppState.currentPage === totalPages ? 'disabled' : ''} onclick="changePage(${AppState.currentPage + 1})"><i class="fas fa-chevron-right"></i></button>`;
+            html += `<span class="page-info">Página ${AppState.currentPage} de ${totalPages} (${AppState.filteredContacts.length} contactos)</span>`;
+            
+            elements.pagination.innerHTML = html;
         }
 
-        function updateProgress() {
-            const total = AppState.contacts.length;
-            if (total === 0) {
-                $('#progressContainer').style.display = 'none';
+        window.changePage = (page) => {
+            AppState.currentPage = page;
+            renderPaginatedView(AppState.currentView === 'cards' ? createCard : createListItem);
+        };
+
+        window.deleteContact = (id, event) => {
+            if (event) event.stopPropagation();
+            const contact = AppState.contacts.find(c => c.id === id);
+            if (contact && confirm(`¿Eliminar "${contact.name}"?`)) {
+                AppState.contacts = AppState.contacts.filter(c => c.id !== id);
+                addToHistory('Contacto eliminado', contact.name);
+                saveData();
+                render();
+                showNotification('Contacto eliminado', 'success');
+            }
+        };
+
+        window.copyToClipboard = (text, event) => {
+            if (event) event.stopPropagation();
+            navigator.clipboard.writeText(text).then(() => {
+                showNotification(`✓ Copiado: ${text}`, 'success');
+            }).catch(() => {
+                showNotification('Error al copiar', 'error');
+            });
+        };
+
+        window.changeContactStatus = (id, newStatus, event) => {
+            if (event) event.stopPropagation();
+            const contact = AppState.contacts.find(c => c.id === id);
+            if (!contact) return;
+
+            const oldStatus = contact.status;
+            if (oldStatus === newStatus) return;
+
+            contact.status = newStatus;
+            contact.lastUpdated = new Date().toISOString();
+            AppState.lastEditedContact = id;
+            addToHistory('Estado cambiado', `${contact.name}: ${oldStatus} → ${newStatus}`);
+            saveData();
+            render();
+        };
+
+        window.editContactField = (id, field, event) => {
+            if (event) event.stopPropagation();
+            const contact = AppState.contacts.find(c => c.id === id);
+            if (!contact) return;
+
+            const currentValue = contact[field] || '';
+            const newValue = prompt(`Editar ${field === 'name' ? 'nombre' : 'teléfono'}:`, currentValue);
+            
+            if (newValue !== null && newValue !== currentValue) {
+                const oldValue = contact[field];
+                contact[field] = field === 'phone' ? normalizePhoneNumber(newValue) : newValue;
+                contact.lastUpdated = new Date().toISOString();
+                AppState.lastEditedContact = id;
+                addToHistory(`${field} editado`, `${contact.name}: ${oldValue} → ${contact[field]}`);
+                saveData();
+                render();
+                showNotification('Contacto actualizado', 'success');
+            }
+        };
+
+        function undoToLastContact() {
+            if (AppState.lastEditedContact) {
+                const contact = AppState.contacts.find(c => c.id === AppState.lastEditedContact);
+                if (contact) {
+                    elements.searchInput.value = contact.name;
+                    AppState.searchTerm = contact.name;
+                    render();
+                    showNotification(`📍 Mostrando: ${contact.name}`, 'info');
+                } else {
+                    showNotification('El último contacto editado ya no existe', 'error');
+                }
+            } else {
+                showNotification('No hay contactos editados recientemente', 'info');
+            }
+        }
+
+        window.openWhatsApp = (phone, event) => {
+            if (event) event.stopPropagation();
+            if (!phone) {
+                showNotification('Este contacto no tiene teléfono', 'error');
                 return;
             }
-            $('#progressContainer').style.display = 'block';
-            const reviewed = total - AppState.contacts.filter(c => c.status === 'sin revisar').length;
-            const percentage = total > 0 ? Math.round((reviewed / total) * 100) : 0;
-            elements.progressFill.style.width = `${percentage}%`;
-            elements.progressPercentage.textContent = `${percentage}%`;
-            elements.reviewedCount.textContent = `${reviewed} revisados`;
-            elements.totalCount.textContent = `${total} totales`;
-        }
-        
-        function updateContact(id, field, value) {
-            const contact = AppState.contacts.find(c => c.id === id);
-            if (contact && contact[field] !== value) {
-                contact[field] = value;
-                contact.lastUpdated = new Date().toISOString();
-                saveData();
-                render();
+            const cleanPhone = normalizePhoneNumber(phone);
+            window.open(`https://wa.me/${cleanPhone}`, '_blank');
+        };
+
+        function updateBulkActionsBar() {
+            if (AppState.selectedContacts.size > 0) {
+                elements.bulkActionsBar.classList.add('active');
+                elements.selectedCount.textContent = AppState.selectedContacts.size;
+            } else {
+                elements.bulkActionsBar.classList.remove('active');
             }
         }
 
-        function updateBulkActionsBar() {
-            const count = AppState.selectedContacts.size;
-            elements.bulkActionsBar.classList.toggle('active', count > 0);
-            elements.bulkSelectedCount.textContent = `${count} seleccionados`;
-            const pageContacts = AppState.filteredContacts.slice((AppState.currentPage - 1) * AppState.itemsPerPage, AppState.currentPage * AppState.itemsPerPage);
-            const allOnPageSelected = pageContacts.length > 0 && pageContacts.every(c => AppState.selectedContacts.has(c.id));
-            elements.selectAllCheckbox.checked = allOnPageSelected;
+        function render() {
+            applyFilters();
+            updateStats();
+            renderPaginatedView(AppState.currentView === 'cards' ? createCard : createListItem);
+            updateBulkActionsBar();
+        }
+
+        function showDuplicatesModal() {
+            const duplicates = detectDuplicates();
+            
+            if (duplicates.length === 0) {
+                $('#duplicatesContent').innerHTML = '<p style="color: var(--accent-success); text-align: center; padding: 30px;">✅ No se encontraron duplicados</p>';
+                $('#mergeAllDuplicates').style.display = 'none';
+            } else {
+                let html = `<div class="duplicates-list">`;
+                duplicates.forEach((group, groupIndex) => {
+                    html += `<div class="duplicate-group">`;
+                    html += `<div class="duplicate-group-header">
+                        <span>📋 ${group.name} (${group.contacts.length} entradas - ${group.type})</span>
+                    </div>`;
+                    
+                    group.contacts.forEach((contact, contactIndex) => {
+                        const isRecommended = contactIndex === 0; // El primero es el recomendado por defecto
+                        html += `<div class="duplicate-item" style="display: flex; align-items: center; justify-content: space-between; padding: 12px; ${isRecommended ? 'border: 2px solid var(--accent-primary);' : ''}">
+                            <div style="flex: 1;">
+                                <strong>${contact.name}</strong>
+                                <div class="duplicate-item-detail">
+                                    📞 ${contact.phone || 'Sin teléfono'} | 
+                                    📍 ${contact.origin} | 
+                                    🔵 <span class="status-badge status-${contact.status}">${contact.status}</span>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                ${isRecommended ? '<span style="color: var(--accent-primary); font-size: 0.8rem; font-weight: 600;">RECOMENDADO</span>' : ''}
+                                <button class="btn" style="padding: 6px 12px; font-size: 0.8rem;" onclick="selectDuplicateToKeep(${groupIndex}, ${contactIndex})" title="Mantener este">
+                                    <i class="fas fa-check"></i> Elegir
+                                </button>
+                            </div>
+                        </div>`;
+                    });
+                    html += `</div>`;
+                });
+                html += `</div>`;
+                const totalEntries = duplicates.reduce((acc, g) => acc + g.contacts.length, 0);
+                html += `<p style="color: var(--accent-warning); margin-top: 15px; text-align: center;">
+                    Se encontraron ${duplicates.length} grupos duplicados con ${totalEntries} entradas totales
+                </p>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 10px; text-align: center;">
+                    <strong>Criterio de fusión automática:</strong> jugando > contactado > sin wsp > sin revisar > no interesado
+                </p>`;
+                
+                $('#duplicatesContent').innerHTML = html;
+                $('#mergeAllDuplicates').style.display = 'block';
+            }
+            
+            $('#duplicatesModal').classList.add('active');
         }
         
-        function setupEventListeners() {
-            elements.dropArea.onclick = () => elements.fileInput.click();
-            elements.fileInput.onchange = (e) => addFilesToList(Array.from(e.target.files));
-            elements.processFiles.onclick = () => processFiles(false);
-
-            elements.dropAreaModal.onclick = () => elements.fileInputModal.click();
-            elements.fileInputModal.onchange = (e) => addFilesToList(Array.from(e.target.files));
-            elements.processFilesModal.onclick = () => processFiles(true);
-            $('#cancelAddMore').onclick = () => elements.addMoreModal.classList.remove('active');
-
-            [elements.dropArea, elements.dropAreaModal].forEach(area => {
-                area.addEventListener('dragover', (e) => { e.preventDefault(); area.style.borderColor = 'var(--accent-primary)'; });
-                area.addEventListener('dragleave', (e) => { area.style.borderColor = 'var(--border-color)'; });
-                area.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    area.style.borderColor = 'var(--border-color)';
-                    addFilesToList(Array.from(e.dataTransfer.files));
-                });
-            });
-
-            elements.searchInput.oninput = () => { AppState.currentPage = 1; render(); };
-
-            $$('.stat-box').forEach(b => b.onclick = (e) => {
-                $$('.stat-box').forEach(sb => sb.classList.remove('active'));
-                const box = e.target.closest('.stat-box');
-                box.classList.add('active');
-                AppState.currentFilter = box.dataset.filter;
-                AppState.currentPage = 1;
-                render();
-            });
-            $$('.view-btn').forEach(b => b.onclick = (e) => {
-                $$('.view-btn').forEach(vb => vb.classList.remove('active'));
-                const btn = e.target.closest('.view-btn');
-                btn.classList.add('active');
-                AppState.currentView = btn.dataset.view;
-                AppState.tinderIndex = 0;
-                AppState.selectedContacts.clear();
-                updateView();
-            });
-
-            $('#tinderNext').onclick = () => { AppState.tinderIndex++; renderTinderView(); };
-            $('#tinderBack').onclick = () => { AppState.tinderIndex = (AppState.tinderIndex - 1 + AppState.filteredContacts.length) % AppState.filteredContacts.length; renderTinderView(); };
-            $$('.tinder-action-btn[data-status]').forEach(btn => btn.onclick = () => {
-                if (AppState.filteredContacts.length === 0) return;
-                const contact = AppState.filteredContacts[AppState.tinderIndex];
-                updateContact(contact.id, 'status', btn.dataset.status);
-                showNotification(`Estado cambiado a: ${btn.textContent.trim()}`, 'success');
-                setTimeout(() => { AppState.tinderIndex++; renderTinderView(); }, 300);
-            });
-
-            elements.pagination.onclick = (e) => {
-                const page = e.target.closest('.page-btn')?.dataset.page;
-                if (page) { AppState.currentPage = parseInt(page); updateView(); }
-            };
-
-            $('#addMoreBtn').onclick = () => {
-                AppState.filesToProcess = [];
-                renderFileList();
-                elements.addMoreModal.classList.add('active');
-            };
-            $('#clearDataBtn').onclick = () => {
-                AppState.contacts = [];
-                AppState.filteredContacts = [];
-                AppState.selectedContacts.clear();
-                AppState.currentPage = 1;
-                AppState.currentFilter = 'all';
-                saveData();
-                $$('.stat-box').forEach(sb => sb.classList.remove('active'));
-                $('.stat-box[data-filter="all"]').classList.add('active');
-                render();
-                showNotification('Todos los contactos han sido eliminados.', 'success');
-            };
+        window.selectDuplicateToKeep = (groupIndex, contactIndex) => {
+            const group = AppState.duplicates[groupIndex];
+            if (!group) return;
             
-            const unifiedEventHandler = (e) => {
-                const target = e.target;
-                const contactEl = target.closest('[data-id]');
-                if (!contactEl) return;
-                const contactId = contactEl.dataset.id;
+            const selectedContact = group.contacts[contactIndex];
+            const contactsToRemove = group.contacts.filter((c, i) => i !== contactIndex);
+            
+            // Eliminar los otros duplicados
+            const idsToRemove = contactsToRemove.map(c => c.id);
+            AppState.contacts = AppState.contacts.filter(c => !idsToRemove.includes(c.id));
+            
+            addToHistory('Duplicado resuelto manualmente', `${selectedContact.name} - mantenido, ${contactsToRemove.length} eliminados`);
+            saveData();
+            render();
+            showDuplicatesModal(); // Recargar modal
+            showNotification(`✅ Duplicados resueltos para ${selectedContact.name}`, 'success');
+        };
 
-                if (target.closest('.delete-contact-btn')) {
-                    e.stopPropagation();
-                    AppState.contacts = AppState.contacts.filter(c => c.id !== contactId);
-                    AppState.selectedContacts.delete(contactId);
-                    saveData();
+        function mergeAllDuplicates() {
+            const duplicates = AppState.duplicates;
+            let mergedCount = 0;
+            
+            duplicates.forEach(group => {
+                if (group.contacts.length > 1) {
+                    let masterContact = { ...group.contacts[0] };
+                    
+                    for (let i = 1; i < group.contacts.length; i++) {
+                        masterContact = mergeContact(masterContact, group.contacts[i]);
+                    }
+                    
+                    const idsToRemove = group.contacts.map(c => c.id);
+                    AppState.contacts = AppState.contacts.filter(c => !idsToRemove.includes(c.id));
+                    AppState.contacts.push(masterContact);
+                    
+                    mergedCount += group.contacts.length - 1;
+                }
+            });
+            
+            addToHistory('Duplicados fusionados', `${mergedCount} duplicados fusionados`);
+            saveData();
+            render();
+            $('#duplicatesModal').classList.remove('active');
+            showNotification(`✅ ${mergedCount} duplicados fusionados`, 'success');
+        }
+
+        function showHistoryModal() {
+            const historyHTML = AppState.history.length > 0 
+                ? AppState.history.map(entry => {
+                    // Extraer el nombre del usuario del detalle
+                    const nameMatch = entry.details.match(/^([^:]+)/);
+                    const userName = nameMatch ? nameMatch[1].trim() : '';
+                    
+                    return `
+                    <div class="history-item" onclick="searchFromHistory('${userName.replace(/'/g, "\\'")}', event)" style="cursor: pointer;" title="Click para buscar este contacto">
+                        <div class="history-time">${new Date(entry.timestamp).toLocaleString('es-ES')}</div>
+                        <div class="history-action"><strong>${entry.action}:</strong> ${entry.details}</div>
+                    </div>
+                `}).join('')
+                : '<p style="text-align: center; color: var(--text-secondary); padding: 30px;">No hay historial disponible</p>';
+            
+            $('#historyList').innerHTML = historyHTML;
+            $('#historyModal').classList.add('active');
+        }
+        
+        window.searchFromHistory = (name, event) => {
+            if (event) event.stopPropagation();
+            elements.searchInput.value = name;
+            AppState.searchTerm = name;
+            $('#historyModal').classList.remove('active');
+            render();
+            showNotification(`🔍 Buscando: ${name}`, 'info');
+        };
+
+        function setupEventListeners() {
+            elements.uploadArea.onclick = () => elements.fileInput.click();
+            elements.uploadArea.ondragover = (e) => { e.preventDefault(); elements.uploadArea.style.borderColor = 'var(--accent-primary)'; };
+            elements.uploadArea.ondragleave = () => elements.uploadArea.style.borderColor = 'var(--border-color)';
+            elements.uploadArea.ondrop = (e) => {
+                e.preventDefault();
+                elements.uploadArea.style.borderColor = 'var(--border-color)';
+                const files = Array.from(e.dataTransfer.files).filter(f => f.name.endsWith('.csv') || f.name.endsWith('.vcf'));
+                if (files.length > 0) {
+                    selectedFiles = files;
+                    updateFileList();
+                }
+            };
+
+            elements.fileInput.onchange = (e) => {
+                selectedFiles = Array.from(e.target.files);
+                updateFileList();
+            };
+
+            elements.startBtn.onclick = loadFiles;
+
+            elements.addMoreBtn.onclick = () => {
+                elements.uploadScreen.classList.remove('hidden');
+                elements.fileInput.value = '';
+                selectedFiles = [];
+                elements.fileList.innerHTML = '';
+                elements.startBtn.disabled = true;
+            };
+
+            elements.searchInput.oninput = (e) => {
+                AppState.searchTerm = e.target.value;
+                render();
+            };
+
+            $('#undoBtn').onclick = undoToLastContact;
+            
+            // Atajo de teclado Ctrl+Z
+            document.addEventListener('keydown', (e) => {
+                if (e.ctrlKey && e.key === 'z' && !e.target.matches('input, textarea')) {
+                    e.preventDefault();
+                    undoToLastContact();
+                }
+            });
+
+            elements.statusFilter.onchange = (e) => {
+                AppState.statusFilter = e.target.value;
+                render();
+            };
+
+            elements.originFilter.onchange = (e) => {
+                AppState.originFilter = e.target.value;
+                render();
+            };
+
+            elements.viewCardsBtn.onclick = () => {
+                AppState.currentView = 'cards';
+                elements.viewCardsBtn.classList.add('active');
+                elements.viewListBtn.classList.remove('active');
+                elements.cardsView.style.display = 'grid';
+                elements.listView.style.display = 'none';
+                render();
+            };
+
+            elements.viewListBtn.onclick = () => {
+                AppState.currentView = 'list';
+                elements.viewListBtn.classList.add('active');
+                elements.viewCardsBtn.classList.remove('active');
+                elements.listView.style.display = 'block';
+                elements.cardsView.style.display = 'none';
+                render();
+            };
+
+            $$('.stat-box').forEach(box => {
+                box.onclick = () => {
+                    const filter = box.dataset.filter;
+                    if (box === elements.duplicatesStatBox) {
+                        showDuplicatesModal();
+                        return;
+                    }
+                    
+                    $$('.stat-box').forEach(b => b.classList.remove('active'));
+                    if (AppState.statusFilter === filter) {
+                        AppState.statusFilter = '';
+                    } else {
+                        AppState.statusFilter = filter;
+                        box.classList.add('active');
+                    }
+                    elements.statusFilter.value = AppState.statusFilter;
                     render();
-                    showNotification('Contacto eliminado.', 'success');
-                    return;
-                }
+                };
+            });
 
-                if (target.closest('.status-btn')) {
-                    e.stopPropagation();
-                    const newStatus = target.closest('.status-btn').dataset.status;
-                    updateContact(contactId, 'status', newStatus);
-                    return;
-                }
+            const unifiedEventHandler = (e) => {
+                const card = e.target.closest('.contact-card, .list-item');
+                if (!card) return;
                 
-                if(target.closest('[data-field]')) {
-                    const text = target.textContent;
-                    navigator.clipboard.writeText(text).then(() => {
-                        showNotification(`"${text}" copiado al portapapeles.`, 'info');
-                    });
-                    return;
-                }
+                const checkbox = e.target.closest('input[type="checkbox"]');
+                const deleteBtn = e.target.closest('button');
                 
-                if (target.closest('.custom-checkbox')) {
-                     const checkbox = $(`#check-${contactId}`);
-                     setTimeout(() => {
-                        if (checkbox.checked) {
-                            AppState.selectedContacts.add(contactId);
-                        } else {
-                            AppState.selectedContacts.delete(contactId);
-                        }
-                        contactEl.classList.toggle('selected', checkbox.checked);
-                        updateBulkActionsBar();
-                     }, 0);
+                if (checkbox) {
+                    const id = parseInt(card.dataset.id);
+                    if (checkbox.checked) AppState.selectedContacts.add(id);
+                    else AppState.selectedContacts.delete(id);
+                    updateBulkActionsBar();
+                    renderPaginatedView(AppState.currentView === 'cards' ? createCard : createListItem);
+                } else if (deleteBtn) {
+                    // Manejado por onclick
+                } else {
+                    const id = parseInt(card.dataset.id);
+                    if (AppState.selectedContacts.has(id)) {
+                        AppState.selectedContacts.delete(id);
+                    } else {
+                        AppState.selectedContacts.add(id);
+                    }
+                    updateBulkActionsBar();
+                    renderPaginatedView(AppState.currentView === 'cards' ? createCard : createListItem);
                 }
             };
 
             const unifiedDblClickHandler = (e) => {
                 const target = e.target.closest('[data-field]');
-                if (!target || target.querySelector('input')) return;
-                const id = target.closest('[data-id]').dataset.id;
-                const field = target.dataset.field;
-                const originalValue = target.textContent;
-                target.innerHTML = `<input class="inline-edit-input" type="text" value="${originalValue}">`;
-                const input = target.querySelector('input');
-                input.focus();
-                input.select();
+                if (!target) return;
                 
-                const save = () => {
-                    const newValue = input.value.trim();
-                    target.textContent = originalValue;
-                    if (newValue && newValue !== originalValue) {
-                         updateContact(id, field, newValue);
-                    }
-                };
-                input.onblur = save;
-                input.onkeydown = (ev) => { if (ev.key === 'Enter') input.blur(); if (ev.key === 'Escape') { input.onblur = null; input.blur(); target.textContent = originalValue; }};
+                const card = e.target.closest('.contact-card, .list-item');
+                const id = parseInt(card.dataset.id);
+                const field = target.dataset.field;
+                const contact = AppState.contacts.find(c => c.id === id);
+                
+                if (!contact) return;
+                
+                const originalValue = target.textContent.trim();
+                
+                if (field === 'status') {
+                    const select = document.createElement('select');
+                    select.className = 'filter-select';
+                    select.style.width = '100%';
+                    select.innerHTML = STATUS_OPTIONS.map(opt => 
+                        `<option value="${opt.id}" ${opt.id === contact.status ? 'selected' : ''}>${opt.label}</option>`
+                    ).join('');
+                    target.textContent = '';
+                    target.appendChild(select);
+                    select.focus();
+                    
+                    const save = () => {
+                        const oldStatus = contact.status;
+                        contact.status = select.value;
+                        contact.lastUpdated = new Date().toISOString();
+                        addToHistory('Estado cambiado', `${contact.name}: ${oldStatus} → ${select.value}`);
+                        saveData();
+                        render();
+                    };
+                    
+                    select.onblur = save;
+                    select.onchange = save;
+                } else {
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.value = originalValue === 'Sin teléfono' ? '' : originalValue;
+                    input.style.width = '100%';
+                    input.style.background = 'var(--bg-card)';
+                    input.style.border = '2px solid var(--accent-primary)';
+                    input.style.borderRadius = '5px';
+                    input.style.padding = '5px';
+                    input.style.color = 'var(--text-primary)';
+                    target.textContent = '';
+                    target.appendChild(input);
+                    input.focus();
+                    input.select();
+                    
+                    const save = () => {
+                        const oldValue = contact[field];
+                        contact[field] = field === 'phone' ? normalizePhoneNumber(input.value) : input.value;
+                        contact.lastUpdated = new Date().toISOString();
+                        addToHistory(`${field} editado`, `${contact.name}: ${oldValue} → ${contact[field]}`);
+                        saveData();
+                        render();
+                    };
+                    
+                    input.onblur = save;
+                    input.onkeydown = (ev) => {
+                        if (ev.key === 'Enter') input.blur();
+                        if (ev.key === 'Escape') {
+                            input.onblur = null;
+                            input.blur();
+                            target.textContent = originalValue;
+                        }
+                    };
+                }
             };
             
             $$('#cardsView, #listView').forEach(el => {
@@ -1170,26 +1993,23 @@
                 el.addEventListener('dblclick', unifiedDblClickHandler);
             });
 
-            elements.selectAllCheckbox.onchange = (e) => {
-                const pageContacts = AppState.filteredContacts.slice((AppState.currentPage - 1) * AppState.itemsPerPage, AppState.currentPage * AppState.itemsPerPage);
-                pageContacts.forEach(c => {
-                    if (e.target.checked) AppState.selectedContacts.add(c.id);
-                    else AppState.selectedContacts.delete(c.id);
-                });
-                renderPaginatedView(AppState.currentView === 'cards' ? createCard : createListItem);
-                updateBulkActionsBar();
-            };
             $('#bulkDeleteBtn').onclick = () => {
                 if(AppState.selectedContacts.size > 0) {
                     const selectedCount = AppState.selectedContacts.size;
+                    const deletedNames = AppState.contacts
+                        .filter(c => AppState.selectedContacts.has(c.id))
+                        .map(c => c.name)
+                        .join(', ');
                     AppState.contacts = AppState.contacts.filter(c => !AppState.selectedContacts.has(c.id));
                     AppState.selectedContacts.clear();
+                    addToHistory('Eliminación masiva', `${selectedCount} contactos eliminados`);
                     saveData();
                     render();
                     showNotification(`${selectedCount} contactos eliminados.`, 'success');
                 }
             };
-             $('#bulkStatusSelect').onchange = (e) => {
+
+            $('#bulkStatusSelect').onchange = (e) => {
                 const newStatus = e.target.value;
                 if (AppState.selectedContacts.size > 0 && newStatus) {
                    const selectedCount = AppState.selectedContacts.size;
@@ -1200,12 +2020,14 @@
                             contact.lastUpdated = new Date().toISOString();
                         }
                    });
+                   addToHistory('Cambio de estado masivo', `${selectedCount} contactos → ${newStatus}`);
                    AppState.selectedContacts.clear();
                    saveData();
                    render();
-                   showNotification(`${selectedCount} contactos actualizados a "${newStatus}".`, 'success');
+                   showNotification(`${selectedCount} contactos actualizados.`, 'success');
                 }
             };
+
             $('#bulkCancelBtn').onclick = () => {
                 AppState.selectedContacts.clear();
                 render();
@@ -1216,7 +2038,9 @@
                 $('#exportAllCount').textContent = `${AppState.contacts.length} contactos`;
                 $('#exportModal').classList.add('active');
             };
+
             $('#cancelExport').onclick = () => $('#exportModal').classList.remove('active');
+
             $('#confirmExport').onclick = () => {
                 const type = $('#exportModal .export-option[data-type].selected').dataset.type;
                 const format = $('#exportModal .export-option[data-format].selected').dataset.format;
@@ -1228,14 +2052,105 @@
 
                 $('#exportModal').classList.remove('active');
             };
+
             $$('#exportModal .export-option').forEach(opt => opt.onclick = (e) => {
                 const option = e.target.closest('.export-option');
                 const group = option.dataset.type ? '[data-type]' : '[data-format]';
                 $$(`#exportModal .export-option${group}`).forEach(o => o.classList.remove('selected'));
                 option.classList.add('selected');
             });
+
+            elements.manageDuplicatesBtn.onclick = showDuplicatesModal;
+            $('#closeDuplicatesModal').onclick = () => $('#duplicatesModal').classList.remove('active');
+            $('#mergeAllDuplicates').onclick = () => {
+                if (confirm('¿Fusionar todos los duplicados? Esta acción no se puede deshacer.')) {
+                    mergeAllDuplicates();
+                }
+            };
+
+            elements.historyBtn.onclick = showHistoryModal;
+            $('#closeHistoryModal').onclick = () => $('#historyModal').classList.remove('active');
+            $('#clearHistoryBtn').onclick = () => {
+                if (confirm('¿Borrar todo el historial?')) {
+                    AppState.history = [];
+                    saveHistory();
+                    $('#historyModal').classList.remove('active');
+                    showNotification('Historial borrado', 'success');
+                }
+            };
+
+            // Agregar contacto único
+            $('#addSingleBtn').onclick = () => {
+                $('#singleName').value = '';
+                $('#singlePhone').value = '';
+                $('#singleOrigin').value = '';
+                $('#singleStatus').value = 'sin revisar';
+                $('#addSingleModal').classList.add('active');
+            };
+
+            $('#cancelAddSingle').onclick = () => $('#addSingleModal').classList.remove('active');
+
+            $('#confirmAddSingle').onclick = () => {
+                const name = $('#singleName').value.trim();
+                const phone = normalizePhoneNumber($('#singlePhone').value.trim());
+                const origin = $('#singleOrigin').value.trim() || 'Manual';
+                const status = $('#singleStatus').value;
+
+                if (!name) {
+                    showNotification('El nombre es obligatorio', 'error');
+                    return;
+                }
+
+                const newContact = {
+                    id: Date.now() + Math.random(),
+                    name: name,
+                    phone: phone,
+                    origin: origin,
+                    status: status,
+                    lastUpdated: new Date().toISOString(),
+                    isDuplicate: false
+                };
+
+                AppState.contacts.push(newContact);
+                addToHistory('Contacto agregado manualmente', name);
+                detectDuplicates();
+                saveData();
+                render();
+                $('#addSingleModal').classList.remove('active');
+                showNotification('✅ Contacto agregado', 'success');
+            };
+
+            // Borrar todo
+            $('#deleteAllBtn').onclick = () => {
+                if (confirm('⚠️ ¿BORRAR TODOS LOS CONTACTOS? Esta acción NO se puede deshacer.')) {
+                    const count = AppState.contacts.length;
+                    AppState.contacts = [];
+                    AppState.selectedContacts.clear();
+                    addToHistory('Todos los contactos eliminados', `${count} contactos borrados`);
+                    saveData();
+                    render();
+                    showNotification(`${count} contactos eliminados`, 'success');
+                }
+            };
         }
-        
+
+        function updateFileList() {
+            if (selectedFiles.length === 0) {
+                elements.fileList.innerHTML = '';
+                elements.startBtn.disabled = true;
+                return;
+            }
+            
+            elements.fileList.innerHTML = selectedFiles.map((f, i) => 
+                `<div class="file-item">
+                    <span><i class="fas fa-file-csv"></i> ${f.name}</span>
+                    <span>${(f.size / 1024).toFixed(1)} KB</span>
+                </div>`
+            ).join('');
+            
+            elements.startBtn.disabled = false;
+        }
+
         function formatCsvField(value) {
             if (value === null || value === undefined) return '""';
             const stringValue = String(value);
@@ -1264,16 +2179,70 @@
         function exportToVCF(contacts) {
             let vcfContent = '';
             contacts.forEach(c => {
-                vcfContent += `BEGIN:VCARD\nVERSION:3.0\nFN:${c.name}\n`;
-                if (c.phone) vcfContent += `TEL;TYPE=CELL:${c.phone}\n`;
-                vcfContent += `NOTE:Origen: ${c.origin}, Estado: ${c.status}\nEND:VCARD\n\n`;
+                vcfContent += `BEGIN:VCARD\n`;
+                vcfContent += `VERSION:3.0\n`;
+                vcfContent += `FN:${c.name}\n`;
+                if (c.phone) {
+                    vcfContent += `TEL;TYPE=CELL:${c.phone}\n`;
+                }
+                vcfContent += `NOTE:Origen: ${c.origin}, Estado: ${c.status}\n`;
+                vcfContent += `END:VCARD\n\n`;
             });
             downloadFile(vcfContent, `contactos_${new Date().toISOString().split('T')[0]}.vcf`, 'text/vcard;charset=utf-8');
-            showNotification('Exportación a VCF completada', 'success');
+            showNotification('✅ Exportación a VCF completada', 'success');
+        }
+        
+        function parseVCF(text) {
+            const contacts = [];
+            const vcards = text.split('BEGIN:VCARD').filter(v => v.trim());
+            
+            vcards.forEach(vcard => {
+                const contact = {};
+                const lines = vcard.split('\n').map(l => l.trim()).filter(Boolean);
+                
+                lines.forEach(line => {
+                    if (line.startsWith('FN:')) {
+                        contact.name = line.substring(3).trim();
+                    } else if (line.startsWith('TEL')) {
+                        const phoneMatch = line.match(/:([\d+]+)/);
+                        if (phoneMatch) {
+                            contact.phone = normalizePhoneNumber(phoneMatch[1]);
+                        }
+                    } else if (line.startsWith('NOTE:')) {
+                        const noteText = line.substring(5);
+                        
+                        // Extraer origen
+                        const origenMatch = noteText.match(/Origen:\s*([^,]+)/);
+                        if (origenMatch) {
+                            contact.origin = origenMatch[1].trim();
+                        }
+                        
+                        // Extraer estado
+                        const estadoMatch = noteText.match(/Estado:\s*(.+)/);
+                        if (estadoMatch) {
+                            const estado = estadoMatch[1].trim().toLowerCase();
+                            if (estado.includes('contactado')) contact.status = 'contactado';
+                            else if (estado.includes('jugando')) contact.status = 'jugando';
+                            else if (estado.includes('sin wsp')) contact.status = 'sin wsp';
+                            else if (estado.includes('no interesado')) contact.status = 'no interesado';
+                            else contact.status = 'sin revisar';
+                        }
+                    }
+                });
+                
+                if (contact.name) {
+                    if (!contact.status) contact.status = 'sin revisar';
+                    if (!contact.origin) contact.origin = 'VCF Importado';
+                    if (!contact.phone) contact.phone = '';
+                    contacts.push(contact);
+                }
+            });
+            
+            return contacts;
         }
 
         function exportToSheetFormat(contacts) {
-            const headers = "usuarios,estado de revision,,estado actual,\"VISTO, RESPONDIDO?\",RECUPERADO,TURNO DE LAS CARGAS,interesado en jugar?,ya contactados,recuperados!,actualmente cargando,TURNO MAÑANA,TURNO TARDE,TURNO NOCHE,contactos a borrar\n";
+            const headers = "usuarios,estado de revision,telefono,estado actual,\"VISTO, RESPONDIDO?\",RECUPERADO,TURNO DE LAS CARGAS,interesado en jugar?,ya contactados,recuperados!,actualmente cargando,TURNO MAÑANA,TURNO TARDE,TURNO NOCHE,contactos a borrar\n";
             
             const statusToSheetStatus = (status) => {
                 const map = { 'contactado': 'promo enviada', 'sin wsp': 'NO ESTA EN WSP', 'sin revisar': 'A CONTACTAR', 'jugando': 'EN CONTACTO', 'no interesado': 'ELIMINADO' };
@@ -1297,7 +2266,7 @@
                 const row = [
                     mainContact ? formatCsvField(mainContact.name) : '',
                     mainContact ? formatCsvField(statusToSheetStatus(mainContact.status)) : '',
-                    '',
+                    mainContact && mainContact.phone ? formatCsvField(mainContact.phone) : '',
                     mainContact ? formatCsvField(statusToSheetStatus(mainContact.status)) : '',
                     'NO', 'NO', '', 'NO',
                     formatCsvField(yaContactados[i]),
@@ -1312,7 +2281,7 @@
             }
 
             downloadFile(csvContent, `planilla_exportada_${new Date().toISOString().split('T')[0]}.csv`, 'text/csv;charset=utf-8;');
-            showNotification('Exportación a formato planilla completada', 'success');
+            showNotification('Exportación completada con teléfonos', 'success');
         }
 
         function downloadFile(content, fileName, mimeType) {
@@ -1330,6 +2299,7 @@
             try {
                 elements.bulkStatusSelect.innerHTML = `<option value="" disabled selected>Cambiar estado</option>` + STATUS_OPTIONS.map(opt => `<option value="${opt.id}">${opt.label}</option>`).join('');
                 setupEventListeners();
+                loadHistory();
                 loadData();
             } catch (e) {
                 console.error("Error fatal en la inicialización:", e);
