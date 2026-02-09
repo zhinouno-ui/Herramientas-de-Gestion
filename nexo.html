@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
+<!-- saved from url=(0038)https://toolboard.vercel.app/nexo.html -->
+<html lang="es"><script src="chrome-extension://eppiocemhmnlbhjplcgkofciiegomcon/content/location/location.js" id="eppiocemhmnlbhjplcgkofciiegomcon"></script><script src="chrome-extension://eppiocemhmnlbhjplcgkofciiegomcon/libs/extend-native-history-api.js"></script><script src="chrome-extension://eppiocemhmnlbhjplcgkofciiegomcon/libs/requests.js"></script><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestor de Contactos Masivo</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         :root {
             --bg-primary: #0f172a;
@@ -427,7 +427,7 @@
             background: var(--bg-card);
             padding: 15px 20px;
             display: grid;
-            grid-template-columns: 50px 2fr 1.5fr 1.2fr 1fr 120px 400px;
+            grid-template-columns: 50px 2fr 1.5fr 1.2fr 1fr 80px 380px;
             gap: 15px;
             font-weight: 600;
             font-size: 0.85rem;
@@ -442,7 +442,7 @@
         .list-item {
             padding: 15px 20px;
             display: grid;
-            grid-template-columns: 50px 2fr 1.5fr 1.2fr 1fr 120px 400px;
+            grid-template-columns: 50px 2fr 1.5fr 1.2fr 1fr 80px 380px;
             gap: 15px;
             align-items: center;
             border-bottom: 1px solid var(--border-color);
@@ -496,23 +496,54 @@
             font-size: 0.8rem;
         }
 
+        .whatsapp-cell {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .whatsapp-btn {
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #25D366;
+            color: white;
+        }
+        .whatsapp-btn:hover {
+            background: #128C7E;
+        }
+        .whatsapp-btn i {
+            font-size: 1.2rem;
+        }
+
         .status-buttons {
             display: flex;
             gap: 5px;
             flex-wrap: wrap;
+            justify-content: flex-start;
         }
 
         .status-btn {
-            padding: 6px 12px;
-            border-radius: 6px;
+            padding: 0;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
             border: 2px solid transparent;
-            font-size: 0.75rem;
             cursor: pointer;
             transition: all 0.2s;
             background: var(--bg-card);
             color: var(--text-secondary);
-            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
+        .status-btn i {
+            font-size: 1rem;
+        }
+
 
         .status-btn:hover {
             transform: translateY(-2px);
@@ -767,7 +798,7 @@
         }
     </style>
 </head>
-<body>
+<body __processed_06e8811e-2870-46d5-8df7-cb489419a036__="true">
     <div class="upload-screen" id="uploadScreen">
         <div class="upload-card">
             <i class="fas fa-cloud-upload-alt"></i>
@@ -776,7 +807,7 @@
             <div class="file-upload-area" id="uploadArea">
                 <i class="fas fa-file-csv" style="font-size: 3rem; color: var(--accent-primary);"></i>
                 <p style="margin-top: 15px; color: var(--text-secondary);">Arrastra archivos CSV o VCF aquí o haz clic para seleccionar</p>
-                <input type="file" id="fileInput" accept=".csv,.vcf" multiple style="display: none;">
+                <input type="file" id="fileInput" accept=".csv,.vcf" multiple="" style="display: none;">
             </div>
             <div class="file-list" id="fileList"></div>
             <input type="text" id="originInput" class="origin-input" placeholder="Origen de los contactos (ej: Turno Mañana, Facebook, etc.)">
@@ -844,7 +875,7 @@
         <!-- Barra de búsqueda y filtros -->
         <div class="search-bar" style="position: relative;">
             <i class="fas fa-search" style="position: absolute; left: 35px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); pointer-events: none; z-index: 1;"></i>
-            <input type="text" id="searchInput" class="search-input" placeholder="Buscar por nombre, teléfono o origen..." style="padding-left: 70px;">
+            <input type="text" id="searchInput" class="search-input" placeholder="Buscar por nombre, teléfono o origen..." style="padding-left: 40px;">
             <div class="filter-group">
                 <select id="statusFilter" class="filter-select">
                     <option value="">Todos los estados</option>
@@ -854,9 +885,7 @@
                     <option value="sin wsp">Sin WhatsApp</option>
                     <option value="no interesado">No Interesado</option>
                 </select>
-                <select id="originFilter" class="filter-select">
-                    <option value="">Todos los orígenes</option>
-                </select>
+                <select id="originFilter" class="filter-select"><option value="">Todos los orígenes</option></select>
                 <button id="undoBtn" class="btn" title="Volver al último contacto editado (Ctrl+Z)">
                     <i class="fas fa-undo"></i> Volver
                 </button>
@@ -869,9 +898,7 @@
         <div class="bulk-actions-bar" id="bulkActionsBar">
             <span class="bulk-count"><span id="selectedCount">0</span> seleccionados</span>
             <div class="bulk-actions">
-                <select id="bulkStatusSelect" class="filter-select" style="min-width: 180px;">
-                    <option value="" disabled selected>Cambiar estado</option>
-                </select>
+                <select id="bulkStatusSelect" class="filter-select" style="min-width: 180px;"><option value="" disabled="" selected="">Cambiar estado</option><option value="sin revisar">Sin Revisar</option><option value="contactado">Contactado</option><option value="jugando">Jugando</option><option value="sin wsp">Sin WhatsApp</option><option value="no interesado">No Interesado</option></select>
                 <button id="bulkDeleteBtn" class="btn btn-danger"><i class="fas fa-trash"></i> Eliminar</button>
                 <button id="bulkCancelBtn" class="btn"><i class="fas fa-times"></i> Cancelar</button>
             </div>
@@ -1246,6 +1273,8 @@
             let totalMerged = 0;
             let filesProcessed = 0;
 
+            if (selectedFiles.length === 0) return;
+
             selectedFiles.forEach(file => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
@@ -1308,9 +1337,49 @@
             });
         }
 
+        function manageAutomaticBackup() {
+            if (!AppState.contacts || AppState.contacts.length === 0) return;
+
+            const now = new Date();
+            const hour = now.getHours();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const dateStr = `${year}-${month}-${day}`;
+
+            let slot;
+            if (hour >= 6 && hour < 14) slot = 'tm';
+            else if (hour >= 14 && hour < 22) slot = 'tt';
+            else slot = 'tn';
+
+            const backupKey = `bk_${slot}_${dateStr}`;
+            if (localStorage.getItem(backupKey)) return;
+
+            try {
+                const backupData = JSON.stringify(AppState.contacts);
+                localStorage.setItem(backupKey, backupData);
+                console.log(`Backup automático creado: ${backupKey}`);
+                
+                const yesterday = new Date(now);
+                yesterday.setDate(now.getDate() - 1);
+                const prevYear = yesterday.getFullYear();
+                const prevMonth = String(yesterday.getMonth() + 1).padStart(2, '0');
+                const prevDay = String(yesterday.getDate()).padStart(2, '0');
+                const prevDateStr = `${prevYear}-${prevMonth}-${prevDay}`;
+                const oldBackupKey = `bk_${slot}_${prevDateStr}`;
+                if(localStorage.getItem(oldBackupKey)) {
+                    localStorage.removeItem(oldBackupKey);
+                    console.log(`Backup antiguo eliminado: ${oldBackupKey}`);
+                }
+            } catch (e) {
+                console.error('Error al crear backup automático:', e);
+            }
+        }
+
         function saveData() {
             try {
                 localStorage.setItem('contactsData', JSON.stringify(AppState.contacts));
+                manageAutomaticBackup();
             } catch (e) {
                 console.error('Error al guardar datos:', e);
                 showNotification('⚠️ Error al guardar datos.', 'error');
@@ -1322,13 +1391,21 @@
                 const saved = localStorage.getItem('contactsData');
                 if (saved) {
                     AppState.contacts = JSON.parse(saved);
-                    detectDuplicates();
-                    elements.uploadScreen.classList.add('hidden');
-                    elements.mainApp.style.display = 'block';
-                    render();
+                    if (AppState.contacts.length > 0) {
+                        detectDuplicates();
+                        elements.uploadScreen.classList.add('hidden');
+                        elements.mainApp.style.display = 'block';
+                        render();
+                        manageAutomaticBackup();
+                    } else {
+                        elements.uploadScreen.classList.remove('hidden');
+                    }
+                } else {
+                    elements.uploadScreen.classList.remove('hidden');
                 }
             } catch (e) {
                 console.error('Error al cargar datos:', e);
+                elements.uploadScreen.classList.remove('hidden');
             }
         }
 
@@ -1343,10 +1420,11 @@
 
         function applyFilters() {
             AppState.filteredContacts = AppState.contacts.filter(contact => {
-                const matchesSearch = !AppState.searchTerm || 
-                    contact.name.toLowerCase().includes(AppState.searchTerm.toLowerCase()) ||
-                    (contact.phone && contact.phone.includes(AppState.searchTerm)) ||
-                    (contact.origin && contact.origin.toLowerCase().includes(AppState.searchTerm.toLowerCase()));
+                const searchTerm = AppState.searchTerm.toLowerCase();
+                const matchesSearch = !searchTerm || 
+                    (contact.name && contact.name.toLowerCase().includes(searchTerm)) ||
+                    (contact.phone && contact.phone.includes(searchTerm)) ||
+                    (contact.origin && contact.origin.toLowerCase().includes(searchTerm));
                 
                 const matchesStatus = !AppState.statusFilter || contact.status === AppState.statusFilter;
                 const matchesOrigin = !AppState.originFilter || contact.origin === AppState.originFilter;
@@ -1379,9 +1457,10 @@
             $('#progressPercentage').textContent = `${progressPercentage}%`;
             $('#progressFill').style.width = `${progressPercentage}%`;
             
-            const uniqueOrigins = [...new Set(AppState.contacts.map(c => c.origin).filter(Boolean))];
+            const uniqueOrigins = [...new Set(AppState.contacts.map(c => c.origin).filter(Boolean))].sort();
             elements.originFilter.innerHTML = '<option value="">Todos los orígenes</option>' + 
                 uniqueOrigins.map(o => `<option value="${o}">${o}</option>`).join('');
+            elements.originFilter.value = AppState.originFilter;
         }
 
         function createCard(contact) {
@@ -1420,7 +1499,7 @@
                         <div class="detail-item"><i class="fas fa-tag"></i><span>${contact.origin}</span></div>
                         <div class="detail-item">
                             <i class="fas fa-circle-notch"></i>
-                            <span class="status-badge status-${contact.status}" data-field="status">${statusOption.label}</span>
+                            <span class="status-badge status-${contact.status.replace(/ /g, '-')} " data-field="status">${statusOption.label}</span>
                         </div>
                     </div>
                     <div class="card-footer">
@@ -1461,10 +1540,10 @@
                     </div>
                     <div class="list-item-origin">${contact.origin}</div>
                     <div class="list-item-date">${new Date(contact.lastUpdated).toLocaleDateString('es-ES')}</div>
-                    <div style="text-align: center;">
+                    <div class="whatsapp-cell">
                         ${contact.phone ? `
-                            <button class="btn" style="padding: 8px; background: #25D366; color: white; width: 100%;" onclick="openWhatsApp('${escapedPhone}', event)" title="Abrir WhatsApp">
-                                <i class="fab fa-whatsapp" style="font-size: 1.2rem;"></i>
+                            <button class="btn whatsapp-btn" onclick="openWhatsApp('${escapedPhone}', event)" title="Abrir WhatsApp">
+                                <i class="fab fa-whatsapp"></i>
                             </button>
                         ` : '<span style="color: var(--text-secondary); font-size: 0.8rem;">-</span>'}
                     </div>
@@ -1494,7 +1573,7 @@
                                 title="No Interesado">
                             <i class="fas fa-times"></i>
                         </button>
-                        <button class="btn btn-danger" style="padding: 6px 10px;" onclick="deleteContact(${contact.id}, event)" title="Eliminar">
+                        <button class="btn btn-danger" style="padding: 0; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;" onclick="deleteContact(${contact.id}, event)" title="Eliminar">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -1507,7 +1586,6 @@
             const end = start + AppState.itemsPerPage;
             const pageContacts = AppState.filteredContacts.slice(start, end);
             
-            // Si no hay contactos en esta página pero hay filtrados, volver a página 1
             if (pageContacts.length === 0 && AppState.filteredContacts.length > 0 && AppState.currentPage > 1) {
                 AppState.currentPage = 1;
                 renderPaginatedView(renderFunc);
@@ -1517,7 +1595,7 @@
             if (AppState.currentView === 'cards') {
                 elements.cardsView.innerHTML = pageContacts.length > 0 
                     ? pageContacts.map(renderFunc).join('') 
-                    : '<div style="text-align: center; padding: 50px; color: var(--text-secondary);">No se encontraron contactos</div>';
+                    : '<div style="text-align: center; padding: 50px; color: var(--text-secondary); grid-column: 1 / -1;">No se encontraron contactos</div>';
             } else {
                 const listItems = pageContacts.map(renderFunc).join('');
                 elements.listView.innerHTML = `
@@ -1535,13 +1613,14 @@
                 
                 const selectAllCheckbox = $('#selectAllCheckbox');
                 if (selectAllCheckbox) {
+                    const areAllOnPageSelected = pageContacts.length > 0 && pageContacts.every(c => AppState.selectedContacts.has(c.id));
+                    selectAllCheckbox.checked = areAllOnPageSelected;
                     selectAllCheckbox.onchange = (e) => {
-                        const pageContacts = AppState.filteredContacts.slice(start, end);
                         pageContacts.forEach(c => {
                             if (e.target.checked) AppState.selectedContacts.add(c.id);
                             else AppState.selectedContacts.delete(c.id);
                         });
-                        renderPaginatedView(AppState.currentView === 'cards' ? createCard : createListItem);
+                        renderPaginatedView(createListItem);
                         updateBulkActionsBar();
                     };
                 }
@@ -1552,18 +1631,33 @@
 
         function renderPagination() {
             const totalPages = Math.ceil(AppState.filteredContacts.length / AppState.itemsPerPage);
+            if (totalPages <= 1) {
+                elements.pagination.innerHTML = '';
+                return;
+            }
             let html = '';
             
             html += `<button ${AppState.currentPage === 1 ? 'disabled' : ''} onclick="changePage(${AppState.currentPage - 1})"><i class="fas fa-chevron-left"></i></button>`;
             
-            for (let i = 1; i <= totalPages; i++) {
-                if (i === 1 || i === totalPages || (i >= AppState.currentPage - 2 && i <= AppState.currentPage + 2)) {
-                    html += `<button class="${i === AppState.currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
-                } else if (i === AppState.currentPage - 3 || i === AppState.currentPage + 3) {
-                    html += '<span class="page-info">...</span>';
-                }
+            const pagesToShow = [];
+            pagesToShow.push(1);
+            if (AppState.currentPage > 4) pagesToShow.push('...');
+            for (let i = Math.max(2, AppState.currentPage - 2); i <= Math.min(totalPages - 1, AppState.currentPage + 2); i++) {
+                pagesToShow.push(i);
             }
-            
+            if (AppState.currentPage < totalPages - 3) pagesToShow.push('...');
+            if(totalPages > 1) pagesToShow.push(totalPages);
+
+            const uniquePages = [...new Set(pagesToShow)];
+
+            uniquePages.forEach(p => {
+                if (p === '...') {
+                    html += '<span class="page-info">...</span>';
+                } else {
+                    html += `<button class="${p === AppState.currentPage ? 'active' : ''}" onclick="changePage(${p})">${p}</button>`;
+                }
+            });
+
             html += `<button ${AppState.currentPage === totalPages ? 'disabled' : ''} onclick="changePage(${AppState.currentPage + 1})"><i class="fas fa-chevron-right"></i></button>`;
             html += `<span class="page-info">Página ${AppState.currentPage} de ${totalPages} (${AppState.filteredContacts.length} contactos)</span>`;
             
@@ -1571,6 +1665,7 @@
         }
 
         window.changePage = (page) => {
+            if (page < 1 || page > Math.ceil(AppState.filteredContacts.length / AppState.itemsPerPage)) return;
             AppState.currentPage = page;
             renderPaginatedView(AppState.currentView === 'cards' ? createCard : createListItem);
         };
@@ -1580,6 +1675,7 @@
             const contact = AppState.contacts.find(c => c.id === id);
             if (contact && confirm(`¿Eliminar "${contact.name}"?`)) {
                 AppState.contacts = AppState.contacts.filter(c => c.id !== id);
+                AppState.selectedContacts.delete(id);
                 addToHistory('Contacto eliminado', contact.name);
                 saveData();
                 render();
@@ -1696,7 +1792,7 @@
                                 <div class="duplicate-item-detail">
                                     📞 ${contact.phone || 'Sin teléfono'} | 
                                     📍 ${contact.origin} | 
-                                    🔵 <span class="status-badge status-${contact.status}">${contact.status}</span>
+                                    🔵 <span class="status-badge status-${contact.status.replace(/ /g, '-')}">${contact.status}</span>
                                 </div>
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
@@ -1732,14 +1828,13 @@
             const selectedContact = group.contacts[contactIndex];
             const contactsToRemove = group.contacts.filter((c, i) => i !== contactIndex);
             
-            // Eliminar los otros duplicados
             const idsToRemove = contactsToRemove.map(c => c.id);
             AppState.contacts = AppState.contacts.filter(c => !idsToRemove.includes(c.id));
             
             addToHistory('Duplicado resuelto manualmente', `${selectedContact.name} - mantenido, ${contactsToRemove.length} eliminados`);
             saveData();
             render();
-            showDuplicatesModal(); // Recargar modal
+            showDuplicatesModal();
             showNotification(`✅ Duplicados resueltos para ${selectedContact.name}`, 'success');
         };
 
@@ -1773,7 +1868,6 @@
         function showHistoryModal() {
             const historyHTML = AppState.history.length > 0 
                 ? AppState.history.map(entry => {
-                    // Extraer el nombre del usuario del detalle
                     const nameMatch = entry.details.match(/^([^:]+)/);
                     const userName = nameMatch ? nameMatch[1].trim() : '';
                     
@@ -1807,7 +1901,7 @@
                 elements.uploadArea.style.borderColor = 'var(--border-color)';
                 const files = Array.from(e.dataTransfer.files).filter(f => f.name.endsWith('.csv') || f.name.endsWith('.vcf'));
                 if (files.length > 0) {
-                    selectedFiles = files;
+                    selectedFiles.push(...files);
                     updateFileList();
                 }
             };
@@ -1834,7 +1928,6 @@
 
             $('#undoBtn').onclick = undoToLastContact;
             
-            // Atajo de teclado Ctrl+Z
             document.addEventListener('keydown', (e) => {
                 if (e.ctrlKey && e.key === 'z' && !e.target.matches('input, textarea')) {
                     e.preventDefault();
@@ -1894,27 +1987,27 @@
                 const card = e.target.closest('.contact-card, .list-item');
                 if (!card) return;
                 
-                const checkbox = e.target.closest('input[type="checkbox"]');
-                const deleteBtn = e.target.closest('button');
+                const id = parseFloat(card.dataset.id);
+                if (isNaN(id)) return;
+
+                const isCheckbox = e.target.matches('input[type="checkbox"]');
+                const isButton = e.target.closest('button');
                 
-                if (checkbox) {
-                    const id = parseInt(card.dataset.id);
-                    if (checkbox.checked) AppState.selectedContacts.add(id);
-                    else AppState.selectedContacts.delete(id);
-                    updateBulkActionsBar();
-                    renderPaginatedView(AppState.currentView === 'cards' ? createCard : createListItem);
-                } else if (deleteBtn) {
-                    // Manejado por onclick
+                if (isButton && !e.target.closest('.list-item-name, .list-item-phone')) return;
+                
+                if (isCheckbox) {
+                     if (e.target.checked) AppState.selectedContacts.add(id);
+                     else AppState.selectedContacts.delete(id);
                 } else {
-                    const id = parseInt(card.dataset.id);
-                    if (AppState.selectedContacts.has(id)) {
+                     if (AppState.selectedContacts.has(id)) {
                         AppState.selectedContacts.delete(id);
                     } else {
                         AppState.selectedContacts.add(id);
                     }
-                    updateBulkActionsBar();
-                    renderPaginatedView(AppState.currentView === 'cards' ? createCard : createListItem);
                 }
+                
+                updateBulkActionsBar();
+                renderPaginatedView(AppState.currentView === 'cards' ? createCard : createListItem);
             };
 
             const unifiedDblClickHandler = (e) => {
@@ -1922,14 +2015,15 @@
                 if (!target) return;
                 
                 const card = e.target.closest('.contact-card, .list-item');
-                const id = parseInt(card.dataset.id);
+                const id = parseFloat(card.dataset.id);
                 const field = target.dataset.field;
                 const contact = AppState.contacts.find(c => c.id === id);
                 
                 if (!contact) return;
                 
                 const originalValue = target.textContent.trim();
-                
+                let hasSaved = false;
+
                 if (field === 'status') {
                     const select = document.createElement('select');
                     select.className = 'filter-select';
@@ -1942,6 +2036,8 @@
                     select.focus();
                     
                     const save = () => {
+                        if (hasSaved) return;
+                        hasSaved = true;
                         const oldStatus = contact.status;
                         contact.status = select.value;
                         contact.lastUpdated = new Date().toISOString();
@@ -1952,39 +2048,6 @@
                     
                     select.onblur = save;
                     select.onchange = save;
-                } else {
-                    const input = document.createElement('input');
-                    input.type = 'text';
-                    input.value = originalValue === 'Sin teléfono' ? '' : originalValue;
-                    input.style.width = '100%';
-                    input.style.background = 'var(--bg-card)';
-                    input.style.border = '2px solid var(--accent-primary)';
-                    input.style.borderRadius = '5px';
-                    input.style.padding = '5px';
-                    input.style.color = 'var(--text-primary)';
-                    target.textContent = '';
-                    target.appendChild(input);
-                    input.focus();
-                    input.select();
-                    
-                    const save = () => {
-                        const oldValue = contact[field];
-                        contact[field] = field === 'phone' ? normalizePhoneNumber(input.value) : input.value;
-                        contact.lastUpdated = new Date().toISOString();
-                        addToHistory(`${field} editado`, `${contact.name}: ${oldValue} → ${contact[field]}`);
-                        saveData();
-                        render();
-                    };
-                    
-                    input.onblur = save;
-                    input.onkeydown = (ev) => {
-                        if (ev.key === 'Enter') input.blur();
-                        if (ev.key === 'Escape') {
-                            input.onblur = null;
-                            input.blur();
-                            target.textContent = originalValue;
-                        }
-                    };
                 }
             };
             
@@ -1994,12 +2057,8 @@
             });
 
             $('#bulkDeleteBtn').onclick = () => {
-                if(AppState.selectedContacts.size > 0) {
+                if(AppState.selectedContacts.size > 0 && confirm(`¿Eliminar ${AppState.selectedContacts.size} contactos seleccionados?`)) {
                     const selectedCount = AppState.selectedContacts.size;
-                    const deletedNames = AppState.contacts
-                        .filter(c => AppState.selectedContacts.has(c.id))
-                        .map(c => c.name)
-                        .join(', ');
                     AppState.contacts = AppState.contacts.filter(c => !AppState.selectedContacts.has(c.id));
                     AppState.selectedContacts.clear();
                     addToHistory('Eliminación masiva', `${selectedCount} contactos eliminados`);
@@ -2025,6 +2084,7 @@
                    saveData();
                    render();
                    showNotification(`${selectedCount} contactos actualizados.`, 'success');
+                   e.target.value = "";
                 }
             };
 
@@ -2079,7 +2139,6 @@
                 }
             };
 
-            // Agregar contacto único
             $('#addSingleBtn').onclick = () => {
                 $('#singleName').value = '';
                 $('#singlePhone').value = '';
@@ -2120,7 +2179,6 @@
                 showNotification('✅ Contacto agregado', 'success');
             };
 
-            // Borrar todo
             $('#deleteAllBtn').onclick = () => {
                 if (confirm('⚠️ ¿BORRAR TODOS LOS CONTACTOS? Esta acción NO se puede deshacer.')) {
                     const count = AppState.contacts.length;
@@ -2211,13 +2269,11 @@
                     } else if (line.startsWith('NOTE:')) {
                         const noteText = line.substring(5);
                         
-                        // Extraer origen
                         const origenMatch = noteText.match(/Origen:\s*([^,]+)/);
                         if (origenMatch) {
                             contact.origin = origenMatch[1].trim();
                         }
                         
-                        // Extraer estado
                         const estadoMatch = noteText.match(/Estado:\s*(.+)/);
                         if (estadoMatch) {
                             const estado = estadoMatch[1].trim().toLowerCase();
@@ -2310,5 +2366,6 @@
         init();
     })();
     </script>
-</body>
-</html>
+
+
+</body></html>
