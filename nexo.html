@@ -433,18 +433,39 @@
         .status-no-interesado { background: rgba(239, 68, 68, 0.2); color: var(--accent-danger); }
         .card-status-inline { min-width: 150px; display: inline-block; position: relative; z-index: 30; }
         .card-status-inline .status-badge { cursor: pointer; }
-        .card-status-select {
+
+        .card-status-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            min-width: 190px;
+            background: #1e293b;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            border-radius: 12px;
+            box-shadow: 0 14px 28px rgba(2, 6, 23, 0.55);
+            padding: 6px;
+            z-index: 60;
+        }
+        .card-status-option {
             width: 100%;
-            position: relative;
-            z-index: 31;
-            background: linear-gradient(180deg, #334155, #1e293b);
+            background: transparent;
             color: var(--text-primary);
-            border: 1px solid rgba(148, 163, 184, 0.4);
-            border-radius: 20px;
-            padding: 6px 28px 6px 10px;
-            font-size: 0.8rem;
-            appearance: none;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+            border: none;
+            border-radius: 8px;
+            padding: 8px 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-align: left;
+            cursor: pointer;
+            font-size: 0.84rem;
+        }
+        .card-status-option:hover {
+            background: rgba(59, 130, 246, 0.16);
+        }
+        .card-status-option.active {
+            background: rgba(59, 130, 246, 0.22);
+            font-weight: 600;
         }
         .card-status-inline::after {
             content: '\f078';
@@ -2137,23 +2158,51 @@
             const contact = AppState.contacts.find(c => c.id === id);
             const container = document.getElementById(`cardStatusInline-${id}`);
             if (!contact || !container) return;
-            container.innerHTML = `<select class="card-status-select" id="statusSelect-${id}">${STATUS_OPTIONS.map(opt => `<option value="${opt.id}" ${opt.id === contact.status ? 'selected' : ''}>${opt.label}</option>`).join('')}</select>`;
-            const select = document.getElementById(`statusSelect-${id}`);
-            select.focus();
-            const save = () => {
-                const next = select.value;
-                if (next !== contact.status) {
-                    const old = contact.status;
-                    contact.status = next;
-                    contact.lastUpdated = new Date().toISOString();
-                    AppState.lastEditedContact = id;
-                    addToHistory('Estado cambiado', `${contact.name}: ${old} → ${next}`);
-                    saveData();
-                }
-                render();
-            };
-            select.onchange = save;
-            select.onblur = save;
+
+            const existingMenu = container.querySelector('.card-status-menu');
+            if (existingMenu) {
+                existingMenu.remove();
+                return;
+            }
+
+            $$('.card-status-menu').forEach(menu => menu.remove());
+
+            const menu = document.createElement('div');
+            menu.className = 'card-status-menu';
+            menu.onclick = (e) => e.stopPropagation();
+            menu.innerHTML = STATUS_OPTIONS.map(opt => `
+                <button class="card-status-option ${opt.id === contact.status ? 'active' : ''}" data-status="${opt.id}">
+                    <i class="fas ${opt.icon}" style="color:${opt.color}"></i>
+                    <span>${opt.label}</span>
+                </button>
+            `).join('');
+
+            menu.querySelectorAll('.card-status-option').forEach(btn => {
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    const next = btn.dataset.status;
+                    if (next !== contact.status) {
+                        const old = contact.status;
+                        contact.status = next;
+                        contact.lastUpdated = new Date().toISOString();
+                        AppState.lastEditedContact = id;
+                        addToHistory('Estado cambiado', `${contact.name}: ${old} → ${next}`);
+                        saveData();
+                    }
+                    menu.remove();
+                    render();
+                };
+            });
+
+            container.appendChild(menu);
+
+            setTimeout(() => {
+                const closeMenu = (evt) => {
+                    if (!container.contains(evt.target)) menu.remove();
+                    document.removeEventListener('click', closeMenu, true);
+                };
+                document.addEventListener('click', closeMenu, true);
+            }, 0);
         };
 
         function updateBulkActionsBar() {
@@ -2495,7 +2544,7 @@
 
                 const isCheckbox = e.target.matches('input[type="checkbox"]');
                 const isButton = e.target.closest('button');
-                const isInteractive = e.target.closest('button, select, option, input[type="text"], textarea, .card-status-inline, .status-badge, .card-status-select, .whatsapp-btn');
+                const isInteractive = e.target.closest('button, select, option, input[type="text"], textarea, .card-status-inline, .status-badge, .card-status-menu, .card-status-option, .whatsapp-btn');
                 
                 if (isInteractive && !isCheckbox) return;
                 
