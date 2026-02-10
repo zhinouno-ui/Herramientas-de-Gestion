@@ -43,6 +43,7 @@
             padding: 20px;
         }
 
+
         /* Pantalla de inicio */
         .upload-screen {
             position: fixed;
@@ -161,7 +162,7 @@
 
         /* Barra de navegación */
         .navbar {
-            background: var(--bg-secondary);
+            background: linear-gradient(180deg, rgba(30, 41, 59, 0.96), rgba(30, 41, 59, 0.88));
             padding: 15px 20px;
             border-radius: 15px;
             margin-bottom: 25px;
@@ -171,6 +172,7 @@
             flex-wrap: wrap;
             gap: 15px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(148, 163, 184, 0.14);
         }
 
         .stats { display: flex; gap: 10px; flex-wrap: wrap; flex: 1; }
@@ -219,7 +221,7 @@
 
         /* Barra de búsqueda */
         .search-bar {
-            background: var(--bg-secondary);
+            background: linear-gradient(180deg, rgba(30, 41, 59, 0.96), rgba(30, 41, 59, 0.88));
             padding: 15px 20px;
             border-radius: 15px;
             margin-bottom: 25px;
@@ -228,6 +230,7 @@
             align-items: center;
             flex-wrap: wrap;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(148, 163, 184, 0.14);
         }
         .search-input {
             flex: 1;
@@ -421,6 +424,7 @@
             border-radius: 15px;
             overflow: hidden;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(148, 163, 184, 0.14);
         }
         
         .list-header {
@@ -448,6 +452,62 @@
             border-bottom: 1px solid var(--border-color);
             cursor: pointer;
             transition: background 0.2s;
+        }
+
+        .list-item-main {
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            padding: 10px 12px;
+            background: linear-gradient(90deg, rgba(71, 85, 105, 0.16), rgba(51, 65, 85, 0.08));
+        }
+
+        .list-item-main::before {
+            content: '';
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            right: -18px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: radial-gradient(circle, rgba(var(--status-rgb, 148,163,184), 0.32) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .list-status-bg-icon {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 2.1rem;
+            color: var(--status-color, #94a3b8);
+            opacity: 0.18;
+            filter: blur(0.3px);
+            pointer-events: none;
+        }
+
+        .list-name-row {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1;
+        }
+
+        .list-status-chip {
+            margin-top: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            color: var(--status-color, var(--text-secondary));
+            background: rgba(var(--status-rgb, 148,163,184), 0.18);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            font-weight: 600;
         }
         
         .list-item:hover { background: var(--hover-color); }
@@ -575,6 +635,7 @@
             border-radius: 15px;
             margin-bottom: 25px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(148, 163, 184, 0.14);
         }
 
         .progress-header {
@@ -793,6 +854,9 @@
             .list-item {
                 grid-template-columns: 1fr;
                 gap: 8px;
+            }
+            .list-item-main {
+                width: 100%;
             }
             .cards-grid { grid-template-columns: 1fr; }
         }
@@ -1019,11 +1083,11 @@
         const $$ = (sel) => document.querySelectorAll(sel);
 
         const STATUS_OPTIONS = [
-            { id: 'sin revisar', label: 'Sin Revisar', icon: 'fa-question-circle', color: '#9ca3af' },
-            { id: 'contactado', label: 'Contactado', icon: 'fa-check-circle', color: '#10b981' },
-            { id: 'jugando', label: 'Jugando', icon: 'fa-gamepad', color: '#8b5cf6' },
-            { id: 'sin wsp', label: 'Sin WhatsApp', icon: 'fa-ban', color: '#f59e0b' },
-            { id: 'no interesado', label: 'No Interesado', icon: 'fa-times-circle', color: '#ef4444' }
+            { id: 'sin revisar', label: 'Sin Revisar', icon: 'fa-question-circle', color: '#9ca3af', rgb: '156, 163, 175' },
+            { id: 'contactado', label: 'Contactado', icon: 'fa-check-circle', color: '#10b981', rgb: '16, 185, 129' },
+            { id: 'jugando', label: 'Jugando', icon: 'fa-gamepad', color: '#8b5cf6', rgb: '139, 92, 246' },
+            { id: 'sin wsp', label: 'Sin WhatsApp', icon: 'fa-ban', color: '#f59e0b', rgb: '245, 158, 11' },
+            { id: 'no interesado', label: 'No Interesado', icon: 'fa-times-circle', color: '#ef4444', rgb: '239, 68, 68' }
         ];
 
         const AppState = {
@@ -1463,8 +1527,12 @@
             elements.originFilter.value = AppState.originFilter;
         }
 
+        function getStatusOption(status) {
+            return STATUS_OPTIONS.find(s => s.id === status) || STATUS_OPTIONS[0];
+        }
+
         function createCard(contact) {
-            const statusOption = STATUS_OPTIONS.find(s => s.id === contact.status) || STATUS_OPTIONS[0];
+            const statusOption = getStatusOption(contact.status);
             const escapedName = (contact.name || '').replace(/'/g, "\\'");
             const escapedPhone = (contact.phone || '').replace(/'/g, "\\'");
             
@@ -1511,15 +1579,16 @@
         }
 
         function createListItem(contact) {
-            const statusOption = STATUS_OPTIONS.find(s => s.id === contact.status) || STATUS_OPTIONS[0];
+            const statusOption = getStatusOption(contact.status);
             const escapedName = (contact.name || '').replace(/'/g, "\\'");
             const escapedPhone = (contact.phone || '').replace(/'/g, "\\'");
             
             return `
                 <div class="list-item ${AppState.selectedContacts.has(contact.id) ? 'selected' : ''} ${contact.isDuplicate ? 'duplicate' : ''}" data-id="${contact.id}">
                     <div><input type="checkbox" ${AppState.selectedContacts.has(contact.id) ? 'checked' : ''}></div>
-                    <div class="list-item-name">
-                        <div style="display: flex; align-items: center; gap: 8px;">
+                    <div class="list-item-name list-item-main" style="--status-color: ${statusOption.color}; --status-rgb: ${statusOption.rgb};">
+                        <i class="fas ${statusOption.icon} list-status-bg-icon"></i>
+                        <div class="list-name-row">
                             <span onclick="copyToClipboard('${escapedName}', event)" style="flex: 1; cursor: pointer;" title="Click para copiar">
                                 ${contact.isDuplicate ? '<i class="fas fa-exclamation-triangle" style="color: var(--accent-warning);"></i> ' : ''}${contact.name}
                             </span>
@@ -1527,6 +1596,7 @@
                                 <i class="fas fa-pencil-alt"></i>
                             </button>
                         </div>
+                        <span class="list-status-chip"><i class="fas ${statusOption.icon}"></i>${statusOption.label}</span>
                     </div>
                     <div class="list-item-phone">
                         <div style="display: flex; align-items: center; gap: 8px;">
