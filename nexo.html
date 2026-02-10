@@ -431,10 +431,12 @@
         .status-jugando { background: rgba(139, 92, 246, 0.2); color: var(--accent-jugando); }
         .status-sin-wsp { background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); }
         .status-no-interesado { background: rgba(239, 68, 68, 0.2); color: var(--accent-danger); }
-        .card-status-inline { min-width: 150px; display: inline-block; position: relative; }
+        .card-status-inline { min-width: 150px; display: inline-block; position: relative; z-index: 30; }
         .card-status-inline .status-badge { cursor: pointer; }
         .card-status-select {
             width: 100%;
+            position: relative;
+            z-index: 31;
             background: linear-gradient(180deg, #334155, #1e293b);
             color: var(--text-primary);
             border: 1px solid rgba(148, 163, 184, 0.4);
@@ -1371,7 +1373,6 @@
             saveTemplateBtn: $('#saveTemplateBtn'),
             insertUserTokenBtn: $('#insertUserTokenBtn'),
             resetTemplateBtn: $('#resetTemplateBtn'),
-            shortcutsInfoBtn: $('#shortcutsInfoBtn'),
             shortcutsModal: $('#shortcutsModal'),
             userOptionsModal: $('#userOptionsModal'),
             whatsappMessageModal: $('#whatsappMessageModal')
@@ -1800,7 +1801,7 @@
                                     <i class="fab fa-whatsapp"></i>
                                 </button>
                             </div>
-                        ` : '<div class="detail-item"><i class="fas fa-phone"></i><span style="color: var(--text-secondary);">Sin teléfono</span></div>'}
+                        ` : `<div class="detail-item"><i class="fas fa-phone"></i><span style="color: var(--text-secondary); flex:1;">Sin teléfono</span><button class="btn" style="padding: 4px 8px; font-size: 0.7rem;" onclick="editContactField(${contact.id}, 'phone', event)" title="Agregar teléfono"><i class="fas fa-pencil-alt"></i></button></div>`}
                         <div class="detail-item"><i class="fas fa-tag"></i><span>${contact.origin}</span></div>
                         <div class="detail-item">
                             <i class="fas fa-circle-notch"></i>
@@ -2401,7 +2402,6 @@
                 AppState.whatsappTemplate = elements.whatsappTemplateInput.value;
                 savePreferences();
             };
-            elements.shortcutsInfoBtn.onclick = () => elements.shortcutsModal.classList.add('active');
             $('#closeWhatsappMessageModal').onclick = () => elements.whatsappMessageModal.classList.remove('active');
             const closeShortcutsBtn = $('#closeShortcutsModal');
             if (closeShortcutsBtn) closeShortcutsBtn.onclick = () => elements.shortcutsModal.classList.remove('active');
@@ -2495,8 +2495,9 @@
 
                 const isCheckbox = e.target.matches('input[type="checkbox"]');
                 const isButton = e.target.closest('button');
+                const isInteractive = e.target.closest('button, select, option, input[type="text"], textarea, .card-status-inline, .status-badge, .card-status-select, .whatsapp-btn');
                 
-                if (isButton && !e.target.closest('.list-item-name, .list-item-phone')) return;
+                if (isInteractive && !isCheckbox) return;
                 
                 if (isCheckbox) {
                      if (e.target.checked) AppState.selectedContacts.add(id);
