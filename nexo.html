@@ -183,6 +183,7 @@
         .stat-total .stat-value { color: var(--accent-primary); }
         .stat-unreviewed .stat-value { color: #9ca3af; }
         .stat-contactado .stat-value { color: var(--accent-success); }
+        .stat-revisado .stat-value { color: #34d399; }
         .stat-jugando .stat-value { color: var(--accent-jugando); }
         .stat-sin-wsp .stat-value { color: var(--accent-warning); }
         .stat-no-interesado .stat-value { color: var(--accent-danger); }
@@ -431,6 +432,7 @@
         .status-jugando { background: rgba(139, 92, 246, 0.2); color: var(--accent-jugando); }
         .status-sin-wsp { background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); }
         .status-no-interesado { background: rgba(239, 68, 68, 0.2); color: var(--accent-danger); }
+        .status-revisado { background: rgba(52, 211, 153, 0.2); color: #34d399; }
         .card-status-inline { min-width: 150px; display: inline-block; position: relative; z-index: 30; }
         .card-status-inline .status-badge { cursor: pointer; }
 
@@ -674,6 +676,24 @@
             font-size: 1.2rem;
         }
 
+        .message-sent-tick {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            color: #60a5fa;
+            font-size: 0.72rem;
+            font-weight: 700;
+            background: rgba(96, 165, 250, 0.14);
+            border: 1px solid rgba(96, 165, 250, 0.35);
+            border-radius: 999px;
+            padding: 3px 7px;
+            white-space: nowrap;
+        }
+
+        .message-sent-tick i {
+            font-size: 0.76rem;
+        }
+
         .status-buttons {
             display: flex;
             gap: 5px;
@@ -712,6 +732,8 @@
         .status-btn.sin-revisar.active { background: #374151; color: #9ca3af; }
         
         .status-btn.contactado { color: var(--accent-success); }
+        .status-btn.revisado { color: #34d399; }
+        .status-btn.revisado.active { background: rgba(52, 211, 153, 0.2); color: #34d399; }
         .status-btn.contactado.active { background: rgba(16, 185, 129, 0.2); color: var(--accent-success); }
         
         .status-btn.jugando { color: var(--accent-jugando); }
@@ -722,6 +744,26 @@
         
         .status-btn.no-interesado { color: var(--accent-danger); }
         .status-btn.no-interesado.active { background: rgba(239, 68, 68, 0.2); color: var(--accent-danger); }
+
+        .urgency-badge {
+            margin-left: 8px;
+            padding: 3px 8px;
+            border-radius: 999px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: .02em;
+            text-transform: uppercase;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .urgency-l1 { background: rgba(245,158,11,0.16); color: #f59e0b; }
+        .urgency-l2 { background: rgba(251,146,60,0.2); color: #fb923c; }
+        .urgency-l3 { background: rgba(239,68,68,0.2); color: #ef4444; }
+        .urgency-l4 { background: rgba(220,38,38,0.32); color: #fecaca; }
+        #exportBtn.export-urgency-1 { box-shadow: 0 0 0 2px rgba(245,158,11,.35) inset; }
+        #exportBtn.export-urgency-2 { box-shadow: 0 0 0 2px rgba(249,115,22,.45) inset; }
+        #exportBtn.export-urgency-3 { box-shadow: 0 0 0 2px rgba(239,68,68,.52) inset; }
 
         /* Barra de progreso */
         .progress-bar-container {
@@ -1066,6 +1108,10 @@
                     <div class="stat-value" id="contactadoCount">0</div>
                     <div class="stat-label">Contactado</div>
                 </div>
+                <div class="stat-box stat-revisado" data-filter="revisado">
+                    <div class="stat-value" id="revisadoCount">0</div>
+                    <div class="stat-label">Revisado</div>
+                </div>
                 <div class="stat-box stat-jugando" data-filter="jugando">
                     <div class="stat-value" id="jugandoCount">0</div>
                     <div class="stat-label">Jugando</div>
@@ -1118,6 +1164,7 @@
                     <option value="">Todos los estados</option>
                     <option value="sin revisar">Sin Revisar</option>
                     <option value="contactado">Contactado</option>
+                    <option value="revisado">Revisado</option>
                     <option value="jugando">Jugando</option>
                     <option value="sin wsp">Sin WhatsApp</option>
                     <option value="no interesado">No Interesado</option>
@@ -1136,7 +1183,7 @@
         <div class="bulk-actions-bar" id="bulkActionsBar">
             <span class="bulk-count"><span id="selectedCount">0</span> seleccionados</span>
             <div class="bulk-actions">
-                <select id="bulkStatusSelect" class="filter-select" style="min-width: 180px;"><option value="" disabled="" selected="">Cambiar estado</option><option value="sin revisar">Sin Revisar</option><option value="contactado">Contactado</option><option value="jugando">Jugando</option><option value="sin wsp">Sin WhatsApp</option><option value="no interesado">No Interesado</option></select>
+                <select id="bulkStatusSelect" class="filter-select" style="min-width: 180px;"><option value="" disabled="" selected="">Cambiar estado</option><option value="sin revisar">Sin Revisar</option><option value="contactado">Contactado</option><option value="revisado">Revisado</option><option value="jugando">Jugando</option><option value="sin wsp">Sin WhatsApp</option><option value="no interesado">No Interesado</option></select>
                 <button id="bulkDeleteBtn" class="btn btn-danger"><i class="fas fa-trash"></i> Eliminar</button>
                 <button id="bulkCancelBtn" class="btn"><i class="fas fa-times"></i> Cancelar</button>
             </div>
@@ -1314,6 +1361,7 @@
                 <select id="singleStatus" class="filter-select">
                     <option value="sin revisar">Sin Revisar</option>
                     <option value="contactado">Contactado</option>
+                    <option value="revisado">Revisado</option>
                     <option value="jugando">Jugando</option>
                     <option value="sin wsp">Sin WhatsApp</option>
                     <option value="no interesado">No Interesado</option>
@@ -1334,6 +1382,7 @@
         const STATUS_OPTIONS = [
             { id: 'sin revisar', label: 'Sin Revisar', icon: 'fa-question-circle', color: '#9ca3af', rgb: '156, 163, 175' },
             { id: 'contactado', label: 'Contactado', icon: 'fa-check-circle', color: '#10b981', rgb: '16, 185, 129' },
+            { id: 'revisado', label: 'Revisado', icon: 'fa-user-check', color: '#34d399', rgb: '52, 211, 153' },
             { id: 'jugando', label: 'Jugando', icon: 'fa-gamepad', color: '#8b5cf6', rgb: '139, 92, 246' },
             { id: 'sin wsp', label: 'Sin WhatsApp', icon: 'fa-ban', color: '#f59e0b', rgb: '245, 158, 11' },
             { id: 'no interesado', label: 'No Interesado', icon: 'fa-times-circle', color: '#ef4444', rgb: '239, 68, 68' }
@@ -1463,6 +1512,7 @@
             const statusPriority = {
                 'jugando': 5,
                 'contactado': 4,
+                'revisado': 3.5,
                 'sin wsp': 3,
                 'sin revisar': 2,
                 'no interesado': 1
@@ -1577,6 +1627,8 @@
                             contact.status = 'jugando';
                         } else if (lowerValue.includes('eliminado') || lowerValue.includes('no interesado')) {
                             contact.status = 'no interesado';
+                        } else if (lowerValue.includes('revisado') || lowerValue.includes('verificado')) {
+                            contact.status = 'revisado';
                         } else if (lowerValue.includes('a contactar') || lowerValue.includes('sin revisar')) {
                             contact.status = 'sin revisar';
                         }
@@ -1700,13 +1752,39 @@
             }
         }
 
+        let lastSaveErrorAt = 0;
+        function tryStorageRecovery() {
+            try {
+                const backupKeys = Object.keys(localStorage).filter(k => k.startsWith('bk_')).sort();
+                while (backupKeys.length > 3) {
+                    localStorage.removeItem(backupKeys.shift());
+                }
+                if (AppState.history.length > 25) {
+                    AppState.history = AppState.history.slice(0, 25);
+                    localStorage.setItem('contactsHistory', JSON.stringify(AppState.history));
+                }
+            } catch (_) {}
+        }
+
         function saveData() {
             try {
                 localStorage.setItem('contactsData', JSON.stringify(AppState.contacts));
                 manageAutomaticBackup();
             } catch (e) {
                 console.error('Error al guardar datos:', e);
-                showNotification('⚠️ Error al guardar datos.', 'error');
+                tryStorageRecovery();
+                try {
+                    localStorage.setItem('contactsData', JSON.stringify(AppState.contacts));
+                    manageAutomaticBackup();
+                    return;
+                } catch (e2) {
+                    console.error('Fallo de recuperación de guardado:', e2);
+                }
+                const now = Date.now();
+                if (now - lastSaveErrorAt > 5000) {
+                    showNotification('⚠️ Error al guardar datos (almacenamiento lleno).', 'error');
+                    lastSaveErrorAt = now;
+                }
             }
         }
 
@@ -1762,6 +1840,8 @@
             $('#totalCount').textContent = AppState.contacts.length;
             $('#unreviewedCount').textContent = AppState.contacts.filter(c => c.status === 'sin revisar').length;
             $('#contactadoCount').textContent = AppState.contacts.filter(c => c.status === 'contactado').length;
+            const revisadoCountEl = $('#revisadoCount');
+            if (revisadoCountEl) revisadoCountEl.textContent = AppState.contacts.filter(c => c.status === 'revisado').length;
             $('#jugandoCount').textContent = AppState.contacts.filter(c => c.status === 'jugando').length;
             $('#sinWspCount').textContent = AppState.contacts.filter(c => c.status === 'sin wsp').length;
             $('#noInteresadoCount').textContent = AppState.contacts.filter(c => c.status === 'no interesado').length;
@@ -1773,6 +1853,7 @@
             // Actualizar barra de progreso
             const totalContacts = AppState.contacts.length;
             const reviewedContacts = AppState.contacts.filter(c => c.status !== 'sin revisar').length;
+            updateExportUrgencyBadge();
             const progressPercentage = totalContacts > 0 ? Math.round((reviewedContacts / totalContacts) * 100) : 0;
             
             $('#reviewedCount').textContent = reviewedContacts;
@@ -1790,10 +1871,77 @@
             return STATUS_OPTIONS.find(s => s.id === status) || STATUS_OPTIONS[0];
         }
 
+        function setReviewMetadata(contact, status) {
+            if (status === 'revisado') {
+                contact.reviewedAt = new Date().toISOString();
+            }
+        }
+
+        function getContactUrgency(contact) {
+            if (contact.status !== 'revisado') return null;
+            const base = contact.reviewedAt || contact.lastUpdated;
+            if (!base) return null;
+            const elapsedH = (Date.now() - new Date(base).getTime()) / 36e5;
+            if (elapsedH < 16) return null;
+            if (elapsedH < 24) return { level: 1, label: '16h', title: 'Revisado hace más de 16 horas' };
+            if (elapsedH < 48) return { level: 2, label: '1 día', title: 'Revisado hace más de 1 día' };
+            if (elapsedH < 72) return { level: 3, label: '2 días', title: 'Revisado hace más de 2 días' };
+            return { level: 4, label: '3+ días', title: 'Revisado hace más de 3 días' };
+        }
+
+        function getExportUrgency() {
+            const now = new Date();
+            const slots = [5, 13, 21];
+            let lastScheduled = null;
+            for (let i = slots.length - 1; i >= 0; i--) {
+                const d = new Date(now);
+                d.setHours(slots[i], 0, 0, 0);
+                if (d <= now) { lastScheduled = d; break; }
+            }
+            if (!lastScheduled) {
+                lastScheduled = new Date(now);
+                lastScheduled.setDate(now.getDate() - 1);
+                lastScheduled.setHours(21, 0, 0, 0);
+            }
+            const lastExport = localStorage.getItem('lastExportAt');
+            if (lastExport && new Date(lastExport) >= lastScheduled) return null;
+            const overdueH = (now - lastScheduled) / 36e5;
+            if (overdueH < 0.01) return null;
+            if (overdueH < 8) return { level: 1, text: 'Pendiente', next: lastScheduled };
+            if (overdueH < 16) return { level: 2, text: 'Atrasado', next: lastScheduled };
+            return { level: 3, text: 'Urgente', next: lastScheduled };
+        }
+
+        function updateExportUrgencyBadge() {
+            const btn = elements.exportBtn;
+            if (!btn) return;
+            btn.classList.remove('export-urgency-1', 'export-urgency-2', 'export-urgency-3');
+            const urgency = getExportUrgency();
+            const icon = '<i class="fas fa-download"></i>';
+            if (!urgency) {
+                btn.innerHTML = `${icon} Exportar`;
+                btn.title = 'Exportar';
+                return;
+            }
+            btn.classList.add(`export-urgency-${urgency.level}`);
+            btn.innerHTML = `${icon} Exportar <span class="urgency-badge urgency-l${urgency.level}">${urgency.text}</span>`;
+            btn.title = `Recordatorio de exportación (${urgency.next.toLocaleString('es-ES')})`;
+        }
+
+
+        function getMessageSentBadge(contact) {
+            if (!contact?.lastMessageSentAt) return '';
+            const sentAt = new Date(contact.lastMessageSentAt);
+            const title = `Mensaje enviado: ${sentAt.toLocaleString('es-ES')}`;
+            return `<span class="message-sent-tick" title="${title}"><i class="fas fa-check-double"></i></span>`;
+        }
+
         function createCard(contact) {
             const statusOption = getStatusOption(contact.status);
             const escapedName = (contact.name || '').replace(/'/g, "\\'");
             const escapedPhone = (contact.phone || '').replace(/'/g, "\\'");
+            const urgency = getContactUrgency(contact);
+            const sentBadge = getMessageSentBadge(contact);
             
             return `
                 <div class="contact-card ${AppState.selectedContacts.has(contact.id) ? 'selected' : ''} ${contact.isDuplicate ? 'duplicate' : ''}" style="--status-rgb: ${statusOption.rgb};" data-id="${contact.id}">
@@ -1804,7 +1952,7 @@
                             <i class="fas ${statusOption.icon}"></i>
                         </div>
                         <div style="flex: 1; display: flex; align-items: center; gap: 8px;">
-                            <span class="card-name" onclick="copyToClipboard('${escapedName}', event)" style="cursor: pointer; flex: 1;" title="Click para copiar">${contact.name}</span>
+                            <span class="card-name" onclick="copyToClipboard('${escapedName}', event)" style="cursor: pointer; flex: 1;" title="Click para copiar">${contact.name}</span>${urgency ? `<span class=\"urgency-badge urgency-l${urgency.level}\" title=\"${urgency.title}\"><i class=\"fas fa-clock\"></i>${urgency.label}</span>` : ''}
                             <button class="btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="editContactField(${contact.id}, 'name', event)" title="Editar nombre">
                                 <i class="fas fa-pencil-alt"></i>
                             </button>
@@ -1821,6 +1969,7 @@
                                 <button class="btn btn-success" style="padding: 4px 8px; font-size: 0.7rem;" onclick="openWhatsApp('${escapedPhone}', event)" title="WhatsApp">
                                     <i class="fab fa-whatsapp"></i>
                                 </button>
+                                ${sentBadge}
                             </div>
                         ` : `<div class="detail-item"><i class="fas fa-phone"></i><span style="color: var(--text-secondary); flex:1;">Sin teléfono</span><button class="btn" style="padding: 4px 8px; font-size: 0.7rem;" onclick="editContactField(${contact.id}, 'phone', event)" title="Agregar teléfono"><i class="fas fa-pencil-alt"></i></button></div>`}
                         <div class="detail-item"><i class="fas fa-tag"></i><span>${contact.origin}</span></div>
@@ -1874,6 +2023,7 @@
                             <button class="btn whatsapp-btn" onclick="openWhatsApp('${escapedPhone}', event)" title="Abrir WhatsApp">
                                 <i class="fab fa-whatsapp"></i>
                             </button>
+                            ${sentBadge}
                         ` : '<span style="color: var(--text-secondary); font-size: 0.8rem;">-</span>'}
                     </div>
                     <div class="status-buttons">
@@ -1886,6 +2036,11 @@
                                 onclick="changeContactStatus(${contact.id}, 'contactado', event)" 
                                 title="Contactado">
                             <i class="fas fa-check"></i>
+                        </button>
+                        <button class="status-btn revisado ${contact.status === 'revisado' ? 'active' : ''}" 
+                                onclick="changeContactStatus(${contact.id}, 'revisado', event)" 
+                                title="Revisado">
+                            <i class="fas fa-user-check"></i>
                         </button>
                         <button class="status-btn jugando ${contact.status === 'jugando' ? 'active' : ''}" 
                                 onclick="changeContactStatus(${contact.id}, 'jugando', event)" 
@@ -2030,6 +2185,7 @@
             if (oldStatus === newStatus) return;
 
             contact.status = newStatus;
+            setReviewMetadata(contact, newStatus);
             contact.lastUpdated = new Date().toISOString();
             AppState.lastEditedContact = id;
             addToHistory('Estado cambiado', `${contact.name}: ${oldStatus} → ${newStatus}`);
@@ -2148,6 +2304,12 @@
             const contact = AppState.contacts.find(c => normalizePhoneNumber(c.phone) === cleanPhone);
             const message = buildWhatsAppMessage(contact?.name || '');
             const url = `https://wa.me/${cleanPhone}${message ? `?text=${encodeURIComponent(message)}` : ''}`;
+            if (contact) {
+                contact.lastMessageSentAt = new Date().toISOString();
+                contact.lastUpdated = new Date().toISOString();
+                saveData();
+                renderContacts();
+            }
             addToHistory('WhatsApp abierto', `${contact?.name || cleanPhone}`);
             saveHistory();
             window.open(url, '_blank');
@@ -2184,6 +2346,7 @@
                     if (next !== contact.status) {
                         const old = contact.status;
                         contact.status = next;
+                        setReviewMetadata(contact, next);
                         contact.lastUpdated = new Date().toISOString();
                         AppState.lastEditedContact = id;
                         addToHistory('Estado cambiado', `${contact.name}: ${old} → ${next}`);
@@ -2594,6 +2757,7 @@
                         hasSaved = true;
                         const oldStatus = contact.status;
                         contact.status = select.value;
+                        setReviewMetadata(contact, select.value);
                         contact.lastUpdated = new Date().toISOString();
                         addToHistory('Estado cambiado', `${contact.name}: ${oldStatus} → ${select.value}`);
                         saveData();
@@ -2630,6 +2794,7 @@
                         const contact = AppState.contacts.find(c => c.id === id);
                         if (contact) {
                             contact.status = newStatus;
+                            setReviewMetadata(contact, newStatus);
                             contact.lastUpdated = new Date().toISOString();
                         }
                    });
@@ -2664,6 +2829,8 @@
                 else if (format === 'vcf') exportToVCF(contactsToExport);
                 else if (format === 'sheet') exportToSheetFormat(AppState.contacts);
 
+                localStorage.setItem('lastExportAt', new Date().toISOString());
+                updateExportUrgencyBadge();
                 $('#exportModal').classList.remove('active');
             };
 
@@ -2826,6 +2993,7 @@
                             const estado = estadoMatch[1].trim().toLowerCase();
                             if (estado.includes('contactado')) contact.status = 'contactado';
                             else if (estado.includes('jugando')) contact.status = 'jugando';
+                            else if (estado.includes('revisado') || estado.includes('verificado')) contact.status = 'revisado';
                             else if (estado.includes('sin wsp')) contact.status = 'sin wsp';
                             else if (estado.includes('no interesado')) contact.status = 'no interesado';
                             else contact.status = 'sin revisar';
@@ -2848,7 +3016,7 @@
             const headers = "usuarios,estado de revision,telefono,estado actual,\"VISTO, RESPONDIDO?\",RECUPERADO,TURNO DE LAS CARGAS,interesado en jugar?,ya contactados,recuperados!,actualmente cargando,TURNO MAÑANA,TURNO TARDE,TURNO NOCHE,contactos a borrar\n";
             
             const statusToSheetStatus = (status) => {
-                const map = { 'contactado': 'promo enviada', 'sin wsp': 'NO ESTA EN WSP', 'sin revisar': 'A CONTACTAR', 'jugando': 'EN CONTACTO', 'no interesado': 'ELIMINADO' };
+                const map = { 'contactado': 'promo enviada', 'revisado': 'REVISADO', 'sin wsp': 'NO ESTA EN WSP', 'sin revisar': 'A CONTACTAR', 'jugando': 'EN CONTACTO', 'no interesado': 'ELIMINADO' };
                 return map[status] || 'SIN REVISAR';
             };
 
@@ -2905,6 +3073,8 @@
                 loadHistory();
                 loadPreferences();
                 loadData();
+                updateExportUrgencyBadge();
+                setInterval(() => { if (AppState.contacts.length) render(); else updateExportUrgencyBadge(); }, 300000);
             } catch (e) {
                 console.error("Error fatal en la inicialización:", e);
                 document.body.innerHTML = "<h1>Error Crítico</h1><p>La aplicación no pudo iniciarse. Por favor, borra la caché y los datos del sitio e inténtalo de nuevo.</p>";
