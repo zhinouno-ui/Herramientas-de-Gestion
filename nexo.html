@@ -43,6 +43,7 @@
             padding: 20px;
         }
 
+
         /* Pantalla de inicio */
         .upload-screen {
             position: fixed;
@@ -161,7 +162,7 @@
 
         /* Barra de navegación */
         .navbar {
-            background: var(--bg-secondary);
+            background: linear-gradient(180deg, rgba(30, 41, 59, 0.96), rgba(30, 41, 59, 0.88));
             padding: 15px 20px;
             border-radius: 15px;
             margin-bottom: 25px;
@@ -171,6 +172,7 @@
             flex-wrap: wrap;
             gap: 15px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(148, 163, 184, 0.14);
         }
 
         .stats { display: flex; gap: 10px; flex-wrap: wrap; flex: 1; }
@@ -219,7 +221,7 @@
 
         /* Barra de búsqueda */
         .search-bar {
-            background: var(--bg-secondary);
+            background: linear-gradient(180deg, rgba(30, 41, 59, 0.96), rgba(30, 41, 59, 0.88));
             padding: 15px 20px;
             border-radius: 15px;
             margin-bottom: 25px;
@@ -228,6 +230,7 @@
             align-items: center;
             flex-wrap: wrap;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(148, 163, 184, 0.14);
         }
         .search-input {
             flex: 1;
@@ -285,6 +288,7 @@
         }
 
         .contact-card {
+            --status-rgb: 148,163,184;
             background: var(--bg-secondary);
             border-radius: 15px;
             padding: 20px;
@@ -300,6 +304,25 @@
             border-color: var(--accent-primary);
         }
         .contact-card.selected { border-color: var(--accent-primary); background: var(--selection-bg); }
+        .contact-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(120deg, rgba(var(--status-rgb),0.12), transparent 38%);
+            pointer-events: none;
+        }
+        .contact-card::after {
+            content: '';
+            position: absolute;
+            right: -28px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(var(--status-rgb),0.18) 0%, transparent 70%);
+            pointer-events: none;
+        }
         .contact-card.duplicate { border-color: var(--accent-warning); }
         .duplicate-badge {
             position: absolute;
@@ -388,6 +411,10 @@
             gap: 10px;
             font-size: 0.9rem;
             color: var(--text-secondary);
+            background: rgba(15, 23, 42, 0.24);
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            border-radius: 10px;
+            padding: 8px 10px;
         }
         .detail-item i { width: 20px; text-align: center; color: var(--accent-primary); }
 
@@ -404,6 +431,30 @@
         .status-jugando { background: rgba(139, 92, 246, 0.2); color: var(--accent-jugando); }
         .status-sin-wsp { background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); }
         .status-no-interesado { background: rgba(239, 68, 68, 0.2); color: var(--accent-danger); }
+        .card-status-inline { min-width: 150px; display: inline-block; position: relative; }
+        .card-status-inline .status-badge { cursor: pointer; }
+        .card-status-select {
+            width: 100%;
+            background: linear-gradient(180deg, #334155, #1e293b);
+            color: var(--text-primary);
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            border-radius: 20px;
+            padding: 6px 28px 6px 10px;
+            font-size: 0.8rem;
+            appearance: none;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+        }
+        .card-status-inline::after {
+            content: '\f078';
+            font-family: 'Font Awesome 5 Free';
+            font-weight: 900;
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            pointer-events: none;
+        }
 
         .card-footer {
             margin-top: 15px;
@@ -421,6 +472,7 @@
             border-radius: 15px;
             overflow: hidden;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(148, 163, 184, 0.14);
         }
         
         .list-header {
@@ -440,6 +492,8 @@
         }
         
         .list-item {
+            position: relative;
+            overflow: hidden;
             padding: 15px 20px;
             display: grid;
             grid-template-columns: 50px 2fr 1.5fr 1.2fr 1fr 80px 380px;
@@ -448,6 +502,62 @@
             border-bottom: 1px solid var(--border-color);
             cursor: pointer;
             transition: background 0.2s;
+        }
+
+        .list-item-main {
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            padding: 10px 12px;
+            background: rgba(15, 23, 42, 0.18);
+        }
+
+        .list-item-main::before {
+            content: '';
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            right: -18px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: radial-gradient(circle, rgba(var(--status-rgb, 148,163,184), 0.32) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .list-status-bg-icon {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 2.1rem;
+            color: var(--status-color, #94a3b8);
+            opacity: 0.18;
+            filter: blur(0.3px);
+            pointer-events: none;
+        }
+
+        .list-name-row {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1;
+        }
+
+        .list-status-chip {
+            margin-top: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            color: var(--status-color, var(--text-secondary));
+            background: rgba(var(--status-rgb, 148,163,184), 0.18);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            font-weight: 600;
         }
         
         .list-item:hover { background: var(--hover-color); }
@@ -465,6 +575,28 @@
             border-right: 4px solid var(--accent-warning);
         }
         .list-item:last-child { border-bottom: none; }
+
+        .list-item::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, rgba(var(--status-rgb,148,163,184),0.13), transparent 35%);
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .list-item::after {
+            content: '';
+            position: absolute;
+            width: 180px;
+            height: 180px;
+            right: -55px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(var(--status-rgb,148,163,184),0.16) 0%, transparent 70%);
+            pointer-events: none;
+        }
         
         .list-item-name {
             font-weight: 600;
@@ -575,6 +707,7 @@
             border-radius: 15px;
             margin-bottom: 25px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(148, 163, 184, 0.14);
         }
 
         .progress-header {
@@ -786,6 +919,82 @@
             margin-left: 10px;
         }
 
+
+        .whatsapp-template {
+            margin-top: 15px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .whatsapp-template textarea {
+            width: 100%;
+            min-height: 88px;
+            resize: vertical;
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: 8px;
+            padding: 10px;
+        }
+        .template-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .template-help { color: var(--text-secondary); font-size: 0.82rem; }
+
+        .timeline-view {
+            background: var(--bg-secondary);
+            border-radius: 15px;
+            border: 1px solid rgba(148, 163, 184, 0.14);
+            padding: 16px;
+            display: none;
+        }
+        .timeline-day { margin-bottom: 16px; }
+        .timeline-day-title { font-weight: 700; color: var(--accent-primary); margin-bottom: 8px; }
+        .timeline-event {
+            background: var(--bg-card);
+            border-left: 3px solid var(--accent-primary);
+            border-radius: 8px;
+            padding: 10px;
+            margin: 6px 0;
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+        }
+        .timeline-event strong { color: var(--text-primary); }
+
+        .duplicates-config {
+            margin: 12px 0;
+            padding: 10px;
+            border-radius: 8px;
+            background: rgba(30,41,59,0.65);
+            border: 1px solid rgba(148,163,184,0.2);
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 8px;
+            flex-direction: column;
+        }
+        .shortcut-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .shortcut-item {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .shortcut-item kbd {
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 2px 6px;
+            color: var(--text-primary);
+        }
         @media (max-width: 768px) {
             .navbar, .search-bar { flex-direction: column; align-items: stretch; }
             .stats { justify-content: center; }
@@ -793,6 +1002,9 @@
             .list-item {
                 grid-template-columns: 1fr;
                 gap: 8px;
+            }
+            .list-item-main {
+                width: 100%;
             }
             .cards-grid { grid-template-columns: 1fr; }
         }
@@ -851,9 +1063,11 @@
             <div class="view-actions">
                 <button id="viewCardsBtn" class="btn active"><i class="fas fa-th"></i> Tarjetas</button>
                 <button id="viewListBtn" class="btn"><i class="fas fa-list"></i> Lista</button>
+                <button id="timelineBtn" class="btn"><i class="fas fa-stream"></i> Timeline</button>
                 <button id="exportBtn" class="btn"><i class="fas fa-download"></i> Exportar</button>
                 <button id="historyBtn" class="btn"><i class="fas fa-history"></i> Historial</button>
                 <button id="manageDuplicatesBtn" class="btn btn-warning"><i class="fas fa-clone"></i> Duplicados</button>
+                <button id="shortcutsInfoBtn" class="btn"><i class="fas fa-keyboard"></i> Atajos</button>
                 <button id="deleteAllBtn" class="btn btn-danger"><i class="fas fa-trash-alt"></i> Borrar Todo</button>
             </div>
         </div>
@@ -890,7 +1104,8 @@
                     <i class="fas fa-undo"></i> Volver
                 </button>
                 <button id="addMoreBtn" class="btn btn-success"><i class="fas fa-file-upload"></i> Importar CSV</button>
-                <button id="addSingleBtn" class="btn btn-success"><i class="fas fa-user-plus"></i> Agregar Contacto</button>
+                <button id="addSingleBtn" class="btn btn-success"><i class="fas fa-user-plus"></i> Crear Usuario</button>
+                <button id="settingsBtn" class="btn"><i class="fas fa-cog"></i> Ajustes</button>
             </div>
         </div>
 
@@ -909,6 +1124,7 @@
 
         <!-- Vista de lista -->
         <div id="listView" class="list-view" style="display: none;"></div>
+
 
         <!-- Paginación -->
         <div class="pagination" id="pagination"></div>
@@ -990,6 +1206,80 @@
         </div>
     </div>
 
+
+    <div class="modal" id="shortcutsModal">
+        <div class="modal-content" style="max-width:700px;">
+            <div class="modal-header"><i class="fas fa-keyboard"></i> Atajos de Teclado (Numpad)</div>
+            <p style="color: var(--text-secondary);">Se evita usar números superiores para no interferir con macros de trabajo.</p>
+            <div class="shortcut-list">
+                <div class="shortcut-item"><kbd>Numpad 1</kbd> Estado: Sin revisar</div>
+                <div class="shortcut-item"><kbd>Numpad 2</kbd> Estado: Contactado</div>
+                <div class="shortcut-item"><kbd>Numpad 3</kbd> Estado: Jugando</div>
+                <div class="shortcut-item"><kbd>Numpad 4</kbd> Estado: Sin WSP</div>
+                <div class="shortcut-item"><kbd>Numpad 5</kbd> Estado: No interesado</div>
+                <div class="shortcut-item"><kbd>Numpad 0</kbd> Volver al último contacto</div>
+                <div class="shortcut-item"><kbd>Numpad +</kbd> Cambiar a vista Lista</div>
+                <div class="shortcut-item"><kbd>Numpad -</kbd> Cambiar a vista Timeline</div>
+            </div>
+            <div class="modal-actions">
+                <button id="closeShortcutsModal" class="btn btn-success"><i class="fas fa-check"></i> Entendido</button>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal" id="timelineModal">
+        <div class="modal-content" style="max-width: 760px;">
+            <div class="modal-header"><i class="fas fa-stream"></i> Timeline de Interacciones</div>
+            <div id="timelineContent"></div>
+            <div class="modal-actions">
+                <button id="closeTimelineModal" class="btn"><i class="fas fa-times"></i> Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal" id="userOptionsModal">
+        <div class="modal-content" style="max-width: 480px;">
+            <div class="modal-header"><i class="fas fa-sliders-h"></i> Ajustes</div>
+            <div class="export-options">
+                <div class="export-option" id="openShortcutsOption">
+                    <i class="fas fa-keyboard"></i>
+                    <div class="export-option-text">
+                        <div class="export-option-title">Ver atajos de teclado</div>
+                        <div class="export-option-desc">Abrir la ayuda de Numpad y accesos rápidos</div>
+                    </div>
+                </div>
+                <div class="export-option" id="openWhatsappMessageOption">
+                    <i class="fab fa-whatsapp"></i>
+                    <div class="export-option-text">
+                        <div class="export-option-title">Cambiar mensaje WhatsApp</div>
+                        <div class="export-option-desc">Editar plantilla con token {usuario}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button id="closeUserOptionsModal" class="btn"><i class="fas fa-times"></i> Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="whatsappMessageModal">
+        <div class="modal-content" style="max-width: 640px;">
+            <div class="modal-header"><i class="fab fa-whatsapp"></i> Mensaje de WhatsApp</div>
+            <textarea id="whatsappTemplateInput" class="origin-input" style="min-height: 140px; margin-top: 0;" placeholder="Hola {usuario}, ..."></textarea>
+            <div class="template-actions" style="margin-top: 12px;">
+                <button id="insertUserTokenBtn" class="btn"><i class="fas fa-user"></i> Insertar usuario</button>
+                <button id="resetTemplateBtn" class="btn"><i class="fas fa-undo"></i> Restablecer</button>
+            </div>
+            <p class="template-help" style="margin-top: 8px;">Usá <code>{usuario}</code> para completar el nombre automáticamente.</p>
+            <div class="modal-actions">
+                <button id="closeWhatsappMessageModal" class="btn"><i class="fas fa-times"></i> Cancelar</button>
+                <button id="saveTemplateBtn" class="btn btn-success"><i class="fas fa-save"></i> Guardar mensaje</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal de agregar contacto único -->
     <div class="modal" id="addSingleModal">
         <div class="modal-content" style="max-width: 500px;">
@@ -1019,18 +1309,17 @@
         const $$ = (sel) => document.querySelectorAll(sel);
 
         const STATUS_OPTIONS = [
-            { id: 'sin revisar', label: 'Sin Revisar', icon: 'fa-question-circle', color: '#9ca3af' },
-            { id: 'contactado', label: 'Contactado', icon: 'fa-check-circle', color: '#10b981' },
-            { id: 'jugando', label: 'Jugando', icon: 'fa-gamepad', color: '#8b5cf6' },
-            { id: 'sin wsp', label: 'Sin WhatsApp', icon: 'fa-ban', color: '#f59e0b' },
-            { id: 'no interesado', label: 'No Interesado', icon: 'fa-times-circle', color: '#ef4444' }
+            { id: 'sin revisar', label: 'Sin Revisar', icon: 'fa-question-circle', color: '#9ca3af', rgb: '156, 163, 175' },
+            { id: 'contactado', label: 'Contactado', icon: 'fa-check-circle', color: '#10b981', rgb: '16, 185, 129' },
+            { id: 'jugando', label: 'Jugando', icon: 'fa-gamepad', color: '#8b5cf6', rgb: '139, 92, 246' },
+            { id: 'sin wsp', label: 'Sin WhatsApp', icon: 'fa-ban', color: '#f59e0b', rgb: '245, 158, 11' },
+            { id: 'no interesado', label: 'No Interesado', icon: 'fa-times-circle', color: '#ef4444', rgb: '239, 68, 68' }
         ];
 
         const AppState = {
             contacts: [],
             filteredContacts: [],
             selectedContacts: new Set(),
-            currentView: 'cards',
             currentPage: 1,
             itemsPerPage: 20,
             searchTerm: '',
@@ -1041,7 +1330,10 @@
             duplicates: [],
             history: [],
             lastEditedContact: null,
-            undoStack: []
+            undoStack: [],
+            currentView: 'cards',
+            whatsappTemplate: 'Hola {usuario}, ¿cómo estás? Te escribo por la propuesta que vimos.',
+            duplicateMergeMode: 'phone-auto'
         };
 
         const elements = {
@@ -1059,6 +1351,7 @@
             originFilter: $('#originFilter'),
             viewCardsBtn: $('#viewCardsBtn'),
             viewListBtn: $('#viewListBtn'),
+            timelineBtn: $('#timelineBtn'),
             exportBtn: $('#exportBtn'),
             bulkActionsBar: $('#bulkActionsBar'),
             selectedCount: $('#selectedCount'),
@@ -1069,10 +1362,19 @@
             duplicatesStatBox: $('#duplicatesStatBox'),
             addMoreBtn: $('#addMoreBtn'),
             addSingleBtn: $('#addSingleBtn'),
+            settingsBtn: $('#settingsBtn'),
             historyBtn: $('#historyBtn'),
             historyModal: $('#historyModal'),
             deleteAllBtn: $('#deleteAllBtn'),
-            undoBtn: $('#undoBtn')
+            undoBtn: $('#undoBtn'),
+            whatsappTemplateInput: $('#whatsappTemplateInput'),
+            saveTemplateBtn: $('#saveTemplateBtn'),
+            insertUserTokenBtn: $('#insertUserTokenBtn'),
+            resetTemplateBtn: $('#resetTemplateBtn'),
+            shortcutsInfoBtn: $('#shortcutsInfoBtn'),
+            shortcutsModal: $('#shortcutsModal'),
+            userOptionsModal: $('#userOptionsModal'),
+            whatsappMessageModal: $('#whatsappMessageModal')
         };
 
         let selectedFiles = [];
@@ -1432,7 +1734,6 @@
                 return matchesSearch && matchesStatus && matchesOrigin;
             });
             
-            AppState.currentPage = 1;
         }
 
         function updateStats() {
@@ -1463,13 +1764,17 @@
             elements.originFilter.value = AppState.originFilter;
         }
 
+        function getStatusOption(status) {
+            return STATUS_OPTIONS.find(s => s.id === status) || STATUS_OPTIONS[0];
+        }
+
         function createCard(contact) {
-            const statusOption = STATUS_OPTIONS.find(s => s.id === contact.status) || STATUS_OPTIONS[0];
+            const statusOption = getStatusOption(contact.status);
             const escapedName = (contact.name || '').replace(/'/g, "\\'");
             const escapedPhone = (contact.phone || '').replace(/'/g, "\\'");
             
             return `
-                <div class="contact-card ${AppState.selectedContacts.has(contact.id) ? 'selected' : ''} ${contact.isDuplicate ? 'duplicate' : ''}" data-id="${contact.id}">
+                <div class="contact-card ${AppState.selectedContacts.has(contact.id) ? 'selected' : ''} ${contact.isDuplicate ? 'duplicate' : ''}" style="--status-rgb: ${statusOption.rgb};" data-id="${contact.id}">
                     ${contact.isDuplicate ? '<span class="duplicate-badge"><i class="fas fa-exclamation-triangle"></i> DUP</span>' : ''}
                     <input type="checkbox" class="card-checkbox" ${AppState.selectedContacts.has(contact.id) ? 'checked' : ''}>
                     <div class="card-header">
@@ -1499,7 +1804,7 @@
                         <div class="detail-item"><i class="fas fa-tag"></i><span>${contact.origin}</span></div>
                         <div class="detail-item">
                             <i class="fas fa-circle-notch"></i>
-                            <span class="status-badge status-${contact.status.replace(/ /g, '-')} " data-field="status">${statusOption.label}</span>
+                            <span class="card-status-inline" id="cardStatusInline-${contact.id}"><span class="status-badge status-${contact.status.replace(/ /g, '-')}" onclick="openCardStatusMenu(${contact.id}, event)">${statusOption.label}</span></span>
                         </div>
                     </div>
                     <div class="card-footer">
@@ -1511,15 +1816,16 @@
         }
 
         function createListItem(contact) {
-            const statusOption = STATUS_OPTIONS.find(s => s.id === contact.status) || STATUS_OPTIONS[0];
+            const statusOption = getStatusOption(contact.status);
             const escapedName = (contact.name || '').replace(/'/g, "\\'");
             const escapedPhone = (contact.phone || '').replace(/'/g, "\\'");
             
             return `
-                <div class="list-item ${AppState.selectedContacts.has(contact.id) ? 'selected' : ''} ${contact.isDuplicate ? 'duplicate' : ''}" data-id="${contact.id}">
+                <div class="list-item ${AppState.selectedContacts.has(contact.id) ? 'selected' : ''} ${contact.isDuplicate ? 'duplicate' : ''}" style="--status-rgb: ${statusOption.rgb};" data-id="${contact.id}">
                     <div><input type="checkbox" ${AppState.selectedContacts.has(contact.id) ? 'checked' : ''}></div>
-                    <div class="list-item-name">
-                        <div style="display: flex; align-items: center; gap: 8px;">
+                    <div class="list-item-name list-item-main" style="--status-color: ${statusOption.color}; --status-rgb: ${statusOption.rgb};">
+                        <i class="fas ${statusOption.icon} list-status-bg-icon"></i>
+                        <div class="list-name-row">
                             <span onclick="copyToClipboard('${escapedName}', event)" style="flex: 1; cursor: pointer;" title="Click para copiar">
                                 ${contact.isDuplicate ? '<i class="fas fa-exclamation-triangle" style="color: var(--accent-warning);"></i> ' : ''}${contact.name}
                             </span>
@@ -1527,6 +1833,7 @@
                                 <i class="fas fa-pencil-alt"></i>
                             </button>
                         </div>
+                        <span class="list-status-chip"><i class="fas ${statusOption.icon}"></i>${statusOption.label}</span>
                     </div>
                     <div class="list-item-phone">
                         <div style="display: flex; align-items: center; gap: 8px;">
@@ -1744,6 +2051,71 @@
             }
         }
 
+        function loadPreferences() {
+            try {
+                const tpl = localStorage.getItem('whatsappTemplate');
+                if (tpl) AppState.whatsappTemplate = tpl;
+                const mode = localStorage.getItem('duplicateMergeMode');
+                if (mode) AppState.duplicateMergeMode = mode;
+            } catch (e) {
+                console.error('Error al cargar preferencias:', e);
+            }
+            if (elements.whatsappTemplateInput) {
+                elements.whatsappTemplateInput.value = AppState.whatsappTemplate;
+            }
+        }
+
+        function savePreferences() {
+            try {
+                localStorage.setItem('whatsappTemplate', AppState.whatsappTemplate);
+                localStorage.setItem('duplicateMergeMode', AppState.duplicateMergeMode);
+            } catch (e) {
+                console.error('Error al guardar preferencias:', e);
+            }
+        }
+
+        function buildWhatsAppMessage(contactName) {
+            const base = (AppState.whatsappTemplate || '').trim();
+            return base.replaceAll('{usuario}', contactName || '');
+        }
+
+        function createTimelineView() {
+            const timelineContent = $('#timelineContent');
+            if (!timelineContent) return;
+            if (!AppState.history.length) {
+                timelineContent.innerHTML = '<p style="color: var(--text-secondary);">No hay eventos todavía.</p>';
+                return;
+            }
+            const grouped = {};
+            AppState.history.forEach(item => {
+                const d = new Date(item.timestamp);
+                const key = d.toLocaleDateString('es-ES');
+                if (!grouped[key]) grouped[key] = [];
+                grouped[key].push(item);
+            });
+            const html = Object.entries(grouped).map(([day, items]) => `
+                <div class="timeline-day">
+                    <div class="timeline-day-title">${day}</div>
+                    ${items.map(ev => `<div class="timeline-event"><strong>${ev.action}</strong> · ${ev.details}<div style="font-size:0.75rem;margin-top:4px;">${new Date(ev.timestamp).toLocaleTimeString('es-ES')}</div></div>`).join('')}
+                </div>
+            `).join('');
+            timelineContent.innerHTML = html;
+        }
+
+        function getDuplicateReason(group) {
+            if (group.type === 'teléfono') return 'Mismo teléfono';
+            if (group.type === 'nombre') return 'Nombre coincidente';
+            return 'Coincidencia múltiple';
+        }
+
+        function renderDuplicatePreview(group) {
+            let result = { ...group.contacts[0] };
+            for (let i = 1; i < group.contacts.length; i++) {
+                result = mergeContact(result, group.contacts[i]);
+            }
+            return `${result.name || '-'} | ${result.phone || 'Sin teléfono'} | ${result.status || 'sin revisar'} | ${result.origin || '-'}`;
+        }
+
         window.openWhatsApp = (phone, event) => {
             if (event) event.stopPropagation();
             if (!phone) {
@@ -1751,7 +2123,36 @@
                 return;
             }
             const cleanPhone = normalizePhoneNumber(phone);
-            window.open(`https://wa.me/${cleanPhone}`, '_blank');
+            const contact = AppState.contacts.find(c => normalizePhoneNumber(c.phone) === cleanPhone);
+            const message = buildWhatsAppMessage(contact?.name || '');
+            const url = `https://wa.me/${cleanPhone}${message ? `?text=${encodeURIComponent(message)}` : ''}`;
+            addToHistory('WhatsApp abierto', `${contact?.name || cleanPhone}`);
+            saveHistory();
+            window.open(url, '_blank');
+        };
+
+        window.openCardStatusMenu = (id, event) => {
+            if (event) event.stopPropagation();
+            const contact = AppState.contacts.find(c => c.id === id);
+            const container = document.getElementById(`cardStatusInline-${id}`);
+            if (!contact || !container) return;
+            container.innerHTML = `<select class="card-status-select" id="statusSelect-${id}">${STATUS_OPTIONS.map(opt => `<option value="${opt.id}" ${opt.id === contact.status ? 'selected' : ''}>${opt.label}</option>`).join('')}</select>`;
+            const select = document.getElementById(`statusSelect-${id}`);
+            select.focus();
+            const save = () => {
+                const next = select.value;
+                if (next !== contact.status) {
+                    const old = contact.status;
+                    contact.status = next;
+                    contact.lastUpdated = new Date().toISOString();
+                    AppState.lastEditedContact = id;
+                    addToHistory('Estado cambiado', `${contact.name}: ${old} → ${next}`);
+                    saveData();
+                }
+                render();
+            };
+            select.onchange = save;
+            select.onblur = save;
         };
 
         function updateBulkActionsBar() {
@@ -1766,6 +2167,7 @@
         function render() {
             applyFilters();
             updateStats();
+            elements.pagination.style.display = 'flex';
             renderPaginatedView(AppState.currentView === 'cards' ? createCard : createListItem);
             updateBulkActionsBar();
         }
@@ -1781,7 +2183,7 @@
                 duplicates.forEach((group, groupIndex) => {
                     html += `<div class="duplicate-group">`;
                     html += `<div class="duplicate-group-header">
-                        <span>📋 ${group.name} (${group.contacts.length} entradas - ${group.type})</span>
+                        <span>📋 ${group.name} (${group.contacts.length} entradas - ${group.type})</span><span style="font-size:0.78rem;color:var(--text-secondary);">${getDuplicateReason(group)}</span>
                     </div>`;
                     
                     group.contacts.forEach((contact, contactIndex) => {
@@ -1803,7 +2205,10 @@
                             </div>
                         </div>`;
                     });
-                    html += `</div>`;
+                    html += `<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+                        <button class="btn btn-success" style="padding:6px 10px;font-size:0.8rem;" onclick="combineDuplicateGroup(${groupIndex})"><i class="fas fa-object-group"></i> Combinar</button>
+                        <span style="font-size:0.78rem;color:var(--text-secondary);"><strong>Preview:</strong> ${renderDuplicatePreview(group)}</span>
+                    </div></div>`;
                 });
                 html += `</div>`;
                 const totalEntries = duplicates.reduce((acc, g) => acc + g.contacts.length, 0);
@@ -1812,7 +2217,11 @@
                 </p>
                 <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 10px; text-align: center;">
                     <strong>Criterio de fusión automática:</strong> jugando > contactado > sin wsp > sin revisar > no interesado
-                </p>`;
+                </p>
+                <div class="duplicates-config">
+                    <label><input type="radio" name="dupMergeMode" value="phone-auto" ${AppState.duplicateMergeMode === 'phone-auto' ? 'checked' : ''}> Si coincide teléfono: merge seguro. Si coincide nombre: pedir confirmación.</label>
+                    <label><input type="radio" name="dupMergeMode" value="always-ask" ${AppState.duplicateMergeMode === 'always-ask' ? 'checked' : ''}> Pedir confirmación para todos los grupos.</label>
+                </div>`;
                 
                 $('#duplicatesContent').innerHTML = html;
                 $('#mergeAllDuplicates').style.display = 'block';
@@ -1838,12 +2247,35 @@
             showNotification(`✅ Duplicados resueltos para ${selectedContact.name}`, 'success');
         };
 
+        window.combineDuplicateGroup = (groupIndex) => {
+            const group = AppState.duplicates[groupIndex];
+            if (!group || group.contacts.length < 2) return;
+            const preview = renderDuplicatePreview(group);
+            const needsConfirm = AppState.duplicateMergeMode === 'always-ask' || group.type === 'nombre';
+            if (needsConfirm && !confirm(`Combinar este grupo?\nResultado estimado:\n${preview}`)) return;
+
+            let masterContact = { ...group.contacts[0] };
+            for (let i = 1; i < group.contacts.length; i++) {
+                masterContact = mergeContact(masterContact, group.contacts[i]);
+            }
+            const idsToRemove = group.contacts.map(c => c.id);
+            AppState.contacts = AppState.contacts.filter(c => !idsToRemove.includes(c.id));
+            AppState.contacts.push(masterContact);
+            addToHistory('Duplicado combinado', `${group.name} -> ${masterContact.name}`);
+            saveData();
+            render();
+            showDuplicatesModal();
+            showNotification('Grupo combinado correctamente', 'success');
+        };
+
         function mergeAllDuplicates() {
             const duplicates = AppState.duplicates;
             let mergedCount = 0;
             
             duplicates.forEach(group => {
                 if (group.contacts.length > 1) {
+                    const needsConfirm = AppState.duplicateMergeMode === 'always-ask' || (AppState.duplicateMergeMode === 'phone-auto' && group.type === 'nombre');
+                    if (needsConfirm && !confirm(`Confirmar fusión para grupo: ${group.name}`)) return;
                     let masterContact = { ...group.contacts[0] };
                     
                     for (let i = 1; i < group.contacts.length; i++) {
@@ -1920,28 +2352,95 @@
                 elements.fileList.innerHTML = '';
                 elements.startBtn.disabled = true;
             };
+            elements.addSingleBtn.onclick = () => {
+                $('#singleName').value = '';
+                $('#singlePhone').value = '';
+                $('#singleOrigin').value = '';
+                $('#singleStatus').value = 'sin revisar';
+                $('#addSingleModal').classList.add('active');
+            };
+            elements.settingsBtn.onclick = () => {
+                elements.userOptionsModal.classList.add('active');
+            };
+            $('#openShortcutsOption').onclick = () => {
+                elements.userOptionsModal.classList.remove('active');
+                elements.shortcutsModal.classList.add('active');
+            };
+            $('#openWhatsappMessageOption').onclick = () => {
+                elements.userOptionsModal.classList.remove('active');
+                elements.whatsappMessageModal.classList.add('active');
+                elements.whatsappTemplateInput.value = AppState.whatsappTemplate;
+            };
+            $('#closeUserOptionsModal').onclick = () => elements.userOptionsModal.classList.remove('active');
 
             elements.searchInput.oninput = (e) => {
                 AppState.searchTerm = e.target.value;
+                AppState.currentPage = 1;
                 render();
             };
 
             $('#undoBtn').onclick = undoToLastContact;
             
+            elements.saveTemplateBtn.onclick = () => {
+                AppState.whatsappTemplate = elements.whatsappTemplateInput.value;
+                savePreferences();
+                showNotification('Mensaje de WhatsApp guardado', 'success');
+                elements.whatsappMessageModal.classList.remove('active');
+            };
+            elements.insertUserTokenBtn.onclick = () => {
+                const el = elements.whatsappTemplateInput;
+                const token = '{usuario}';
+                const start = el.selectionStart || el.value.length;
+                const end = el.selectionEnd || el.value.length;
+                el.value = el.value.slice(0, start) + token + el.value.slice(end);
+                el.focus();
+                el.selectionStart = el.selectionEnd = start + token.length;
+            };
+            elements.resetTemplateBtn.onclick = () => {
+                elements.whatsappTemplateInput.value = 'Hola {usuario}, ¿cómo estás? Te escribo por la propuesta que vimos.';
+                AppState.whatsappTemplate = elements.whatsappTemplateInput.value;
+                savePreferences();
+            };
+            elements.shortcutsInfoBtn.onclick = () => elements.shortcutsModal.classList.add('active');
+            $('#closeWhatsappMessageModal').onclick = () => elements.whatsappMessageModal.classList.remove('active');
+            const closeShortcutsBtn = $('#closeShortcutsModal');
+            if (closeShortcutsBtn) closeShortcutsBtn.onclick = () => elements.shortcutsModal.classList.remove('active');
+
+            document.addEventListener('change', (e) => {
+                if (e.target && e.target.name === 'dupMergeMode') {
+                    AppState.duplicateMergeMode = e.target.value;
+                    savePreferences();
+                }
+            });
+
             document.addEventListener('keydown', (e) => {
                 if (e.ctrlKey && e.key === 'z' && !e.target.matches('input, textarea')) {
                     e.preventDefault();
                     undoToLastContact();
+                    return;
                 }
+                if (e.target.matches('input, textarea, select')) return;
+                const code = e.code;
+                const selectedId = Array.from(AppState.selectedContacts)[0] || AppState.lastEditedContact;
+                if (code === 'Numpad1' && selectedId) changeContactStatus(selectedId, 'sin revisar');
+                else if (code === 'Numpad2' && selectedId) changeContactStatus(selectedId, 'contactado');
+                else if (code === 'Numpad3' && selectedId) changeContactStatus(selectedId, 'jugando');
+                else if (code === 'Numpad4' && selectedId) changeContactStatus(selectedId, 'sin wsp');
+                else if (code === 'Numpad5' && selectedId) changeContactStatus(selectedId, 'no interesado');
+                else if (code === 'Numpad0') undoToLastContact();
+                else if (code === 'NumpadAdd') elements.viewListBtn.click();
+                else if (code === 'NumpadSubtract') elements.timelineBtn.click();
             });
 
             elements.statusFilter.onchange = (e) => {
                 AppState.statusFilter = e.target.value;
+                AppState.currentPage = 1;
                 render();
             };
 
             elements.originFilter.onchange = (e) => {
                 AppState.originFilter = e.target.value;
+                AppState.currentPage = 1;
                 render();
             };
 
@@ -1961,6 +2460,10 @@
                 elements.listView.style.display = 'block';
                 elements.cardsView.style.display = 'none';
                 render();
+            };
+            elements.timelineBtn.onclick = () => {
+                createTimelineView();
+                $('#timelineModal').classList.add('active');
             };
 
             $$('.stat-box').forEach(box => {
@@ -2007,6 +2510,7 @@
                 }
                 
                 updateBulkActionsBar();
+                elements.pagination.style.display = 'flex';
                 renderPaginatedView(AppState.currentView === 'cards' ? createCard : createListItem);
             };
 
@@ -2130,6 +2634,7 @@
 
             elements.historyBtn.onclick = showHistoryModal;
             $('#closeHistoryModal').onclick = () => $('#historyModal').classList.remove('active');
+            $('#closeTimelineModal').onclick = () => $('#timelineModal').classList.remove('active');
             $('#clearHistoryBtn').onclick = () => {
                 if (confirm('¿Borrar todo el historial?')) {
                     AppState.history = [];
@@ -2137,14 +2642,6 @@
                     $('#historyModal').classList.remove('active');
                     showNotification('Historial borrado', 'success');
                 }
-            };
-
-            $('#addSingleBtn').onclick = () => {
-                $('#singleName').value = '';
-                $('#singlePhone').value = '';
-                $('#singleOrigin').value = '';
-                $('#singleStatus').value = 'sin revisar';
-                $('#addSingleModal').classList.add('active');
             };
 
             $('#cancelAddSingle').onclick = () => $('#addSingleModal').classList.remove('active');
@@ -2356,6 +2853,7 @@
                 elements.bulkStatusSelect.innerHTML = `<option value="" disabled selected>Cambiar estado</option>` + STATUS_OPTIONS.map(opt => `<option value="${opt.id}">${opt.label}</option>`).join('');
                 setupEventListeners();
                 loadHistory();
+                loadPreferences();
                 loadData();
             } catch (e) {
                 console.error("Error fatal en la inicialización:", e);
