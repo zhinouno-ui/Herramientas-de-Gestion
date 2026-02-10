@@ -676,6 +676,24 @@
             font-size: 1.2rem;
         }
 
+        .message-sent-tick {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            color: #60a5fa;
+            font-size: 0.72rem;
+            font-weight: 700;
+            background: rgba(96, 165, 250, 0.14);
+            border: 1px solid rgba(96, 165, 250, 0.35);
+            border-radius: 999px;
+            padding: 3px 7px;
+            white-space: nowrap;
+        }
+
+        .message-sent-tick i {
+            font-size: 0.76rem;
+        }
+
         .status-buttons {
             display: flex;
             gap: 5px;
@@ -1363,7 +1381,7 @@
         const STATUS_OPTIONS = [
             { id: 'sin revisar', label: 'Sin Revisar', icon: 'fa-question-circle', color: '#9ca3af', rgb: '156, 163, 175' },
             { id: 'contactado', label: 'Contactado', icon: 'fa-check-circle', color: '#10b981', rgb: '16, 185, 129' },
-            { id: 'revisado', label: 'Revisado', icon: 'fa-check-double', color: '#34d399', rgb: '52, 211, 153' },
+            { id: 'revisado', label: 'Revisado', icon: 'fa-user-check', color: '#34d399', rgb: '52, 211, 153' },
             { id: 'jugando', label: 'Jugando', icon: 'fa-gamepad', color: '#8b5cf6', rgb: '139, 92, 246' },
             { id: 'sin wsp', label: 'Sin WhatsApp', icon: 'fa-ban', color: '#f59e0b', rgb: '245, 158, 11' },
             { id: 'no interesado', label: 'No Interesado', icon: 'fa-times-circle', color: '#ef4444', rgb: '239, 68, 68' }
@@ -1909,11 +1927,20 @@
             btn.title = `Recordatorio de exportación (${urgency.next.toLocaleString('es-ES')})`;
         }
 
+
+        function getMessageSentBadge(contact) {
+            if (!contact?.lastMessageSentAt) return '';
+            const sentAt = new Date(contact.lastMessageSentAt);
+            const title = `Mensaje enviado: ${sentAt.toLocaleString('es-ES')}`;
+            return `<span class="message-sent-tick" title="${title}"><i class="fas fa-check-double"></i></span>`;
+        }
+
         function createCard(contact) {
             const statusOption = getStatusOption(contact.status);
             const escapedName = (contact.name || '').replace(/'/g, "\\'");
             const escapedPhone = (contact.phone || '').replace(/'/g, "\\'");
             const urgency = getContactUrgency(contact);
+            const sentBadge = getMessageSentBadge(contact);
             
             return `
                 <div class="contact-card ${AppState.selectedContacts.has(contact.id) ? 'selected' : ''} ${contact.isDuplicate ? 'duplicate' : ''}" style="--status-rgb: ${statusOption.rgb};" data-id="${contact.id}">
@@ -1941,6 +1968,7 @@
                                 <button class="btn btn-success" style="padding: 4px 8px; font-size: 0.7rem;" onclick="openWhatsApp('${escapedPhone}', event)" title="WhatsApp">
                                     <i class="fab fa-whatsapp"></i>
                                 </button>
+                                ${sentBadge}
                             </div>
                         ` : `<div class="detail-item"><i class="fas fa-phone"></i><span style="color: var(--text-secondary); flex:1;">Sin teléfono</span><button class="btn" style="padding: 4px 8px; font-size: 0.7rem;" onclick="editContactField(${contact.id}, 'phone', event)" title="Agregar teléfono"><i class="fas fa-pencil-alt"></i></button></div>`}
                         <div class="detail-item"><i class="fas fa-tag"></i><span>${contact.origin}</span></div>
@@ -1994,6 +2022,7 @@
                             <button class="btn whatsapp-btn" onclick="openWhatsApp('${escapedPhone}', event)" title="Abrir WhatsApp">
                                 <i class="fab fa-whatsapp"></i>
                             </button>
+                            ${sentBadge}
                         ` : '<span style="color: var(--text-secondary); font-size: 0.8rem;">-</span>'}
                     </div>
                     <div class="status-buttons">
@@ -2010,7 +2039,7 @@
                         <button class="status-btn revisado ${contact.status === 'revisado' ? 'active' : ''}" 
                                 onclick="changeContactStatus(${contact.id}, 'revisado', event)" 
                                 title="Revisado">
-                            <i class="fas fa-check-double"></i>
+                            <i class="fas fa-user-check"></i>
                         </button>
                         <button class="status-btn jugando ${contact.status === 'jugando' ? 'active' : ''}" 
                                 onclick="changeContactStatus(${contact.id}, 'jugando', event)" 
@@ -2274,6 +2303,12 @@
             const contact = AppState.contacts.find(c => normalizePhoneNumber(c.phone) === cleanPhone);
             const message = buildWhatsAppMessage(contact?.name || '');
             const url = `https://wa.me/${cleanPhone}${message ? `?text=${encodeURIComponent(message)}` : ''}`;
+            if (contact) {
+                contact.lastMessageSentAt = new Date().toISOString();
+                contact.lastUpdated = new Date().toISOString();
+                saveData();
+                renderContacts();
+            }
             addToHistory('WhatsApp abierto', `${contact?.name || cleanPhone}`);
             saveHistory();
             window.open(url, '_blank');
