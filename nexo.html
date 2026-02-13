@@ -303,6 +303,7 @@
             transform: translateY(-5px);
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
             border-color: var(--accent-primary);
+            z-index: 40;
         }
         .contact-card.selected { border-color: var(--accent-primary); background: var(--selection-bg); }
         .contact-card::before {
@@ -438,7 +439,7 @@
 
         .card-status-menu {
             position: absolute;
-            top: calc(100% + 8px);
+            bottom: calc(100% + 8px);
             left: 0;
             min-width: 190px;
             background: #1e293b;
@@ -930,8 +931,10 @@
 
         /* Historial */
         .history-list {
-            max-height: 400px;
+            max-height: none;
             overflow-y: auto;
+            flex: 1;
+            min-height: 260px;
         }
         .history-item {
             background: var(--bg-card);
@@ -948,6 +951,38 @@
         }
         .history-action {
             color: var(--text-primary);
+        }
+        .history-modal-content {
+            max-height: 82vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .history-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .history-toolbar #historySearchInput { flex: 1; }
+        .history-count-label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+        .history-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .history-item-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .history-item-muted {
+            border-left-color: rgba(148, 163, 184, 0.45);
+            opacity: 0.85;
         }
 
         /* Duplicados */
@@ -1007,26 +1042,6 @@
         }
         .template-actions { display: flex; gap: 8px; flex-wrap: wrap; }
         .template-help { color: var(--text-secondary); font-size: 0.82rem; }
-
-        .timeline-view {
-            background: var(--bg-secondary);
-            border-radius: 15px;
-            border: 1px solid rgba(148, 163, 184, 0.14);
-            padding: 16px;
-            display: none;
-        }
-        .timeline-day { margin-bottom: 16px; }
-        .timeline-day-title { font-weight: 700; color: var(--accent-primary); margin-bottom: 8px; }
-        .timeline-event {
-            background: var(--bg-card);
-            border-left: 3px solid var(--accent-primary);
-            border-radius: 8px;
-            padding: 10px;
-            margin: 6px 0;
-            font-size: 0.88rem;
-            color: var(--text-secondary);
-        }
-        .timeline-event strong { color: var(--text-primary); }
 
         .duplicates-config {
             margin: 12px 0;
@@ -1132,11 +1147,10 @@
             <div class="view-actions">
                 <button id="viewCardsBtn" class="btn active"><i class="fas fa-th"></i> Tarjetas</button>
                 <button id="viewListBtn" class="btn"><i class="fas fa-list"></i> Lista</button>
-                <button id="timelineBtn" class="btn"><i class="fas fa-stream"></i> Timeline</button>
                 <button id="exportBtn" class="btn"><i class="fas fa-download"></i> Exportar</button>
                 <button id="historyBtn" class="btn"><i class="fas fa-history"></i> Historial</button>
                 <button id="manageDuplicatesBtn" class="btn btn-warning"><i class="fas fa-clone"></i> Duplicados</button>
-                <button id="shortcutsInfoBtn" class="btn"><i class="fas fa-keyboard"></i> Atajos</button>
+                <button id="settingsBtn" class="btn"><i class="fas fa-cog"></i> Ajustes</button>
                 <button id="deleteAllBtn" class="btn btn-danger"><i class="fas fa-trash-alt"></i> Borrar Todo</button>
             </div>
         </div>
@@ -1175,7 +1189,6 @@
                 </button>
                 <button id="addMoreBtn" class="btn btn-success"><i class="fas fa-file-upload"></i> Importar CSV</button>
                 <button id="addSingleBtn" class="btn btn-success"><i class="fas fa-user-plus"></i> Crear Usuario</button>
-                <button id="settingsBtn" class="btn"><i class="fas fa-cog"></i> Ajustes</button>
             </div>
         </div>
 
@@ -1266,8 +1279,12 @@
 
     <!-- Modal de historial -->
     <div class="modal" id="historyModal">
-        <div class="modal-content" style="max-width: 700px;">
+        <div class="modal-content history-modal-content" style="max-width: 900px;">
             <div class="modal-header"><i class="fas fa-history"></i> Historial de Cambios</div>
+            <div class="history-toolbar">
+                <input type="text" id="historySearchInput" class="filter-select" placeholder="Filtrar historial por usuario o acción...">
+                <span id="historyCountLabel" class="history-count-label"></span>
+            </div>
             <div class="history-list" id="historyList"></div>
             <div class="modal-actions">
                 <button id="closeHistoryModal" class="btn"><i class="fas fa-times"></i> Cerrar</button>
@@ -1289,21 +1306,10 @@
                 <div class="shortcut-item"><kbd>Numpad 5</kbd> Estado: No interesado</div>
                 <div class="shortcut-item"><kbd>Numpad 0</kbd> Volver al último contacto</div>
                 <div class="shortcut-item"><kbd>Numpad +</kbd> Cambiar a vista Lista</div>
-                <div class="shortcut-item"><kbd>Numpad -</kbd> Cambiar a vista Timeline</div>
+                <div class="shortcut-item"><kbd>Esc</kbd> Cerrar modales y menús abiertos</div>
             </div>
             <div class="modal-actions">
                 <button id="closeShortcutsModal" class="btn btn-success"><i class="fas fa-check"></i> Entendido</button>
-            </div>
-        </div>
-    </div>
-
-
-    <div class="modal" id="timelineModal">
-        <div class="modal-content" style="max-width: 760px;">
-            <div class="modal-header"><i class="fas fa-stream"></i> Timeline de Interacciones</div>
-            <div id="timelineContent"></div>
-            <div class="modal-actions">
-                <button id="closeTimelineModal" class="btn"><i class="fas fa-times"></i> Cerrar</button>
             </div>
         </div>
     </div>
@@ -1423,7 +1429,6 @@
             originFilter: $('#originFilter'),
             viewCardsBtn: $('#viewCardsBtn'),
             viewListBtn: $('#viewListBtn'),
-            timelineBtn: $('#timelineBtn'),
             exportBtn: $('#exportBtn'),
             bulkActionsBar: $('#bulkActionsBar'),
             selectedCount: $('#selectedCount'),
@@ -1782,7 +1787,6 @@
                 }
                 const now = Date.now();
                 if (now - lastSaveErrorAt > 5000) {
-                    showNotification('⚠️ Error al guardar datos (almacenamiento lleno).', 'error');
                     lastSaveErrorAt = now;
                 }
             }
@@ -1990,6 +1994,7 @@
             const statusOption = getStatusOption(contact.status);
             const escapedName = (contact.name || '').replace(/'/g, "\\'");
             const escapedPhone = (contact.phone || '').replace(/'/g, "\\'");
+            const sentBadge = getMessageSentBadge(contact);
             
             return `
                 <div class="list-item ${AppState.selectedContacts.has(contact.id) ? 'selected' : ''} ${contact.isDuplicate ? 'duplicate' : ''}" style="--status-rgb: ${statusOption.rgb};" data-id="${contact.id}">
@@ -2257,29 +2262,6 @@
             return base.replaceAll('{usuario}', contactName || '');
         }
 
-        function createTimelineView() {
-            const timelineContent = $('#timelineContent');
-            if (!timelineContent) return;
-            if (!AppState.history.length) {
-                timelineContent.innerHTML = '<p style="color: var(--text-secondary);">No hay eventos todavía.</p>';
-                return;
-            }
-            const grouped = {};
-            AppState.history.forEach(item => {
-                const d = new Date(item.timestamp);
-                const key = d.toLocaleDateString('es-ES');
-                if (!grouped[key]) grouped[key] = [];
-                grouped[key].push(item);
-            });
-            const html = Object.entries(grouped).map(([day, items]) => `
-                <div class="timeline-day">
-                    <div class="timeline-day-title">${day}</div>
-                    ${items.map(ev => `<div class="timeline-event"><strong>${ev.action}</strong> · ${ev.details}<div style="font-size:0.75rem;margin-top:4px;">${new Date(ev.timestamp).toLocaleTimeString('es-ES')}</div></div>`).join('')}
-                </div>
-            `).join('');
-            timelineContent.innerHTML = html;
-        }
-
         function getDuplicateReason(group) {
             if (group.type === 'teléfono') return 'Mismo teléfono';
             if (group.type === 'nombre') return 'Nombre coincidente';
@@ -2308,7 +2290,7 @@
                 contact.lastMessageSentAt = new Date().toISOString();
                 contact.lastUpdated = new Date().toISOString();
                 saveData();
-                renderContacts();
+                render();
             }
             addToHistory('WhatsApp abierto', `${contact?.name || cleanPhone}`);
             saveHistory();
@@ -2510,32 +2492,89 @@
             showNotification(`✅ ${mergedCount} duplicados fusionados`, 'success');
         }
 
-        function showHistoryModal() {
-            const historyHTML = AppState.history.length > 0 
-                ? AppState.history.map(entry => {
-                    const nameMatch = entry.details.match(/^([^:]+)/);
-                    const userName = nameMatch ? nameMatch[1].trim() : '';
-                    
+        function extractHistoryName(details = '') {
+            const [raw] = details.split(':');
+            return (raw || '').trim();
+        }
+
+        function getHistoryContact(name = '') {
+            if (!name) return null;
+            return AppState.contacts.find(c => normalizeUsername(c.name) === normalizeUsername(name));
+        }
+
+        function goToHistoryContact(name, event) {
+            if (event) event.stopPropagation();
+            const contact = getHistoryContact(name);
+            if (!contact) {
+                showNotification('Contacto no disponible en la base actual', 'info');
+                return;
+            }
+            elements.searchInput.value = contact.name;
+            AppState.searchTerm = contact.name;
+            AppState.lastEditedContact = contact.id;
+            closeAllOverlays();
+            render();
+            showNotification(`🔎 Mostrando: ${contact.name}`, 'success');
+        }
+
+        window.searchFromHistory = (name, event) => {
+            goToHistoryContact(name, event);
+        };
+
+        window.editFromHistory = (name, event) => {
+            if (event) event.stopPropagation();
+            const contact = getHistoryContact(name);
+            if (!contact) {
+                showNotification('No se pudo abrir el editor: contacto no encontrado', 'error');
+                return;
+            }
+            editContactField(contact.id, 'name');
+        };
+
+        function renderHistoryList(filterTerm = '') {
+            const term = normalizeUsername(filterTerm);
+            const filtered = AppState.history.filter(entry => {
+                if (!term) return true;
+                return normalizeUsername(`${entry.action} ${entry.details}`).includes(term);
+            });
+
+            const historyHTML = filtered.length > 0
+                ? filtered.map(entry => {
+                    const userName = extractHistoryName(entry.details);
+                    const contact = getHistoryContact(userName);
+
                     return `
-                    <div class="history-item" onclick="searchFromHistory('${userName.replace(/'/g, "\\'")}', event)" style="cursor: pointer;" title="Click para buscar este contacto">
+                    <div class="history-item ${contact ? '' : 'history-item-muted'}">
                         <div class="history-time">${new Date(entry.timestamp).toLocaleString('es-ES')}</div>
                         <div class="history-action"><strong>${entry.action}:</strong> ${entry.details}</div>
+                        <div class="history-item-actions">
+                            <button class="btn" onclick="searchFromHistory('${userName.replace(/'/g, "\\'")}', event)"><i class="fas fa-search"></i> Ver</button>
+                            <button class="btn" onclick="editFromHistory('${userName.replace(/'/g, "\\'")}', event)" ${contact ? '' : 'disabled'}><i class="fas fa-pen"></i> Editar</button>
+                        </div>
                     </div>
-                `}).join('')
-                : '<p style="text-align: center; color: var(--text-secondary); padding: 30px;">No hay historial disponible</p>';
-            
+                `;
+                }).join('')
+                : '<p style="text-align: center; color: var(--text-secondary); padding: 30px;">No hay historial para ese filtro.</p>';
+
             $('#historyList').innerHTML = historyHTML;
+            const label = $('#historyCountLabel');
+            if (label) label.textContent = `${filtered.length} evento(s)`;
+        }
+
+        function showHistoryModal() {
+            renderHistoryList('');
+            const historySearchInput = $('#historySearchInput');
+            if (historySearchInput) {
+                historySearchInput.value = '';
+                historySearchInput.oninput = (e) => renderHistoryList(e.target.value);
+            }
             $('#historyModal').classList.add('active');
         }
-        
-        window.searchFromHistory = (name, event) => {
-            if (event) event.stopPropagation();
-            elements.searchInput.value = name;
-            AppState.searchTerm = name;
-            $('#historyModal').classList.remove('active');
-            render();
-            showNotification(`🔍 Buscando: ${name}`, 'info');
-        };
+
+        function closeAllOverlays() {
+            $$('.modal.active').forEach(modal => modal.classList.remove('active'));
+            $$('.card-status-menu').forEach(menu => menu.remove());
+        }
 
         function setupEventListeners() {
             elements.uploadArea.onclick = () => elements.fileInput.click();
@@ -2626,6 +2665,10 @@
             });
 
             document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeAllOverlays();
+                    return;
+                }
                 if (e.ctrlKey && e.key === 'z' && !e.target.matches('input, textarea')) {
                     e.preventDefault();
                     undoToLastContact();
@@ -2641,7 +2684,6 @@
                 else if (code === 'Numpad5' && selectedId) changeContactStatus(selectedId, 'no interesado');
                 else if (code === 'Numpad0') undoToLastContact();
                 else if (code === 'NumpadAdd') elements.viewListBtn.click();
-                else if (code === 'NumpadSubtract') elements.timelineBtn.click();
             });
 
             elements.statusFilter.onchange = (e) => {
@@ -2672,10 +2714,6 @@
                 elements.listView.style.display = 'block';
                 elements.cardsView.style.display = 'none';
                 render();
-            };
-            elements.timelineBtn.onclick = () => {
-                createTimelineView();
-                $('#timelineModal').classList.add('active');
             };
 
             $$('.stat-box').forEach(box => {
@@ -2851,7 +2889,6 @@
 
             elements.historyBtn.onclick = showHistoryModal;
             $('#closeHistoryModal').onclick = () => $('#historyModal').classList.remove('active');
-            $('#closeTimelineModal').onclick = () => $('#timelineModal').classList.remove('active');
             $('#clearHistoryBtn').onclick = () => {
                 if (confirm('¿Borrar todo el historial?')) {
                     AppState.history = [];
