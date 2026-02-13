@@ -1990,6 +1990,7 @@
             const statusOption = getStatusOption(contact.status);
             const escapedName = (contact.name || '').replace(/'/g, "\\'");
             const escapedPhone = (contact.phone || '').replace(/'/g, "\\'");
+            const sentBadge = getMessageSentBadge(contact);
             
             return `
                 <div class="list-item ${AppState.selectedContacts.has(contact.id) ? 'selected' : ''} ${contact.isDuplicate ? 'duplicate' : ''}" style="--status-rgb: ${statusOption.rgb};" data-id="${contact.id}">
@@ -2308,7 +2309,7 @@
                 contact.lastMessageSentAt = new Date().toISOString();
                 contact.lastUpdated = new Date().toISOString();
                 saveData();
-                renderContacts();
+                render();
             }
             addToHistory('WhatsApp abierto', `${contact?.name || cleanPhone}`);
             saveHistory();
