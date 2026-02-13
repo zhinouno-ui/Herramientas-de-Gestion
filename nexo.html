@@ -303,6 +303,7 @@
             transform: translateY(-5px);
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
             border-color: var(--accent-primary);
+            z-index: 40;
         }
         .contact-card.selected { border-color: var(--accent-primary); background: var(--selection-bg); }
         .contact-card::before {
@@ -438,7 +439,7 @@
 
         .card-status-menu {
             position: absolute;
-            top: calc(100% + 8px);
+            bottom: calc(100% + 8px);
             left: 0;
             min-width: 190px;
             background: #1e293b;
@@ -495,7 +496,7 @@
         .list-view {
             background: var(--bg-secondary);
             border-radius: 15px;
-            overflow: hidden;
+            overflow: visible;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
             border: 1px solid rgba(148, 163, 184, 0.14);
         }
@@ -518,7 +519,7 @@
         
         .list-item {
             position: relative;
-            overflow: hidden;
+            overflow: visible;
             padding: 15px 20px;
             display: grid;
             grid-template-columns: 50px 2fr 1.5fr 1.2fr 1fr 80px 380px;
@@ -531,7 +532,7 @@
 
         .list-item-main {
             position: relative;
-            overflow: hidden;
+            overflow: visible;
             border-radius: 12px;
             padding: 10px 12px;
             background: rgba(15, 23, 42, 0.18);
@@ -928,10 +929,41 @@
         .notification.error i { color: var(--accent-danger); }
         .notification.info i { color: var(--accent-primary); }
 
+        .ops-chip-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
+        .ops-chip {
+            font-size: 0.72rem;
+            padding: 2px 7px;
+            border-radius: 999px;
+            background: rgba(59,130,246,.16);
+            border: 1px solid rgba(96,165,250,.32);
+            color: #bfdbfe;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .ops-chip.hot { background: rgba(16,185,129,.18); border-color: rgba(16,185,129,.4); color: #a7f3d0; }
+        .ops-chip.cold { background: rgba(148,163,184,.16); border-color: rgba(148,163,184,.35); color: #cbd5e1; }
+        .ops-info-wrap { position: relative; display: inline-flex; }
+        .ops-info-btn {
+            width: 20px; height: 20px; border-radius: 50%; border: 1px solid rgba(148,163,184,.35);
+            background: rgba(15,23,42,.5); color: #cbd5e1; font-size: .72rem; cursor: help;
+        }
+        .ops-tooltip {
+            position: absolute; z-index: 90; top: 24px; right: 0; width: 280px;
+            background: #0f172a; border: 1px solid rgba(148,163,184,.35); border-radius: 10px;
+            padding: 10px; display: none; box-shadow: 0 12px 24px rgba(2,6,23,.5); font-size: .78rem;
+        }
+        .ops-info-wrap:hover .ops-tooltip { display: block; }
+        .ops-tooltip .line { display: flex; justify-content: space-between; gap: 8px; margin: 4px 0; color: var(--text-secondary); }
+        .ops-tooltip .line strong { color: var(--text-primary); }
+        .btn.needs-upload { box-shadow: 0 0 0 2px rgba(239,68,68,.5) inset; }
+
         /* Historial */
         .history-list {
-            max-height: 400px;
+            max-height: none;
             overflow-y: auto;
+            flex: 1;
+            min-height: 260px;
         }
         .history-item {
             background: var(--bg-card);
@@ -948,6 +980,38 @@
         }
         .history-action {
             color: var(--text-primary);
+        }
+        .history-modal-content {
+            max-height: 82vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .history-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .history-toolbar #historySearchInput { flex: 1; }
+        .history-count-label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+        .history-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .history-item-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .history-item-muted {
+            border-left-color: rgba(148, 163, 184, 0.45);
+            opacity: 0.85;
         }
 
         /* Duplicados */
@@ -1007,26 +1071,6 @@
         }
         .template-actions { display: flex; gap: 8px; flex-wrap: wrap; }
         .template-help { color: var(--text-secondary); font-size: 0.82rem; }
-
-        .timeline-view {
-            background: var(--bg-secondary);
-            border-radius: 15px;
-            border: 1px solid rgba(148, 163, 184, 0.14);
-            padding: 16px;
-            display: none;
-        }
-        .timeline-day { margin-bottom: 16px; }
-        .timeline-day-title { font-weight: 700; color: var(--accent-primary); margin-bottom: 8px; }
-        .timeline-event {
-            background: var(--bg-card);
-            border-left: 3px solid var(--accent-primary);
-            border-radius: 8px;
-            padding: 10px;
-            margin: 6px 0;
-            font-size: 0.88rem;
-            color: var(--text-secondary);
-        }
-        .timeline-event strong { color: var(--text-primary); }
 
         .duplicates-config {
             margin: 12px 0;
@@ -1132,12 +1176,13 @@
             <div class="view-actions">
                 <button id="viewCardsBtn" class="btn active"><i class="fas fa-th"></i> Tarjetas</button>
                 <button id="viewListBtn" class="btn"><i class="fas fa-list"></i> Lista</button>
-                <button id="timelineBtn" class="btn"><i class="fas fa-stream"></i> Timeline</button>
                 <button id="exportBtn" class="btn"><i class="fas fa-download"></i> Exportar</button>
                 <button id="historyBtn" class="btn"><i class="fas fa-history"></i> Historial</button>
                 <button id="manageDuplicatesBtn" class="btn btn-warning"><i class="fas fa-clone"></i> Duplicados</button>
-                <button id="shortcutsInfoBtn" class="btn"><i class="fas fa-keyboard"></i> Atajos</button>
+                <button id="settingsBtn" class="btn"><i class="fas fa-cog"></i> Ajustes</button>
+                <button id="importOpsBtn" class="btn" title="Importar agent_operations.csv"><i class="fas fa-chart-line"></i> Operaciones</button>
                 <button id="deleteAllBtn" class="btn btn-danger"><i class="fas fa-trash-alt"></i> Borrar Todo</button>
+                <input type="file" id="opsFileInput" accept=".csv" style="display:none;">
             </div>
         </div>
 
@@ -1170,12 +1215,18 @@
                     <option value="no interesado">No Interesado</option>
                 </select>
                 <select id="originFilter" class="filter-select"><option value="">Todos los orígenes</option></select>
+                <select id="opsSegmentFilter" class="filter-select">
+                    <option value="all">Todos</option>
+                    <option value="top50">Top 50</option>
+                    <option value="top100">Top 100</option>
+                    <option value="matched">Con movimiento</option>
+                    <option value="nomatch">Sin movimiento</option>
+                </select>
                 <button id="undoBtn" class="btn" title="Volver al último contacto editado (Ctrl+Z)">
                     <i class="fas fa-undo"></i> Volver
                 </button>
                 <button id="addMoreBtn" class="btn btn-success"><i class="fas fa-file-upload"></i> Importar CSV</button>
                 <button id="addSingleBtn" class="btn btn-success"><i class="fas fa-user-plus"></i> Crear Usuario</button>
-                <button id="settingsBtn" class="btn"><i class="fas fa-cog"></i> Ajustes</button>
             </div>
         </div>
 
@@ -1266,8 +1317,12 @@
 
     <!-- Modal de historial -->
     <div class="modal" id="historyModal">
-        <div class="modal-content" style="max-width: 700px;">
+        <div class="modal-content history-modal-content" style="max-width: 900px;">
             <div class="modal-header"><i class="fas fa-history"></i> Historial de Cambios</div>
+            <div class="history-toolbar">
+                <input type="text" id="historySearchInput" class="filter-select" placeholder="Filtrar historial por usuario o acción...">
+                <span id="historyCountLabel" class="history-count-label"></span>
+            </div>
             <div class="history-list" id="historyList"></div>
             <div class="modal-actions">
                 <button id="closeHistoryModal" class="btn"><i class="fas fa-times"></i> Cerrar</button>
@@ -1289,21 +1344,10 @@
                 <div class="shortcut-item"><kbd>Numpad 5</kbd> Estado: No interesado</div>
                 <div class="shortcut-item"><kbd>Numpad 0</kbd> Volver al último contacto</div>
                 <div class="shortcut-item"><kbd>Numpad +</kbd> Cambiar a vista Lista</div>
-                <div class="shortcut-item"><kbd>Numpad -</kbd> Cambiar a vista Timeline</div>
+                <div class="shortcut-item"><kbd>Esc</kbd> Cerrar modales y menús abiertos</div>
             </div>
             <div class="modal-actions">
                 <button id="closeShortcutsModal" class="btn btn-success"><i class="fas fa-check"></i> Entendido</button>
-            </div>
-        </div>
-    </div>
-
-
-    <div class="modal" id="timelineModal">
-        <div class="modal-content" style="max-width: 760px;">
-            <div class="modal-header"><i class="fas fa-stream"></i> Timeline de Interacciones</div>
-            <div id="timelineContent"></div>
-            <div class="modal-actions">
-                <button id="closeTimelineModal" class="btn"><i class="fas fa-times"></i> Cerrar</button>
             </div>
         </div>
     </div>
@@ -1405,13 +1449,17 @@
             undoStack: [],
             currentView: 'cards',
             whatsappTemplate: 'Hola {usuario}, ¿cómo estás? Te escribo por la propuesta que vimos.',
-            duplicateMergeMode: 'phone-auto'
+            duplicateMergeMode: 'phone-auto',
+            opsProfiles: {},
+            opsLastImportedAt: null,
+            opsFilter: 'all'
         };
 
         const elements = {
             uploadScreen: $('#uploadScreen'),
             mainApp: $('#mainApp'),
             fileInput: $('#fileInput'),
+            opsFileInput: $('#opsFileInput'),
             uploadArea: $('#uploadArea'),
             fileList: $('#fileList'),
             originInput: $('#originInput'),
@@ -1421,9 +1469,9 @@
             searchInput: $('#searchInput'),
             statusFilter: $('#statusFilter'),
             originFilter: $('#originFilter'),
+            opsSegmentFilter: $('#opsSegmentFilter'),
             viewCardsBtn: $('#viewCardsBtn'),
             viewListBtn: $('#viewListBtn'),
-            timelineBtn: $('#timelineBtn'),
             exportBtn: $('#exportBtn'),
             bulkActionsBar: $('#bulkActionsBar'),
             selectedCount: $('#selectedCount'),
@@ -1438,6 +1486,7 @@
             historyBtn: $('#historyBtn'),
             historyModal: $('#historyModal'),
             deleteAllBtn: $('#deleteAllBtn'),
+            importOpsBtn: $('#importOpsBtn'),
             undoBtn: $('#undoBtn'),
             whatsappTemplateInput: $('#whatsappTemplateInput'),
             saveTemplateBtn: $('#saveTemplateBtn'),
@@ -1458,6 +1507,308 @@
         function normalizeUsername(name) {
             if (!name) return '';
             return name.toString().toLowerCase().trim();
+        }
+
+        function normalizeAlias(alias) {
+            return normalizeUsername(alias).replace(/\s+/g, '');
+        }
+
+        function extractPrimaryAlias(name = '') {
+            const base = (name || '').split('/')[0].trim();
+            const token = base.split(/\s+/)[0] || base;
+            return token.trim();
+        }
+
+        function parseCsvRow(line) {
+            const out = [];
+            let cur = '';
+            let q = false;
+            for (let i = 0; i < line.length; i++) {
+                const ch = line[i];
+                if (ch === '"') {
+                    if (q && line[i + 1] === '"') { cur += '"'; i++; }
+                    else q = !q;
+                } else if (ch === ',' && !q) {
+                    out.push(cur); cur = '';
+                } else cur += ch;
+            }
+            out.push(cur);
+            return out.map(v => v.trim());
+        }
+
+        function median(values) {
+            if (!values.length) return 0;
+            const sorted = [...values].sort((a, b) => a - b);
+            const mid = Math.floor(sorted.length / 2);
+            return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+        }
+
+        function getOpsSuggestedStatus(lastCargaAt) {
+            if (!lastCargaAt) return 'sin revisar';
+            const days = (Date.now() - new Date(lastCargaAt).getTime()) / 86400000;
+            if (days <= 2) return 'jugando';
+            if (days <= 7) return 'contactado';
+            if (days <= 21) return 'revisado';
+            if (days <= 45) return 'sin revisar';
+            return 'sin wsp';
+        }
+
+        function getOpsHeatLabel(lastCargaAt) {
+            if (!lastCargaAt) return { text: 'Sin datos', cls: 'cold' };
+            const days = (Date.now() - new Date(lastCargaAt).getTime()) / 86400000;
+            if (days <= 7) return { text: '🔥 Activo', cls: 'hot' };
+            if (days <= 21) return { text: '⏳ Tibio', cls: '' };
+            return { text: '❄️ Frío', cls: 'cold' };
+        }
+
+        function parseOperationsCsvChunked(text) {
+            return new Promise((resolve) => {
+                const lines = text.split(/\r?\n/).filter(Boolean);
+                if (!lines.length) return resolve({ byAlias: {}, importedRows: 0 });
+
+                let idx = 0;
+                if (lines[0].toLowerCase().startsWith('sep=')) idx = 1;
+                const header = parseCsvRow(lines[idx] || '');
+                idx++;
+                const h = header.map(v => normalizeUsername(v));
+                const aliasIdx = h.findIndex(v => v.includes('alias'));
+                const amountIdx = h.findIndex(v => v.includes('cantidad'));
+                const dateIdx = h.findIndex(v => v.includes('fecha'));
+                const stats = new Map();
+                const now = Date.now();
+                const chunk = 500;
+                let importedRows = 0;
+
+                const process = () => {
+                    const end = Math.min(lines.length, idx + chunk);
+                    for (; idx < end; idx++) {
+                        const row = parseCsvRow(lines[idx]);
+                        const aliasRaw = row[aliasIdx] || '';
+                        const alias = normalizeAlias(aliasRaw);
+                        if (!alias) continue;
+                        const amount = parseInt((row[amountIdx] || '0').replace(/[^\d-]/g, ''), 10);
+                        if (Number.isNaN(amount)) continue;
+                        const dateRaw = row[dateIdx] || '';
+                        const ts = Date.parse(dateRaw.replace(' ', 'T')) || Date.now();
+                        const hour = new Date(ts).getHours();
+
+                        if (!stats.has(alias)) {
+                            stats.set(alias, {
+                                alias,
+                                aliasLabel: aliasRaw.trim(),
+                                cargasCount: 0,
+                                descargasCount: 0,
+                                cargadoTotal: 0,
+                                descargadoTotal: 0,
+                                netoTotal: 0,
+                                lastAt: null,
+                                lastCargaAt: null,
+                                cargasVals: [],
+                                hourHist: Array(24).fill(0),
+                                cargas30d: 0,
+                                cargado30d: 0,
+                                cargado90d: 0,
+                                weeks30: new Set(),
+                                months90: new Set()
+                            });
+                        }
+                        const st = stats.get(alias);
+                        importedRows++;
+                        st.netoTotal += amount;
+                        st.hourHist[hour] += 1;
+                        if (!st.lastAt || ts > st.lastAt) st.lastAt = ts;
+
+                        const ageDays = (now - ts) / 86400000;
+                        if (amount > 0) {
+                            st.cargasCount++;
+                            st.cargadoTotal += amount;
+                            st.cargasVals.push(amount);
+                            if (!st.lastCargaAt || ts > st.lastCargaAt) st.lastCargaAt = ts;
+                            if (ageDays <= 30) {
+                                st.cargas30d++;
+                                st.cargado30d += amount;
+                                const d = new Date(ts);
+                                const wk = `${d.getFullYear()}-${Math.ceil((((d - new Date(d.getFullYear(),0,1)) / 86400000) + d.getDay() + 1) / 7)}`;
+                                st.weeks30.add(wk);
+                            }
+                            if (ageDays <= 90) {
+                                st.cargado90d += amount;
+                                const d = new Date(ts);
+                                st.months90.add(`${d.getFullYear()}-${d.getMonth()+1}`);
+                            }
+                        } else {
+                            st.descargasCount++;
+                            st.descargadoTotal += Math.abs(amount);
+                        }
+                    }
+                    if (idx < lines.length) return setTimeout(process, 0);
+
+                    const byAlias = {};
+                    for (const [alias, st] of stats.entries()) {
+                        const topHours = st.hourHist.map((v, i) => ({ h: i, v })).sort((a, b) => b.v - a.v).slice(0, 3).map(x => `${String(x.h).padStart(2, '0')}:00`);
+                        const avgCarga = st.cargasCount ? (st.cargadoTotal / st.cargasCount) : 0;
+                        const mediana = median(st.cargasVals);
+                        const loyalty = (st.weeks30.size >= 2 ? 1 : 0) + (st.months90.size >= 2 ? 1 : 0) + (st.cargado30d >= 50000 ? 1 : 0) + (st.cargas30d >= 8 ? 1 : 0);
+                        const recencyDays = st.lastCargaAt ? (Date.now() - st.lastCargaAt) / 86400000 : 999;
+                        const recencyScore = Math.max(0, 40 - recencyDays);
+                        const score = recencyScore + Math.min(35, st.cargas30d * 3) + Math.min(20, st.cargado90d / 10000) + (loyalty * 8);
+                        byAlias[alias] = {
+                            ...st,
+                            lastAt: st.lastAt ? new Date(st.lastAt).toISOString() : null,
+                            lastCargaAt: st.lastCargaAt ? new Date(st.lastCargaAt).toISOString() : null,
+                            avgCarga: Math.round(avgCarga),
+                            medianCarga: Math.round(mediana),
+                            topHours,
+                            loyalty,
+                            score: Math.round(score),
+                            suggestedStatus: getOpsSuggestedStatus(st.lastCargaAt),
+                            heat: getOpsHeatLabel(st.lastCargaAt)
+                        };
+                        delete byAlias[alias].cargasVals;
+                        delete byAlias[alias].weeks30;
+                        delete byAlias[alias].months90;
+                    }
+                    resolve({ byAlias, importedRows });
+                };
+                process();
+            });
+        }
+
+        function applyOpsHeuristicsToContact(contact) {
+            if (!contact || !contact.ops?.suggestedStatus) return;
+            if (contact.status === 'sin revisar') {
+                contact.status = contact.ops.suggestedStatus;
+                contact.lastUpdated = new Date().toISOString();
+            }
+        }
+
+        function syncOpsToContacts({ createNewUsers = true } = {}) {
+            const profiles = AppState.opsProfiles || {};
+            const matchedAliases = new Set();
+            AppState.contacts.forEach(contact => {
+                const keys = [normalizeAlias(contact.alias || ''), normalizeAlias(extractPrimaryAlias(contact.name || '')), normalizeAlias(contact.name || '')].filter(Boolean);
+                const foundKey = keys.find(k => profiles[k]);
+                contact.ops = foundKey ? profiles[foundKey] : null;
+                if (foundKey) {
+                    contact.alias = contact.alias || extractPrimaryAlias(contact.name || '') || profiles[foundKey].aliasLabel;
+                    matchedAliases.add(foundKey);
+                    applyOpsHeuristicsToContact(contact);
+                }
+            });
+
+            if (createNewUsers) {
+                Object.keys(profiles).forEach(alias => {
+                    if (matchedAliases.has(alias)) return;
+                    const p = profiles[alias];
+                    const newId = Date.now() + Math.random();
+                    AppState.contacts.push({
+                        id: newId,
+                        name: p.aliasLabel || alias,
+                        alias: p.aliasLabel || alias,
+                        phone: '',
+                        origin: 'Operaciones panel',
+                        status: 'sin revisar',
+                        lastUpdated: new Date().toISOString(),
+                        isDuplicate: false,
+                        isNewFromOps: true,
+                        ops: p
+                    });
+                    applyOpsHeuristicsToContact(AppState.contacts[AppState.contacts.length - 1]);
+                    addToHistory('Nuevo usuario desde operaciones', p.aliasLabel || alias);
+                });
+            }
+        }
+
+        function mergeOpsProfiles(newProfiles) {
+            const merged = { ...(AppState.opsProfiles || {}) };
+            Object.entries(newProfiles || {}).forEach(([alias, n]) => {
+                const prev = merged[alias];
+                if (!prev) { merged[alias] = n; return; }
+                merged[alias] = {
+                    ...n,
+                    cargasCount: (prev.cargasCount || 0) + (n.cargasCount || 0),
+                    descargasCount: (prev.descargasCount || 0) + (n.descargasCount || 0),
+                    cargadoTotal: (prev.cargadoTotal || 0) + (n.cargadoTotal || 0),
+                    descargadoTotal: (prev.descargadoTotal || 0) + (n.descargadoTotal || 0),
+                    netoTotal: (prev.netoTotal || 0) + (n.netoTotal || 0),
+                    cargas30d: Math.max(prev.cargas30d || 0, n.cargas30d || 0),
+                    cargado30d: Math.max(prev.cargado30d || 0, n.cargado30d || 0),
+                    cargado90d: Math.max(prev.cargado90d || 0, n.cargado90d || 0),
+                    lastAt: (!prev.lastAt || (n.lastAt && n.lastAt > prev.lastAt)) ? n.lastAt : prev.lastAt,
+                    lastCargaAt: (!prev.lastCargaAt || (n.lastCargaAt && n.lastCargaAt > prev.lastCargaAt)) ? n.lastCargaAt : prev.lastCargaAt,
+                    avgCarga: Math.round(((prev.avgCarga || 0) + (n.avgCarga || 0)) / 2),
+                    medianCarga: Math.round(((prev.medianCarga || 0) + (n.medianCarga || 0)) / 2),
+                    loyalty: Math.max(prev.loyalty || 0, n.loyalty || 0),
+                    score: Math.max(prev.score || 0, n.score || 0),
+                    suggestedStatus: n.suggestedStatus || prev.suggestedStatus,
+                    heat: n.heat || prev.heat,
+                    topHours: n.topHours?.length ? n.topHours : (prev.topHours || [])
+                };
+            });
+            AppState.opsProfiles = merged;
+            AppState.opsLastImportedAt = new Date().toISOString();
+            saveOpsData();
+        }
+
+        function saveOpsData() {
+            try {
+                localStorage.setItem('opsProfilesData', JSON.stringify(AppState.opsProfiles || {}));
+                localStorage.setItem('opsLastImportedAt', AppState.opsLastImportedAt || '');
+            } catch (e) {
+                console.error('Error guardando operaciones:', e);
+            }
+        }
+
+        function loadOpsData() {
+            try {
+                AppState.opsProfiles = JSON.parse(localStorage.getItem('opsProfilesData') || '{}');
+                AppState.opsLastImportedAt = localStorage.getItem('opsLastImportedAt') || null;
+            } catch (e) {
+                AppState.opsProfiles = {};
+                AppState.opsLastImportedAt = null;
+            }
+        }
+
+        function updateOpsUploadReminder() {
+            if (!elements.importOpsBtn) return;
+            elements.importOpsBtn.classList.remove('needs-upload');
+            if (!AppState.opsLastImportedAt) {
+                elements.importOpsBtn.classList.add('needs-upload');
+                elements.importOpsBtn.title = 'Importá operaciones (sin importación previa)';
+                return;
+            }
+            const hours = (Date.now() - new Date(AppState.opsLastImportedAt).getTime()) / 36e5;
+            if (hours >= 48) elements.importOpsBtn.classList.add('needs-upload');
+            elements.importOpsBtn.title = `Última importación: ${new Date(AppState.opsLastImportedAt).toLocaleString('es-ES')}`;
+        }
+
+        function getOpsMiniHtml(contact) {
+            if (!contact.ops) return '';
+            const o = contact.ops;
+            const heat = o.heat || getOpsHeatLabel(o.lastCargaAt);
+            const last = o.lastCargaAt ? new Date(o.lastCargaAt).toLocaleString('es-ES') : '-';
+            const topHours = (o.topHours || []).join(' / ') || '-';
+            return `
+                <div class="ops-chip-row">
+                    <span class="ops-chip ${heat.cls}">${heat.text}</span>
+                    <span class="ops-chip">↑${o.cargasCount || 0} ↓${o.descargasCount || 0}</span>
+                    <span class="ops-chip">Σ $${Math.round(o.netoTotal || 0)}</span>
+                    <span class="ops-chip">Score ${o.score || 0}</span>
+                    <div class="ops-info-wrap">
+                        <button class="ops-info-btn" type="button" onclick="event.stopPropagation()">ℹ️</button>
+                        <div class="ops-tooltip" onclick="event.stopPropagation()">
+                            <div class="line"><span>Última actividad</span><strong>${last}</strong></div>
+                            <div class="line"><span>Promedio / Mediana</span><strong>$${Math.round(o.avgCarga || 0)} / $${Math.round(o.medianCarga || 0)}</strong></div>
+                            <div class="line"><span>Cargado 30d / 90d</span><strong>$${Math.round(o.cargado30d || 0)} / $${Math.round(o.cargado90d || 0)}</strong></div>
+                            <div class="line"><span>Horas top</span><strong>${topHours}</strong></div>
+                            <div class="line"><span>Lealtad</span><strong>${o.loyalty || 0}/4</strong></div>
+                            <div style="display:flex; gap:6px; margin-top:8px;">
+                                <button class="btn" style="padding:4px 8px;font-size:.72rem;" onclick="applyOpsSuggestion(${contact.id}, event)">Aplicar ${o.suggestedStatus || 'sin revisar'}</button>
+                                <button class="btn" style="padding:4px 8px;font-size:.72rem;" onclick="pinContact(${contact.id}, event)">${contact.pinned ? 'Desfijar' : 'Pin'}</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
         }
 
         function addToHistory(action, details) {
@@ -1713,6 +2064,24 @@
             });
         }
 
+
+        function importOperationsFile(file) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                showNotification('Procesando operaciones...', 'info');
+                const { byAlias, importedRows } = await parseOperationsCsvChunked(String(e.target.result || ''));
+                mergeOpsProfiles(byAlias);
+                syncOpsToContacts({ createNewUsers: true });
+                detectDuplicates();
+                saveData();
+                addToHistory('Operaciones importadas', `${importedRows} filas procesadas`);
+                render();
+                showNotification(`✅ Operaciones actualizadas (${importedRows} filas)`, 'success');
+            };
+            reader.readAsText(file);
+        }
+
         function manageAutomaticBackup() {
             if (!AppState.contacts || AppState.contacts.length === 0) return;
 
@@ -1768,13 +2137,13 @@
 
         function saveData() {
             try {
-                localStorage.setItem('contactsData', JSON.stringify(AppState.contacts));
+                localStorage.setItem('contactsData', JSON.stringify(AppState.contacts.map(({ ops, ...rest }) => rest)));
                 manageAutomaticBackup();
             } catch (e) {
                 console.error('Error al guardar datos:', e);
                 tryStorageRecovery();
                 try {
-                    localStorage.setItem('contactsData', JSON.stringify(AppState.contacts));
+                    localStorage.setItem('contactsData', JSON.stringify(AppState.contacts.map(({ ops, ...rest }) => rest)));
                     manageAutomaticBackup();
                     return;
                 } catch (e2) {
@@ -1782,7 +2151,6 @@
                 }
                 const now = Date.now();
                 if (now - lastSaveErrorAt > 5000) {
-                    showNotification('⚠️ Error al guardar datos (almacenamiento lleno).', 'error');
                     lastSaveErrorAt = now;
                 }
             }
@@ -1795,6 +2163,7 @@
                     AppState.contacts = JSON.parse(saved);
                     if (AppState.contacts.length > 0) {
                         detectDuplicates();
+                        syncOpsToContacts({ createNewUsers: false });
                         elements.uploadScreen.classList.add('hidden');
                         elements.mainApp.style.display = 'block';
                         render();
@@ -1829,11 +2198,21 @@
                     (contact.origin && contact.origin.toLowerCase().includes(searchTerm));
                 
                 const matchesStatus = !AppState.statusFilter || contact.status === AppState.statusFilter;
-                const matchesOrigin = !AppState.originFilter || contact.origin === AppState.originFilter;
+                const matchesOrigin = !AppState.originFilter || contact.origin === AppState.originFilter || (AppState.originFilter === 'Operaciones panel' && !!contact.ops);
+                let matchesOps = true;
+                if (AppState.opsFilter === 'matched') matchesOps = !!contact.ops;
+                else if (AppState.opsFilter === 'nomatch') matchesOps = !contact.ops;
                 
-                return matchesSearch && matchesStatus && matchesOrigin;
+                return matchesSearch && matchesStatus && matchesOrigin && matchesOps;
             });
-            
+
+            if (AppState.opsFilter === 'top50' || AppState.opsFilter === 'top100') {
+                const limit = AppState.opsFilter === 'top50' ? 50 : 100;
+                AppState.filteredContacts = AppState.filteredContacts
+                    .filter(c => c.ops)
+                    .sort((a, b) => (b.ops?.score || 0) - (a.ops?.score || 0))
+                    .slice(0, limit);
+            }
         }
 
         function updateStats() {
@@ -1942,6 +2321,7 @@
             const escapedPhone = (contact.phone || '').replace(/'/g, "\\'");
             const urgency = getContactUrgency(contact);
             const sentBadge = getMessageSentBadge(contact);
+            const opsMini = getOpsMiniHtml(contact);
             
             return `
                 <div class="contact-card ${AppState.selectedContacts.has(contact.id) ? 'selected' : ''} ${contact.isDuplicate ? 'duplicate' : ''}" style="--status-rgb: ${statusOption.rgb};" data-id="${contact.id}">
@@ -1952,7 +2332,7 @@
                             <i class="fas ${statusOption.icon}"></i>
                         </div>
                         <div style="flex: 1; display: flex; align-items: center; gap: 8px;">
-                            <span class="card-name" onclick="copyToClipboard('${escapedName}', event)" style="cursor: pointer; flex: 1;" title="Click para copiar">${contact.name}</span>${urgency ? `<span class=\"urgency-badge urgency-l${urgency.level}\" title=\"${urgency.title}\"><i class=\"fas fa-clock\"></i>${urgency.label}</span>` : ''}
+                            <span class="card-name" onclick="copyToClipboard('${escapedName}', event)" style="cursor: pointer; flex: 1;" title="Click para copiar">${contact.pinned ? '📌 ' : ''}${contact.name}</span>${urgency ? `<span class=\"urgency-badge urgency-l${urgency.level}\" title=\"${urgency.title}\"><i class=\"fas fa-clock\"></i>${urgency.label}</span>` : ''}
                             <button class="btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="editContactField(${contact.id}, 'name', event)" title="Editar nombre">
                                 <i class="fas fa-pencil-alt"></i>
                             </button>
@@ -1978,6 +2358,7 @@
                             <span class="card-status-inline" id="cardStatusInline-${contact.id}"><span class="status-badge status-${contact.status.replace(/ /g, '-')}" onclick="openCardStatusMenu(${contact.id}, event)">${statusOption.label}</span></span>
                         </div>
                     </div>
+                    ${opsMini}
                     <div class="card-footer">
                         <span><i class="fas fa-calendar"></i> ${new Date(contact.lastUpdated).toLocaleDateString('es-ES')}</span>
                         <button class="btn btn-danger" style="padding: 5px 10px; font-size: 0.75rem;" onclick="deleteContact(${contact.id}, event)"><i class="fas fa-trash"></i></button>
@@ -1990,6 +2371,8 @@
             const statusOption = getStatusOption(contact.status);
             const escapedName = (contact.name || '').replace(/'/g, "\\'");
             const escapedPhone = (contact.phone || '').replace(/'/g, "\\'");
+            const sentBadge = getMessageSentBadge(contact);
+            const opsMini = getOpsMiniHtml(contact);
             
             return `
                 <div class="list-item ${AppState.selectedContacts.has(contact.id) ? 'selected' : ''} ${contact.isDuplicate ? 'duplicate' : ''}" style="--status-rgb: ${statusOption.rgb};" data-id="${contact.id}">
@@ -2004,16 +2387,14 @@
                                 <i class="fas fa-pencil-alt"></i>
                             </button>
                         </div>
-                        <span class="list-status-chip"><i class="fas ${statusOption.icon}"></i>${statusOption.label}</span>
+                        <span class="list-status-chip"><i class="fas ${statusOption.icon}"></i>${statusOption.label}</span>${opsMini}
                     </div>
                     <div class="list-item-phone">
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <span onclick="copyToClipboard('${escapedPhone}', event)" style="flex: 1; font-family: monospace; cursor: pointer;" title="Click para copiar">${contact.phone || 'Sin teléfono'}</span>
-                            ${contact.phone ? `
-                                <button class="btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="editContactField(${contact.id}, 'phone', event)" title="Editar">
-                                    <i class="fas fa-pencil-alt"></i>
-                                </button>
-                            ` : ''}
+                            <button class="btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="editContactField(${contact.id}, 'phone', event)" title="${contact.phone ? 'Editar' : 'Agregar teléfono'}">
+                                <i class="fas fa-pencil-alt"></i>
+                            </button>
                         </div>
                     </div>
                     <div class="list-item-origin">${contact.origin}</div>
@@ -2176,6 +2557,7 @@
             });
         };
 
+
         window.changeContactStatus = (id, newStatus, event) => {
             if (event) event.stopPropagation();
             const contact = AppState.contacts.find(c => c.id === id);
@@ -2189,6 +2571,24 @@
             contact.lastUpdated = new Date().toISOString();
             AppState.lastEditedContact = id;
             addToHistory('Estado cambiado', `${contact.name}: ${oldStatus} → ${newStatus}`);
+            saveData();
+            render();
+        };
+
+        window.applyOpsSuggestion = (id, event) => {
+            if (event) event.stopPropagation();
+            const contact = AppState.contacts.find(c => c.id === id);
+            if (!contact || !contact.ops?.suggestedStatus) return;
+            changeContactStatus(id, contact.ops.suggestedStatus);
+            showNotification(`Sugerencia aplicada a ${contact.name}`, 'success');
+        };
+
+        window.pinContact = (id, event) => {
+            if (event) event.stopPropagation();
+            const contact = AppState.contacts.find(c => c.id === id);
+            if (!contact) return;
+            contact.pinned = !contact.pinned;
+            contact.lastUpdated = new Date().toISOString();
             saveData();
             render();
         };
@@ -2257,29 +2657,6 @@
             return base.replaceAll('{usuario}', contactName || '');
         }
 
-        function createTimelineView() {
-            const timelineContent = $('#timelineContent');
-            if (!timelineContent) return;
-            if (!AppState.history.length) {
-                timelineContent.innerHTML = '<p style="color: var(--text-secondary);">No hay eventos todavía.</p>';
-                return;
-            }
-            const grouped = {};
-            AppState.history.forEach(item => {
-                const d = new Date(item.timestamp);
-                const key = d.toLocaleDateString('es-ES');
-                if (!grouped[key]) grouped[key] = [];
-                grouped[key].push(item);
-            });
-            const html = Object.entries(grouped).map(([day, items]) => `
-                <div class="timeline-day">
-                    <div class="timeline-day-title">${day}</div>
-                    ${items.map(ev => `<div class="timeline-event"><strong>${ev.action}</strong> · ${ev.details}<div style="font-size:0.75rem;margin-top:4px;">${new Date(ev.timestamp).toLocaleTimeString('es-ES')}</div></div>`).join('')}
-                </div>
-            `).join('');
-            timelineContent.innerHTML = html;
-        }
-
         function getDuplicateReason(group) {
             if (group.type === 'teléfono') return 'Mismo teléfono';
             if (group.type === 'nombre') return 'Nombre coincidente';
@@ -2308,7 +2685,7 @@
                 contact.lastMessageSentAt = new Date().toISOString();
                 contact.lastUpdated = new Date().toISOString();
                 saveData();
-                renderContacts();
+                render();
             }
             addToHistory('WhatsApp abierto', `${contact?.name || cleanPhone}`);
             saveHistory();
@@ -2379,10 +2756,16 @@
 
         function render() {
             applyFilters();
+            AppState.filteredContacts.sort((a, b) => {
+                if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1;
+                if (AppState.opsFilter === 'top50' || AppState.opsFilter === 'top100') return (b.ops?.score || 0) - (a.ops?.score || 0);
+                return normalizeUsername(a.name).localeCompare(normalizeUsername(b.name));
+            });
             updateStats();
             elements.pagination.style.display = 'flex';
             renderPaginatedView(AppState.currentView === 'cards' ? createCard : createListItem);
             updateBulkActionsBar();
+            updateOpsUploadReminder();
         }
 
         function showDuplicatesModal() {
@@ -2510,32 +2893,89 @@
             showNotification(`✅ ${mergedCount} duplicados fusionados`, 'success');
         }
 
-        function showHistoryModal() {
-            const historyHTML = AppState.history.length > 0 
-                ? AppState.history.map(entry => {
-                    const nameMatch = entry.details.match(/^([^:]+)/);
-                    const userName = nameMatch ? nameMatch[1].trim() : '';
-                    
+        function extractHistoryName(details = '') {
+            const [raw] = details.split(':');
+            return (raw || '').trim();
+        }
+
+        function getHistoryContact(name = '') {
+            if (!name) return null;
+            return AppState.contacts.find(c => normalizeUsername(c.name) === normalizeUsername(name));
+        }
+
+        function goToHistoryContact(name, event) {
+            if (event) event.stopPropagation();
+            const contact = getHistoryContact(name);
+            if (!contact) {
+                showNotification('Contacto no disponible en la base actual', 'info');
+                return;
+            }
+            elements.searchInput.value = contact.name;
+            AppState.searchTerm = contact.name;
+            AppState.lastEditedContact = contact.id;
+            closeAllOverlays();
+            render();
+            showNotification(`🔎 Mostrando: ${contact.name}`, 'success');
+        }
+
+        window.searchFromHistory = (name, event) => {
+            goToHistoryContact(name, event);
+        };
+
+        window.editFromHistory = (name, event) => {
+            if (event) event.stopPropagation();
+            const contact = getHistoryContact(name);
+            if (!contact) {
+                showNotification('No se pudo abrir el editor: contacto no encontrado', 'error');
+                return;
+            }
+            editContactField(contact.id, 'name');
+        };
+
+        function renderHistoryList(filterTerm = '') {
+            const term = normalizeUsername(filterTerm);
+            const filtered = AppState.history.filter(entry => {
+                if (!term) return true;
+                return normalizeUsername(`${entry.action} ${entry.details}`).includes(term);
+            });
+
+            const historyHTML = filtered.length > 0
+                ? filtered.map(entry => {
+                    const userName = extractHistoryName(entry.details);
+                    const contact = getHistoryContact(userName);
+
                     return `
-                    <div class="history-item" onclick="searchFromHistory('${userName.replace(/'/g, "\\'")}', event)" style="cursor: pointer;" title="Click para buscar este contacto">
+                    <div class="history-item ${contact ? '' : 'history-item-muted'}">
                         <div class="history-time">${new Date(entry.timestamp).toLocaleString('es-ES')}</div>
                         <div class="history-action"><strong>${entry.action}:</strong> ${entry.details}</div>
+                        <div class="history-item-actions">
+                            <button class="btn" onclick="searchFromHistory('${userName.replace(/'/g, "\\'")}', event)"><i class="fas fa-search"></i> Ver</button>
+                            <button class="btn" onclick="editFromHistory('${userName.replace(/'/g, "\\'")}', event)" ${contact ? '' : 'disabled'}><i class="fas fa-pen"></i> Editar</button>
+                        </div>
                     </div>
-                `}).join('')
-                : '<p style="text-align: center; color: var(--text-secondary); padding: 30px;">No hay historial disponible</p>';
-            
+                `;
+                }).join('')
+                : '<p style="text-align: center; color: var(--text-secondary); padding: 30px;">No hay historial para ese filtro.</p>';
+
             $('#historyList').innerHTML = historyHTML;
+            const label = $('#historyCountLabel');
+            if (label) label.textContent = `${filtered.length} evento(s)`;
+        }
+
+        function showHistoryModal() {
+            renderHistoryList('');
+            const historySearchInput = $('#historySearchInput');
+            if (historySearchInput) {
+                historySearchInput.value = '';
+                historySearchInput.oninput = (e) => renderHistoryList(e.target.value);
+            }
             $('#historyModal').classList.add('active');
         }
-        
-        window.searchFromHistory = (name, event) => {
-            if (event) event.stopPropagation();
-            elements.searchInput.value = name;
-            AppState.searchTerm = name;
-            $('#historyModal').classList.remove('active');
-            render();
-            showNotification(`🔍 Buscando: ${name}`, 'info');
-        };
+
+        function closeAllOverlays() {
+            $$('.modal.active').forEach(modal => modal.classList.remove('active'));
+            $$('.card-status-menu').forEach(menu => menu.remove());
+        }
 
         function setupEventListeners() {
             elements.uploadArea.onclick = () => elements.fileInput.click();
@@ -2575,6 +3015,16 @@
             elements.settingsBtn.onclick = () => {
                 elements.userOptionsModal.classList.add('active');
             };
+            if (elements.importOpsBtn) {
+                elements.importOpsBtn.onclick = () => elements.opsFileInput && elements.opsFileInput.click();
+            }
+            if (elements.opsFileInput) {
+                elements.opsFileInput.onchange = (e) => {
+                    const file = e.target.files && e.target.files[0];
+                    importOperationsFile(file);
+                    elements.opsFileInput.value = '';
+                };
+            }
             $('#openShortcutsOption').onclick = () => {
                 elements.userOptionsModal.classList.remove('active');
                 elements.shortcutsModal.classList.add('active');
@@ -2626,6 +3076,10 @@
             });
 
             document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeAllOverlays();
+                    return;
+                }
                 if (e.ctrlKey && e.key === 'z' && !e.target.matches('input, textarea')) {
                     e.preventDefault();
                     undoToLastContact();
@@ -2641,7 +3095,6 @@
                 else if (code === 'Numpad5' && selectedId) changeContactStatus(selectedId, 'no interesado');
                 else if (code === 'Numpad0') undoToLastContact();
                 else if (code === 'NumpadAdd') elements.viewListBtn.click();
-                else if (code === 'NumpadSubtract') elements.timelineBtn.click();
             });
 
             elements.statusFilter.onchange = (e) => {
@@ -2655,6 +3108,14 @@
                 AppState.currentPage = 1;
                 render();
             };
+
+            if (elements.opsSegmentFilter) {
+                elements.opsSegmentFilter.onchange = (e) => {
+                    AppState.opsFilter = e.target.value;
+                    AppState.currentPage = 1;
+                    render();
+                };
+            }
 
             elements.viewCardsBtn.onclick = () => {
                 AppState.currentView = 'cards';
@@ -2672,10 +3133,6 @@
                 elements.listView.style.display = 'block';
                 elements.cardsView.style.display = 'none';
                 render();
-            };
-            elements.timelineBtn.onclick = () => {
-                createTimelineView();
-                $('#timelineModal').classList.add('active');
             };
 
             $$('.stat-box').forEach(box => {
@@ -2851,7 +3308,6 @@
 
             elements.historyBtn.onclick = showHistoryModal;
             $('#closeHistoryModal').onclick = () => $('#historyModal').classList.remove('active');
-            $('#closeTimelineModal').onclick = () => $('#timelineModal').classList.remove('active');
             $('#clearHistoryBtn').onclick = () => {
                 if (confirm('¿Borrar todo el historial?')) {
                     AppState.history = [];
@@ -2933,13 +3389,18 @@
         }
         
         function exportToExcel(contacts) {
-            let csvContent = "Nombre,Teléfono,Origen,Estado,Fecha Actualización\n";
+            let csvContent = "Nombre,Alias,Teléfono,Origen,Estado,Cargas,Descargas,Neto,Score,Fecha Actualización\n";
             contacts.forEach(c => {
                 const row = [
                     formatCsvField(c.name),
+                    formatCsvField(c.alias || extractPrimaryAlias(c.name || '')),
                     formatCsvField(c.phone),
                     formatCsvField(c.origin),
                     formatCsvField(c.status),
+                    formatCsvField(c.ops?.cargasCount || 0),
+                    formatCsvField(c.ops?.descargasCount || 0),
+                    formatCsvField(Math.round(c.ops?.netoTotal || 0)),
+                    formatCsvField(c.ops?.score || 0),
                     formatCsvField(new Date(c.lastUpdated).toLocaleDateString('es-ES'))
                 ];
                 csvContent += row.join(',') + '\n';
@@ -3013,7 +3474,7 @@
         }
 
         function exportToSheetFormat(contacts) {
-            const headers = "usuarios,estado de revision,telefono,estado actual,\"VISTO, RESPONDIDO?\",RECUPERADO,TURNO DE LAS CARGAS,interesado en jugar?,ya contactados,recuperados!,actualmente cargando,TURNO MAÑANA,TURNO TARDE,TURNO NOCHE,contactos a borrar\n";
+            const headers = "usuarios,alias,estado de revision,telefono,estado actual,cargas,descargas,neto,score,lealtad,ultima actividad,\"VISTO, RESPONDIDO?\",RECUPERADO,TURNO DE LAS CARGAS,interesado en jugar?,ya contactados,recuperados!,actualmente cargando,TURNO MAÑANA,TURNO TARDE,TURNO NOCHE,contactos a borrar\n";
             
             const statusToSheetStatus = (status) => {
                 const map = { 'contactado': 'promo enviada', 'revisado': 'REVISADO', 'sin wsp': 'NO ESTA EN WSP', 'sin revisar': 'A CONTACTAR', 'jugando': 'EN CONTACTO', 'no interesado': 'ELIMINADO' };
@@ -3036,9 +3497,16 @@
                 const mainContact = contacts[i];
                 const row = [
                     mainContact ? formatCsvField(mainContact.name) : '',
+                    mainContact ? formatCsvField(mainContact.alias || extractPrimaryAlias(mainContact.name || '')) : '',
                     mainContact ? formatCsvField(statusToSheetStatus(mainContact.status)) : '',
                     mainContact && mainContact.phone ? formatCsvField(mainContact.phone) : '',
                     mainContact ? formatCsvField(statusToSheetStatus(mainContact.status)) : '',
+                    mainContact ? formatCsvField(mainContact.ops?.cargasCount || 0) : '',
+                    mainContact ? formatCsvField(mainContact.ops?.descargasCount || 0) : '',
+                    mainContact ? formatCsvField(Math.round(mainContact.ops?.netoTotal || 0)) : '',
+                    mainContact ? formatCsvField(mainContact.ops?.score || 0) : '',
+                    mainContact ? formatCsvField(mainContact.ops?.loyalty || 0) : '',
+                    mainContact && mainContact.ops?.lastCargaAt ? formatCsvField(new Date(mainContact.ops.lastCargaAt).toLocaleString('es-ES')) : '',
                     'NO', 'NO', '', 'NO',
                     formatCsvField(yaContactados[i]),
                     formatCsvField(recuperados[i]),
@@ -3072,6 +3540,7 @@
                 setupEventListeners();
                 loadHistory();
                 loadPreferences();
+                loadOpsData();
                 loadData();
                 updateExportUrgencyBadge();
                 setInterval(() => { if (AppState.contacts.length) render(); else updateExportUrgencyBadge(); }, 300000);
