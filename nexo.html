@@ -1604,125 +1604,47 @@
             if (text.trim().startsWith('BEGIN:VCARD')) {
                 return parseVCF(text);
             }
-
-            const normalizeHeader = (header) => (header || '')
-                .toLowerCase()
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
-                .trim();
-
-            const parseCSVRow = (line, delimiter) => {
-                const row = [];
-                let current = '';
-                let inQuotes = false;
-
-                for (let i = 0; i < line.length; i++) {
-                    const char = line[i];
-                    const nextChar = line[i + 1];
-
-                    if (char === '"') {
-                        if (inQuotes && nextChar === '"') {
-                            current += '"';
-                            i++;
-                        } else {
-                            inQuotes = !inQuotes;
-                        }
-                    } else if (char === delimiter && !inQuotes) {
-                        row.push(current.trim());
-                        current = '';
-                    } else {
-                        current += char;
-                    }
-                }
-
-                row.push(current.trim());
-                return row.map(v => v.replace(/^"|"$/g, '').trim());
-            };
-
-            const detectDelimiter = (headerLine) => {
-                const candidates = [',', ';', '\t', '|'];
-                let best = ',';
-                let bestScore = -1;
-
-                candidates.forEach((candidate) => {
-                    const score = parseCSVRow(headerLine, candidate).length;
-                    if (score > bestScore) {
-                        best = candidate;
-                        bestScore = score;
-                    }
-                });
-
-                return best;
-            };
-
-            const lines = text.replace(/\r/g, '').split('\n').filter(line => line.trim());
+            
+            const lines = text.split('\n').filter(line => line.trim());
             if (lines.length === 0) return [];
-
-            const delimiter = detectDelimiter(lines[0]);
-            const headers = parseCSVRow(lines[0], delimiter).map(normalizeHeader);
+            
+            const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, '').toLowerCase());
             const contacts = [];
-
-            const isNameHeader = (header) => {
-                return [
-                    'name', 'nombre', 'usuario', 'fullname', 'full name', 'displayname', 'display name', 'contacto', 'contact'
-                ].includes(header) || header.includes('nombre') || header.includes('usuario') || header.includes('name');
-            };
-
-            const isPhoneHeader = (header) => {
-                return [
-                    'number', 'phone', 'telefono', 'tel', 'cel', 'celular', 'mobile', 'movil', 'whatsapp', 'msisdn'
-                ].includes(header)
-                    || header.includes('telefono')
-                    || header.includes('numero')
-                    || header.includes('phone')
-                    || header.includes('mobile')
-                    || header.includes('whatsapp');
-            };
-
-            const mapStatus = (value) => {
-                const lowerValue = (value || '').toLowerCase();
-                if (lowerValue.includes('promo enviada') || lowerValue.includes('contactado')) return 'contactado';
-                if (lowerValue.includes('no esta en wsp') || lowerValue.includes('sin wsp')) return 'sin wsp';
-                if (lowerValue.includes('en contacto') || lowerValue.includes('jugando')) return 'jugando';
-                if (lowerValue.includes('eliminado') || lowerValue.includes('no interesado')) return 'no interesado';
-                if (lowerValue.includes('revisado') || lowerValue.includes('verificado')) return 'revisado';
-                if (lowerValue.includes('a contactar') || lowerValue.includes('sin revisar')) return 'sin revisar';
-                return undefined;
-            };
-
+            
             for (let i = 1; i < lines.length; i++) {
-                const values = parseCSVRow(lines[i], delimiter);
+                const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
                 const contact = {};
-
+                
                 headers.forEach((header, index) => {
                     const value = values[index] || '';
-                    if (!value) return;
-
-                    if (isNameHeader(header)) {
+                    
+                    if (header.includes('nombre') || header.includes('usuario')) {
                         contact.name = value;
-                    } else if (isPhoneHeader(header)) {
+                    } else if (header.includes('tel') || header.includes('phone') || header.includes('número')) {
                         contact.phone = normalizePhoneNumber(value);
                     } else if (header.includes('estado') && !header.includes('revision')) {
-                        const status = mapStatus(value);
-                        if (status) contact.status = status;
+                        const lowerValue = value.toLowerCase();
+                        if (lowerValue.includes('promo enviada') || lowerValue.includes('contactado')) {
+                            contact.status = 'contactado';
+                        } else if (lowerValue.includes('no esta en wsp') || lowerValue.includes('sin wsp')) {
+                            contact.status = 'sin wsp';
+                        } else if (lowerValue.includes('en contacto') || lowerValue.includes('jugando')) {
+                            contact.status = 'jugando';
+                        } else if (lowerValue.includes('eliminado') || lowerValue.includes('no interesado')) {
+                            contact.status = 'no interesado';
+                        } else if (lowerValue.includes('revisado') || lowerValue.includes('verificado')) {
+                            contact.status = 'revisado';
+                        } else if (lowerValue.includes('a contactar') || lowerValue.includes('sin revisar')) {
+                            contact.status = 'sin revisar';
+                        }
                     }
                 });
-
-                // Fallback: si el CSV no tiene headers claros, tomar la primera celda numérica como teléfono.
-                if (!contact.phone) {
-                    const probablePhone = values.find(v => /\d{6,}/.test((v || '').replace(/\D/g, '')));
-                    if (probablePhone) contact.phone = normalizePhoneNumber(probablePhone);
-                }
-
-                if (!contact.name && contact.phone) {
-                    contact.name = contact.phone;
-                }
-
-                if (contact.name || contact.phone) {
+                
+                if (contact.name) {
                     contacts.push(contact);
                 }
             }
-
+            
             return contacts;
         }
 
