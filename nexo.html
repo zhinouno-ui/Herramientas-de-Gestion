@@ -1685,7 +1685,12 @@
         function syncOpsToContacts({ createNewUsers = true } = {}) {
             const profiles = AppState.opsProfiles || {};
             const matchedAliases = new Set();
+            let updatedCount = 0;
+            let createdCount = 0;
+
             AppState.contacts.forEach(contact => {
+                const prevStatus = contact.status;
+                const prevAlias = contact.alias || '';
                 const keys = [normalizeAlias(contact.alias || ''), normalizeAlias(extractPrimaryAlias(contact.name || '')), normalizeAlias(contact.name || '')].filter(Boolean);
                 const foundKey = keys.find(k => profiles[k]);
                 contact.ops = foundKey ? profiles[foundKey] : null;
@@ -1694,6 +1699,7 @@
                     matchedAliases.add(foundKey);
                     applyOpsHeuristicsToContact(contact);
                 }
+                if (contact.status !== prevStatus || (contact.alias || '') !== prevAlias) updatedCount++;
             });
 
             if (createNewUsers) {
@@ -1715,8 +1721,10 @@
                     });
                     applyOpsHeuristicsToContact(AppState.contacts[AppState.contacts.length - 1]);
                     addToHistory('Nuevo usuario desde operaciones', p.aliasLabel || alias);
+                    createdCount++;
                 });
             }
+            return { updatedCount, createdCount };
         }
 
         function mergeOpsProfiles(newProfiles) {
@@ -2160,6 +2168,28 @@
             reader.readAsText(file);
         }
 
+        function sanitizeContactsForStorage(contacts = []) {
+            return contacts.map(({ ops, ...rest }) => ({ ...rest }));
+        }
+
+        function getLatestBackupContacts() {
+            try {
+                const backupKeys = Object.keys(localStorage)
+                    .filter(k => k.startsWith('bk_'))
+                    .sort()
+                    .reverse();
+                for (const key of backupKeys) {
+                    const raw = localStorage.getItem(key);
+                    if (!raw) continue;
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed) && parsed.length) return parsed;
+                }
+            } catch (e) {
+                console.error('Error leyendo backups:', e);
+            }
+            return null;
+        }
+
         function manageAutomaticBackup() {
             if (!AppState.contacts || AppState.contacts.length === 0) return;
 
@@ -2179,7 +2209,7 @@
             if (localStorage.getItem(backupKey)) return;
 
             try {
-                const backupData = JSON.stringify(AppState.contacts);
+                const backupData = JSON.stringify(sanitizeContactsForStorage(AppState.contacts));
                 localStorage.setItem(backupKey, backupData);
                 console.log(`Backup automático creado: ${backupKey}`);
                 
@@ -2203,29 +2233,47 @@
         function tryStorageRecovery() {
             try {
                 const backupKeys = Object.keys(localStorage).filter(k => k.startsWith('bk_')).sort();
-                while (backupKeys.length > 3) {
+                while (backupKeys.length > 2) {
                     localStorage.removeItem(backupKeys.shift());
                 }
                 if (AppState.history.length > 25) {
                     AppState.history = AppState.history.slice(0, 25);
                     localStorage.setItem('contactsHistory', JSON.stringify(AppState.history));
                 }
+                const opsRaw = localStorage.getItem('opsProfilesData');
+                if (opsRaw && opsRaw.length > 1200000) {
+                    localStorage.removeItem('opsProfilesData');
+                    localStorage.removeItem('opsLastImportedAt');
+                    AppState.opsProfiles = {};
+                    AppState.opsLastImportedAt = null;
+                }
             } catch (_) {}
         }
 
         function saveData() {
+            const safeContacts = sanitizeContactsForStorage(AppState.contacts);
             try {
-                localStorage.setItem('contactsData', JSON.stringify(AppState.contacts.map(({ ops, ...rest }) => rest)));
+                localStorage.setItem('contactsData', JSON.stringify(safeContacts));
                 manageAutomaticBackup();
             } catch (e) {
                 console.error('Error al guardar datos:', e);
                 tryStorageRecovery();
                 try {
-                    localStorage.setItem('contactsData', JSON.stringify(AppState.contacts.map(({ ops, ...rest }) => rest)));
+                    localStorage.setItem('contactsData', JSON.stringify(safeContacts));
                     manageAutomaticBackup();
                     return;
                 } catch (e2) {
                     console.error('Fallo de recuperación de guardado:', e2);
+                    try {
+                        localStorage.removeItem('opsProfilesData');
+                        localStorage.removeItem('opsLastImportedAt');
+                        localStorage.setItem('contactsData', JSON.stringify(safeContacts));
+                        manageAutomaticBackup();
+                        showNotification('Se guardaron contactos priorizando espacio local', 'info');
+                        return;
+                    } catch (e3) {
+                        console.error('Fallo crítico de guardado:', e3);
+                    }
                 }
                 const now = Date.now();
                 if (now - lastSaveErrorAt > 5000) {
@@ -2239,16 +2287,23 @@
                 const saved = localStorage.getItem('contactsData');
                 if (saved) {
                     AppState.contacts = JSON.parse(saved);
-                    if (AppState.contacts.length > 0) {
-                        detectDuplicates();
-                        syncOpsToContacts({ createNewUsers: false });
-                        elements.uploadScreen.classList.add('hidden');
-                        elements.mainApp.style.display = 'block';
-                        render();
-                        manageAutomaticBackup();
-                    } else {
-                        elements.uploadScreen.classList.remove('hidden');
+                } else {
+                    const backupContacts = getLatestBackupContacts();
+                    if (backupContacts) {
+                        AppState.contacts = backupContacts;
+                        localStorage.setItem('contactsData', JSON.stringify(sanitizeContactsForStorage(AppState.contacts)));
+                        showNotification('Datos recuperados desde backup local', 'info');
                     }
+                }
+
+                if (AppState.contacts.length > 0) {
+                    detectDuplicates();
+                    const syncResult = syncOpsToContacts({ createNewUsers: false });
+                    if (syncResult.updatedCount > 0) saveData();
+                    elements.uploadScreen.classList.add('hidden');
+                    elements.mainApp.style.display = 'block';
+                    render();
+                    manageAutomaticBackup();
                 } else {
                     elements.uploadScreen.classList.remove('hidden');
                 }
@@ -3150,6 +3205,18 @@
                 if (e.target && e.target.name === 'dupMergeMode') {
                     AppState.duplicateMergeMode = e.target.value;
                     savePreferences();
+                }
+            });
+
+            window.addEventListener('beforeunload', () => {
+                saveData();
+                saveHistory();
+            });
+
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'hidden') {
+                    saveData();
+                    saveHistory();
                 }
             });
 
