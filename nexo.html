@@ -957,6 +957,19 @@
         .ops-tooltip .line { display: flex; justify-content: space-between; gap: 8px; margin: 4px 0; color: var(--text-secondary); }
         .ops-tooltip .line strong { color: var(--text-primary); }
         .btn.needs-upload { box-shadow: 0 0 0 2px rgba(239,68,68,.5) inset; }
+        .save-state-badge {
+            margin-left: 8px;
+            font-size: 0.78rem;
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(148,163,184,.35);
+            color: var(--text-secondary);
+            background: rgba(15,23,42,.35);
+            white-space: nowrap;
+        }
+        .save-state-badge.ok { color: #86efac; border-color: rgba(34,197,94,.35); }
+        .save-state-badge.warn { color: #fca5a5; border-color: rgba(239,68,68,.35); }
+        .save-state-badge.pending { color: #fcd34d; border-color: rgba(245,158,11,.35); }
 
         /* Historial */
         .history-list {
@@ -1182,6 +1195,7 @@
                 <button id="settingsBtn" class="btn"><i class="fas fa-cog"></i> Ajustes</button>
                 <button id="importOpsBtn" class="btn" title="Importar agent_operations.csv"><i class="fas fa-chart-line"></i> Operaciones</button>
                 <button id="deleteAllBtn" class="btn btn-danger"><i class="fas fa-trash-alt"></i> Borrar Todo</button>
+                <span id="saveStateBadge" class="save-state-badge pending">● Pendiente</span>
                 <input type="file" id="opsFileInput" accept=".csv" style="display:none;">
             </div>
         </div>
@@ -1494,7 +1508,8 @@
             resetTemplateBtn: $('#resetTemplateBtn'),
             shortcutsModal: $('#shortcutsModal'),
             userOptionsModal: $('#userOptionsModal'),
-            whatsappMessageModal: $('#whatsappMessageModal')
+            whatsappMessageModal: $('#whatsappMessageModal'),
+            saveStateBadge: $('#saveStateBadge')
         };
 
         let selectedFiles = [];
@@ -2230,6 +2245,13 @@
         }
 
         let lastSaveErrorAt = 0;
+        function setSaveState(type = 'pending', text = 'Pendiente') {
+            if (!elements.saveStateBadge) return;
+            elements.saveStateBadge.classList.remove('ok', 'warn', 'pending');
+            elements.saveStateBadge.classList.add(type);
+            elements.saveStateBadge.textContent = `● ${text}`;
+        }
+
         function tryStorageRecovery() {
             try {
                 const backupKeys = Object.keys(localStorage).filter(k => k.startsWith('bk_')).sort();
@@ -2255,12 +2277,14 @@
             try {
                 localStorage.setItem('contactsData', JSON.stringify(safeContacts));
                 manageAutomaticBackup();
+                setSaveState('ok', `Guardado ${new Date().toLocaleTimeString('es-ES')}`);
             } catch (e) {
                 console.error('Error al guardar datos:', e);
                 tryStorageRecovery();
                 try {
                     localStorage.setItem('contactsData', JSON.stringify(safeContacts));
                     manageAutomaticBackup();
+                    setSaveState('ok', `Guardado ${new Date().toLocaleTimeString('es-ES')}`);
                     return;
                 } catch (e2) {
                     console.error('Fallo de recuperación de guardado:', e2);
@@ -2269,6 +2293,7 @@
                         localStorage.removeItem('opsLastImportedAt');
                         localStorage.setItem('contactsData', JSON.stringify(safeContacts));
                         manageAutomaticBackup();
+                        setSaveState('warn', 'Guardado parcial (espacio justo)');
                         showNotification('Se guardaron contactos priorizando espacio local', 'info');
                         return;
                     } catch (e3) {
@@ -2278,6 +2303,7 @@
                 const now = Date.now();
                 if (now - lastSaveErrorAt > 5000) {
                     lastSaveErrorAt = now;
+                    setSaveState('warn', 'No se pudo guardar');
                 }
             }
         }
@@ -2304,6 +2330,7 @@
                     elements.mainApp.style.display = 'block';
                     render();
                     manageAutomaticBackup();
+                    setSaveState('ok', `Cargado ${new Date().toLocaleTimeString('es-ES')}`);
                 } else {
                     elements.uploadScreen.classList.remove('hidden');
                 }
@@ -2704,6 +2731,25 @@
             contact.lastUpdated = new Date().toISOString();
             AppState.lastEditedContact = id;
             addToHistory('Estado cambiado', `${contact.name}: ${oldStatus} → ${newStatus}`);
+            setSaveState('pending', 'Guardando cambios...');
+            saveData();
+            render();
+        };
+
+        window.applyOpsSuggestion = (id, event) => {
+            if (event) event.stopPropagation();
+            const contact = AppState.contacts.find(c => c.id === id);
+            if (!contact || !contact.ops?.suggestedStatus) return;
+            changeContactStatus(id, contact.ops.suggestedStatus);
+            showNotification(`Sugerencia aplicada a ${contact.name}`, 'success');
+        };
+
+        window.pinContact = (id, event) => {
+            if (event) event.stopPropagation();
+            const contact = AppState.contacts.find(c => c.id === id);
+            if (!contact) return;
+            contact.pinned = !contact.pinned;
+            contact.lastUpdated = new Date().toISOString();
             saveData();
             render();
         };
@@ -3316,6 +3362,7 @@
                 if (isCheckbox) {
                      if (e.target.checked) AppState.selectedContacts.add(id);
                      else AppState.selectedContacts.delete(id);
+                     setSaveState('pending', 'Selección local');
                 } else {
                      if (AppState.selectedContacts.has(id)) {
                         AppState.selectedContacts.delete(id);
