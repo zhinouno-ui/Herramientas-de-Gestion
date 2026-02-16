@@ -1663,116 +1663,207 @@
             return { text: '❄️ Frío', cls: 'cold' };
         }
 
-        function parseOperationsCsvChunked(text) {
-            return new Promise((resolve) => {
-                const lines = text.split(/\r?\n/).filter(Boolean);
-                if (!lines.length) return resolve({ byAlias: {}, importedRows: 0 });
-
-                let idx = 0;
-                if (lines[0].toLowerCase().startsWith('sep=')) idx = 1;
-                const header = parseCsvRow(lines[idx] || '');
-                idx++;
-                const h = header.map(v => normalizeUsername(v));
-                const aliasIdx = h.findIndex(v => v.includes('alias'));
-                const amountIdx = h.findIndex(v => v.includes('cantidad'));
-                const dateIdx = h.findIndex(v => v.includes('fecha'));
-                const stats = new Map();
-                const now = Date.now();
-                const chunk = 500;
-                let importedRows = 0;
-
-                const process = () => {
-                    const end = Math.min(lines.length, idx + chunk);
-                    for (; idx < end; idx++) {
-                        const row = parseCsvRow(lines[idx]);
-                        const aliasRaw = row[aliasIdx] || '';
-                        const alias = normalizeAlias(aliasRaw);
-                        if (!alias) continue;
-                        const amount = parseInt((row[amountIdx] || '0').replace(/[^\d-]/g, ''), 10);
-                        if (Number.isNaN(amount)) continue;
-                        const dateRaw = row[dateIdx] || '';
-                        const ts = Date.parse(dateRaw.replace(' ', 'T')) || Date.now();
-                        const hour = new Date(ts).getHours();
-
-                        if (!stats.has(alias)) {
-                            stats.set(alias, {
-                                alias,
-                                aliasLabel: aliasRaw.trim(),
-                                cargasCount: 0,
-                                descargasCount: 0,
-                                cargadoTotal: 0,
-                                descargadoTotal: 0,
-                                netoTotal: 0,
-                                lastAt: null,
-                                lastCargaAt: null,
-                                cargasVals: [],
-                                hourHist: Array(24).fill(0),
-                                cargas30d: 0,
-                                cargado30d: 0,
-                                cargado90d: 0,
-                                weeks30: new Set(),
-                                months90: new Set()
-                            });
+        function parseOperationsCsvChunked(text, onProgress) {
+            return new Promise((resolve, reject) => {
+                const workerScript = `
+                    const normalizeUsername = (value = '') => (value || '').toString().trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                    const normalizeAlias = (value = '') => normalizeUsername(value).replace(/\s+/g, '');
+                    const parseCsvRow = (line = '') => {
+                        const out = [];
+                        let cur = '';
+                        let inQuotes = false;
+                        for (let i = 0; i < line.length; i++) {
+                            const ch = line[i];
+                            if (ch === '"') {
+                                if (inQuotes && line[i + 1] === '"') { cur += '"'; i++; }
+                                else inQuotes = !inQuotes;
+                            } else if (ch === ',' && !inQuotes) {
+                                out.push(cur);
+                                cur = '';
+                            } else cur += ch;
                         }
-                        const st = stats.get(alias);
-                        importedRows++;
-                        st.netoTotal += amount;
-                        st.hourHist[hour] += 1;
-                        if (!st.lastAt || ts > st.lastAt) st.lastAt = ts;
+                        out.push(cur);
+                        return out.map(v => v.trim());
+                    };
+                    const median = (values) => {
+                        if (!values.length) return 0;
+                        const sorted = [...values].sort((a, b) => a - b);
+                        const mid = Math.floor(sorted.length / 2);
+                        return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+                    };
+                    const getOpsSuggestedStatus = (lastCargaAt) => {
+                        if (!lastCargaAt) return 'sin revisar';
+                        const days = (Date.now() - new Date(lastCargaAt).getTime()) / 86400000;
+                        if (days <= 2) return 'jugando';
+                        if (days <= 7) return 'contactado';
+                        if (days <= 21) return 'revisado';
+                        return 'sin revisar';
+                    };
+                    const getOpsHeatLabel = (lastCargaAt) => {
+                        if (!lastCargaAt) return { text: 'Sin datos', cls: 'cold' };
+                        const days = (Date.now() - new Date(lastCargaAt).getTime()) / 86400000;
+                        if (days <= 7) return { text: '🔥 Activo', cls: 'hot' };
+                        if (days <= 21) return { text: '⏳ Tibio', cls: '' };
+                        return { text: '❄️ Frío', cls: 'cold' };
+                    };
 
-                        const ageDays = (now - ts) / 86400000;
-                        if (amount > 0) {
-                            st.cargasCount++;
-                            st.cargadoTotal += amount;
-                            st.cargasVals.push(amount);
-                            if (!st.lastCargaAt || ts > st.lastCargaAt) st.lastCargaAt = ts;
-                            if (ageDays <= 30) {
-                                st.cargas30d++;
-                                st.cargado30d += amount;
-                                const d = new Date(ts);
-                                const wk = `${d.getFullYear()}-${Math.ceil((((d - new Date(d.getFullYear(),0,1)) / 86400000) + d.getDay() + 1) / 7)}`;
-                                st.weeks30.add(wk);
+                    self.onmessage = (event) => {
+                        try {
+                            const text = String(event.data && event.data.text || '');
+                            const lines = text.split(/\r?\n/).filter(Boolean);
+                            if (!lines.length) {
+                                self.postMessage({ type: 'done', payload: { byAlias: {}, importedRows: 0 } });
+                                return;
                             }
-                            if (ageDays <= 90) {
-                                st.cargado90d += amount;
-                                const d = new Date(ts);
-                                st.months90.add(`${d.getFullYear()}-${d.getMonth()+1}`);
+
+                            let idx = 0;
+                            if ((lines[0] || '').toLowerCase().startsWith('sep=')) idx = 1;
+                            const header = parseCsvRow(lines[idx] || '');
+                            idx++;
+                            const h = header.map(v => normalizeUsername(v));
+                            const aliasIdx = h.findIndex(v => v.includes('alias'));
+                            const amountIdx = h.findIndex(v => v.includes('cantidad'));
+                            const dateIdx = h.findIndex(v => v.includes('fecha'));
+                            const stats = new Map();
+                            const now = Date.now();
+                            const chunk = 1200;
+                            const totalRows = Math.max(0, lines.length - idx);
+                            let importedRows = 0;
+
+                            while (idx < lines.length) {
+                                const end = Math.min(lines.length, idx + chunk);
+                                for (; idx < end; idx++) {
+                                    const row = parseCsvRow(lines[idx]);
+                                    const aliasRaw = row[aliasIdx] || '';
+                                    const alias = normalizeAlias(aliasRaw);
+                                    if (!alias) continue;
+                                    const amount = parseInt((row[amountIdx] || '0').replace(/[^\d-]/g, ''), 10);
+                                    if (Number.isNaN(amount)) continue;
+                                    const dateRaw = row[dateIdx] || '';
+                                    const ts = Date.parse(dateRaw.replace(' ', 'T')) || Date.now();
+                                    const hour = new Date(ts).getHours();
+
+                                    if (!stats.has(alias)) {
+                                        stats.set(alias, {
+                                            alias,
+                                            aliasLabel: aliasRaw.trim(),
+                                            cargasCount: 0,
+                                            descargasCount: 0,
+                                            cargadoTotal: 0,
+                                            descargadoTotal: 0,
+                                            netoTotal: 0,
+                                            lastAt: null,
+                                            lastCargaAt: null,
+                                            cargasVals: [],
+                                            hourHist: Array(24).fill(0),
+                                            cargas30d: 0,
+                                            cargado30d: 0,
+                                            cargado90d: 0,
+                                            weeks30: new Set(),
+                                            months90: new Set()
+                                        });
+                                    }
+
+                                    const st = stats.get(alias);
+                                    importedRows++;
+                                    st.netoTotal += amount;
+                                    st.hourHist[hour] += 1;
+                                    if (!st.lastAt || ts > st.lastAt) st.lastAt = ts;
+
+                                    const ageDays = (now - ts) / 86400000;
+                                    if (amount > 0) {
+                                        st.cargasCount++;
+                                        st.cargadoTotal += amount;
+                                        st.cargasVals.push(amount);
+                                        if (!st.lastCargaAt || ts > st.lastCargaAt) st.lastCargaAt = ts;
+                                        if (ageDays <= 30) {
+                                            st.cargas30d++;
+                                            st.cargado30d += amount;
+                                            const d = new Date(ts);
+                                            const wk = String(d.getFullYear()) + '-' + String(Math.ceil((((d - new Date(d.getFullYear(), 0, 1)) / 86400000) + d.getDay() + 1) / 7));
+                                            st.weeks30.add(wk);
+                                        }
+                                        if (ageDays <= 90) {
+                                            st.cargado90d += amount;
+                                            const d = new Date(ts);
+                                            st.months90.add(String(d.getFullYear()) + '-' + String(d.getMonth() + 1));
+                                        }
+                                    } else {
+                                        st.descargasCount++;
+                                        st.descargadoTotal += Math.abs(amount);
+                                    }
+                                }
+
+                                self.postMessage({ type: 'progress', payload: { processed: Math.max(0, idx - (lines[0].toLowerCase().startsWith('sep=') ? 2 : 1)), total: totalRows } });
                             }
-                        } else {
-                            st.descargasCount++;
-                            st.descargadoTotal += Math.abs(amount);
+
+                            const byAlias = {};
+                            for (const [alias, st] of stats.entries()) {
+                                const topHours = st.hourHist
+                                    .map((v, i) => ({ h: i, v }))
+                                    .sort((a, b) => b.v - a.v)
+                                    .slice(0, 3)
+                                    .map(x => String(x.h).padStart(2, '0') + ':00');
+                                const avgCarga = st.cargasCount ? (st.cargadoTotal / st.cargasCount) : 0;
+                                const mediana = median(st.cargasVals);
+                                const loyalty = (st.weeks30.size >= 2 ? 1 : 0) + (st.months90.size >= 2 ? 1 : 0) + (st.cargado30d >= 50000 ? 1 : 0) + (st.cargas30d >= 8 ? 1 : 0);
+                                const recencyDays = st.lastCargaAt ? (Date.now() - st.lastCargaAt) / 86400000 : 999;
+                                const recencyScore = Math.max(0, 40 - recencyDays);
+                                const score = recencyScore + Math.min(35, st.cargas30d * 3) + Math.min(20, st.cargado90d / 10000) + (loyalty * 8);
+                                byAlias[alias] = {
+                                    ...st,
+                                    lastAt: st.lastAt ? new Date(st.lastAt).toISOString() : null,
+                                    lastCargaAt: st.lastCargaAt ? new Date(st.lastCargaAt).toISOString() : null,
+                                    avgCarga: Math.round(avgCarga),
+                                    medianCarga: Math.round(mediana),
+                                    topHours,
+                                    loyalty,
+                                    score: Math.round(score),
+                                    suggestedStatus: getOpsSuggestedStatus(st.lastCargaAt),
+                                    heat: getOpsHeatLabel(st.lastCargaAt)
+                                };
+                                delete byAlias[alias].cargasVals;
+                                delete byAlias[alias].weeks30;
+                                delete byAlias[alias].months90;
+                            }
+
+                            self.postMessage({ type: 'done', payload: { byAlias, importedRows } });
+                        } catch (err) {
+                            self.postMessage({ type: 'error', payload: String((err && err.message) || err || 'Error procesando CSV de operaciones') });
                         }
-                    }
-                    if (idx < lines.length) return setTimeout(process, 0);
+                    };
+                `;
 
-                    const byAlias = {};
-                    for (const [alias, st] of stats.entries()) {
-                        const topHours = st.hourHist.map((v, i) => ({ h: i, v })).sort((a, b) => b.v - a.v).slice(0, 3).map(x => `${String(x.h).padStart(2, '0')}:00`);
-                        const avgCarga = st.cargasCount ? (st.cargadoTotal / st.cargasCount) : 0;
-                        const mediana = median(st.cargasVals);
-                        const loyalty = (st.weeks30.size >= 2 ? 1 : 0) + (st.months90.size >= 2 ? 1 : 0) + (st.cargado30d >= 50000 ? 1 : 0) + (st.cargas30d >= 8 ? 1 : 0);
-                        const recencyDays = st.lastCargaAt ? (Date.now() - st.lastCargaAt) / 86400000 : 999;
-                        const recencyScore = Math.max(0, 40 - recencyDays);
-                        const score = recencyScore + Math.min(35, st.cargas30d * 3) + Math.min(20, st.cargado90d / 10000) + (loyalty * 8);
-                        byAlias[alias] = {
-                            ...st,
-                            lastAt: st.lastAt ? new Date(st.lastAt).toISOString() : null,
-                            lastCargaAt: st.lastCargaAt ? new Date(st.lastCargaAt).toISOString() : null,
-                            avgCarga: Math.round(avgCarga),
-                            medianCarga: Math.round(mediana),
-                            topHours,
-                            loyalty,
-                            score: Math.round(score),
-                            suggestedStatus: getOpsSuggestedStatus(st.lastCargaAt),
-                            heat: getOpsHeatLabel(st.lastCargaAt)
-                        };
-                        delete byAlias[alias].cargasVals;
-                        delete byAlias[alias].weeks30;
-                        delete byAlias[alias].months90;
+                const blob = new Blob([workerScript], { type: 'application/javascript' });
+                const workerUrl = URL.createObjectURL(blob);
+                const worker = new Worker(workerUrl);
+
+                worker.onmessage = (event) => {
+                    const { type, payload } = event.data || {};
+                    if (type === 'progress' && typeof onProgress === 'function') {
+                        onProgress(payload || {});
+                        return;
                     }
-                    resolve({ byAlias, importedRows });
+                    if (type === 'done') {
+                        worker.terminate();
+                        URL.revokeObjectURL(workerUrl);
+                        resolve(payload || { byAlias: {}, importedRows: 0 });
+                        return;
+                    }
+                    if (type === 'error') {
+                        worker.terminate();
+                        URL.revokeObjectURL(workerUrl);
+                        reject(new Error(payload || 'Error en worker de operaciones'));
+                    }
                 };
-                process();
+
+                worker.onerror = (err) => {
+                    worker.terminate();
+                    URL.revokeObjectURL(workerUrl);
+                    reject(err);
+                };
+
+                worker.postMessage({ text: String(text || '') });
             });
         }
 
@@ -2257,15 +2348,26 @@
             if (!file) return;
             const reader = new FileReader();
             reader.onload = async (e) => {
-                showNotification('Procesando operaciones...', 'info');
-                const { byAlias, importedRows } = await parseOperationsCsvChunked(String(e.target.result || ''));
-                mergeOpsProfiles(byAlias);
-                syncOpsToContacts({ createNewUsers: true });
-                detectDuplicates();
-                saveData();
-                addToHistory('Operaciones importadas', `${importedRows} filas procesadas`);
-                render();
-                showNotification(`✅ Operaciones actualizadas (${importedRows} filas)`, 'success');
+                try {
+                    showNotification('Procesando operaciones...', 'info');
+                    setSaveState('pending', 'Procesando operaciones 0%');
+                    const { byAlias, importedRows } = await parseOperationsCsvChunked(String(e.target.result || ''), ({ processed = 0, total = 0 }) => {
+                        const pct = total > 0 ? Math.min(99, Math.round((processed / total) * 100)) : 0;
+                        setSaveState('pending', `Procesando operaciones ${pct}%`);
+                    });
+                    mergeOpsProfiles(byAlias);
+                    syncOpsToContacts({ createNewUsers: true });
+                    detectDuplicates();
+                    saveData();
+                    addToHistory('Operaciones importadas', `${importedRows} filas procesadas`);
+                    render();
+                    setSaveState('ok', `Operaciones listas ${new Date().toLocaleTimeString('es-ES')}`);
+                    showNotification(`✅ Operaciones actualizadas (${importedRows} filas)`, 'success');
+                } catch (err) {
+                    console.error('Error importando operaciones:', err);
+                    setSaveState('warn', 'Error procesando operaciones');
+                    showNotification('Error al importar operaciones', 'error');
+                }
             };
             reader.readAsText(file);
         }
@@ -2699,13 +2801,22 @@
         };
 
         window.rebalanceShift = (shift) => {
-            const unreviewed = AppState.contacts.filter(c => c.status === 'sin revisar');
             const seq = ['tm', 'tt', 'tn'];
-            let i = 0;
-            unreviewed.forEach(c => { c.assignedShift = seq[i % 3]; i++; });
+            if (shift === 'all') {
+                const unreviewed = AppState.contacts.filter(c => c.status === 'sin revisar');
+                let i = 0;
+                unreviewed.forEach(c => { c.assignedShift = seq[i % 3]; i++; });
+                renderShiftsView();
+                saveData();
+                showNotification('Turnos rebalanceados (global)', 'success');
+                return;
+            }
+
+            const shiftContacts = AppState.contacts.filter(c => c.assignedShift === shift && c.status === 'sin revisar');
+            shiftContacts.forEach(c => { c.shiftReviewed = false; });
             renderShiftsView();
             saveData();
-            showNotification('Turnos rebalanceados', 'success');
+            showNotification(`Turno ${String(shift).toUpperCase()} rebalanceado`, 'success');
         };
 
         function buildShiftQueue(shift) {
