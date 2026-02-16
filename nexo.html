@@ -192,10 +192,12 @@
 
         .view-actions {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             align-items: center;
             flex-wrap: wrap;
         }
+        .view-actions .btn { padding: 8px 12px; font-size: 0.84rem; border-radius: 10px; }
+        .view-actions .btn i { font-size: 0.9rem; }
 
         .btn {
             background: var(--bg-card);
@@ -1131,16 +1133,23 @@
             .cards-grid { grid-template-columns: 1fr; }
         }
     
-        .shifts-view { display:none; gap:16px; grid-template-columns: repeat(auto-fit,minmax(280px,1fr)); }
-        .shift-card { background: var(--bg-secondary); border:1px solid rgba(148,163,184,.2); border-radius:14px; padding:14px; }
-        .shift-card h3 { margin:0 0 10px 0; display:flex; justify-content:space-between; align-items:center; }
+        .shifts-view { display:none; gap:14px; grid-template-columns: repeat(auto-fit,minmax(280px,1fr)); }
+        .shift-card { background: linear-gradient(180deg, rgba(30,41,59,.95), rgba(30,41,59,.82)); border:1px solid rgba(148,163,184,.2); border-radius:14px; padding:14px; }
+        .shift-card h3 { margin:0 0 8px 0; display:flex; justify-content:space-between; align-items:center; font-size:1.05rem; }
+        .shift-card-sub { color: var(--text-secondary); font-size: .8rem; margin-bottom: 8px; }
         .shift-progress { height:8px; border-radius:999px; background:rgba(148,163,184,.2); overflow:hidden; margin:8px 0; }
         .shift-progress > span { display:block; height:100%; background:linear-gradient(90deg,#34d399,#3b82f6); }
-        .shift-stats { display:flex; gap:10px; font-size:.82rem; color:var(--text-secondary); flex-wrap:wrap; }
+        .shift-stats { display:flex; gap:10px; font-size:.8rem; color:var(--text-secondary); flex-wrap:wrap; }
         .review-quick { margin-top:16px; background:var(--bg-secondary); border:1px solid rgba(148,163,184,.2); border-radius:14px; padding:16px; display:none; }
         .review-actions { display:grid; grid-template-columns: repeat(3,minmax(120px,1fr)); gap:8px; margin-top:12px; }
         .shift-controls { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:8px; }
+        .shift-controls .btn { padding: 8px 10px; font-size: .84rem; }
         .shift-tag { font-size:.72rem; padding:2px 8px; border-radius:999px; border:1px solid rgba(148,163,184,.35); color:#cbd5e1; }
+        .strict-mode-card { grid-column: 1 / -1; border-style: dashed; }
+        .strict-mode-title { font-weight:700; margin-bottom:4px; }
+        .strict-mode-desc { color: var(--text-secondary); font-size: .85rem; line-height: 1.35; margin-bottom: 10px; }
+        .strict-toggle { display:flex; align-items:center; gap:10px; background:rgba(15,23,42,.35); border:1px solid rgba(148,163,184,.3); border-radius:10px; padding:10px; }
+        .strict-toggle input { width:18px; height:18px; accent-color:#34d399; }
 
     </style>
 </head>
@@ -2472,15 +2481,16 @@
         function renderShiftsView() {
             assignShifts();
             const shifts = ['tm', 'tt', 'tn'];
-            elements.shiftsView.innerHTML = shifts.map(shift => {
+            const cards = shifts.map(shift => {
                 const st = getShiftStats(shift);
                 const data = AppState.shiftMode[shift];
                 return `
                 <div class="shift-card">
                     <h3>
                         <span>${shift.toUpperCase()}</span>
-                        <input class="filter-select" style="max-width:140px;" value="${data.name}" onchange="renameShift('${shift}', this.value)">
+                        <input class="filter-select" style="max-width:130px;" value="${data.name}" onchange="renameShift('${shift}', this.value)">
                     </h3>
+                    <div class="shift-card-sub">Operador y cola de revisión para este turno.</div>
                     <div class="shift-stats">
                         <span>Asignados: <strong>${st.total}</strong></span>
                         <span>Revisados: <strong>${st.revisados}</strong></span>
@@ -2492,7 +2502,20 @@
                         <button class="btn" onclick="rebalanceShift('${shift}')"><i class="fas fa-random"></i> Rebalancear</button>
                     </div>
                 </div>`;
-            }).join('') + `<div class="shift-card"><label><input type="checkbox" ${AppState.turnosStrictProgress ? 'checked' : ''} onchange="toggleStrictShiftProgress(this.checked)"> Progreso estricto (solo cuenta revisión en modo turnos)</label></div>`;
+            }).join('');
+
+            const strictCard = `
+                <div class="shift-card strict-mode-card">
+                    <div class="strict-mode-title">Modo estricto de progreso</div>
+                    <div class="strict-mode-desc">Si está activo, el progreso de turnos solo sube cuando revisás desde <strong>Turnos → Revisión rápida</strong>.
+                    Así evitás que cambios hechos en Tarjetas/Lista alteren el ranking del operador.</div>
+                    <label class="strict-toggle">
+                        <input type="checkbox" ${AppState.turnosStrictProgress ? 'checked' : ''} onchange="toggleStrictShiftProgress(this.checked)">
+                        <span>${AppState.turnosStrictProgress ? 'Activo: protegido contra cruces de turnos' : 'Desactivado: cualquier cambio de estado suma al turno asignado'}</span>
+                    </label>
+                </div>`;
+
+            elements.shiftsView.innerHTML = cards + strictCard;
             elements.shiftsView.style.display = 'grid';
         }
 
@@ -2917,24 +2940,6 @@
             AppState.lastEditedContact = id;
             addToHistory('Estado cambiado', `${contact.name}: ${oldStatus} → ${newStatus}`);
             setSaveState('pending', 'Guardando cambios...');
-            saveData();
-            render();
-        };
-
-        window.applyOpsSuggestion = (id, event) => {
-            if (event) event.stopPropagation();
-            const contact = AppState.contacts.find(c => c.id === id);
-            if (!contact || !contact.ops?.suggestedStatus) return;
-            changeContactStatus(id, contact.ops.suggestedStatus);
-            showNotification(`Sugerencia aplicada a ${contact.name}`, 'success');
-        };
-
-        window.pinContact = (id, event) => {
-            if (event) event.stopPropagation();
-            const contact = AppState.contacts.find(c => c.id === id);
-            if (!contact) return;
-            contact.pinned = !contact.pinned;
-            contact.lastUpdated = new Date().toISOString();
             saveData();
             render();
         };
