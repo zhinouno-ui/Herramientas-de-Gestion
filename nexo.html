@@ -1544,7 +1544,10 @@
             turnosStrictProgress: true,
             activeShift: null,
             editingContactId: null,
-            lastSelectedContactId: null
+            lastSelectedContactId: null,
+            autoDownloadBackupIntervalMs: 30 * 60 * 1000,
+            lastAutoDownloadAt: 0,
+            lastAutoBackupSignature: ''
         };
 
         const elements = {
@@ -2567,6 +2570,46 @@
             }
         }
 
+        function computeAutoBackupSignature() {
+            if (!AppState.contacts || AppState.contacts.length === 0) return 'empty';
+            const first = AppState.contacts[0];
+            const last = AppState.contacts[AppState.contacts.length - 1];
+            return [
+                AppState.contacts.length,
+                first?.id || '-',
+                first?.lastUpdated || '-',
+                last?.id || '-',
+                last?.lastUpdated || '-'
+            ].join('|');
+        }
+
+        function maybeDownloadAutomaticBackup(reason = 'interval') {
+            if (!AppState.contacts || AppState.contacts.length === 0) return;
+            const now = Date.now();
+            if (now - AppState.lastAutoDownloadAt < AppState.autoDownloadBackupIntervalMs) return;
+
+            const signature = computeAutoBackupSignature();
+            if (signature === AppState.lastAutoBackupSignature && reason !== 'manual-force') return;
+
+            const stamp = new Date(now).toISOString().replace(/[:T]/g, '-').slice(0, 16);
+            const fileName = `nexo_backup_auto_${stamp}.json`;
+            const payload = {
+                exportedAt: new Date(now).toISOString(),
+                reason,
+                contactsCount: AppState.contacts.length,
+                contacts: sanitizeContactsForStorage(AppState.contacts)
+            };
+            downloadFile(JSON.stringify(payload, null, 2), fileName, 'application/json;charset=utf-8;');
+
+            AppState.lastAutoDownloadAt = now;
+            AppState.lastAutoBackupSignature = signature;
+            try {
+                localStorage.setItem('lastAutoBackupDownloadAt', String(now));
+                localStorage.setItem('lastAutoBackupSignature', signature);
+            } catch (_) {}
+            showNotification(`📦 Backup auto descargado (${AppState.contacts.length} contactos)`, 'info');
+        }
+
         let lastSaveErrorAt = 0;
         function setSaveState(type = 'pending', text = 'Pendiente') {
             if (!elements.saveStateBadge) return;
@@ -2600,6 +2643,7 @@
             try {
                 localStorage.setItem('contactsData', JSON.stringify(safeContacts));
                 manageAutomaticBackup();
+                maybeDownloadAutomaticBackup('save');
                 setSaveState('ok', `Guardado ${new Date().toLocaleTimeString('es-ES')}`);
             } catch (e) {
                 console.error('Error al guardar datos:', e);
@@ -2607,6 +2651,7 @@
                 try {
                     localStorage.setItem('contactsData', JSON.stringify(safeContacts));
                     manageAutomaticBackup();
+                    maybeDownloadAutomaticBackup('save-recovery');
                     setSaveState('ok', `Guardado ${new Date().toLocaleTimeString('es-ES')}`);
                     return;
                 } catch (e2) {
@@ -2616,6 +2661,7 @@
                         localStorage.removeItem('opsLastImportedAt');
                         localStorage.setItem('contactsData', JSON.stringify(safeContacts));
                         manageAutomaticBackup();
+                        maybeDownloadAutomaticBackup('save-critical-space');
                         setSaveState('warn', 'Guardado parcial (espacio justo)');
                         showNotification('Se guardaron contactos priorizando espacio local', 'info');
                         return;
@@ -3423,6 +3469,10 @@
                 if (tpl) AppState.whatsappTemplate = tpl;
                 const mode = localStorage.getItem('duplicateMergeMode');
                 if (mode) AppState.duplicateMergeMode = mode;
+                const lastAutoDl = parseInt(localStorage.getItem('lastAutoBackupDownloadAt') || '0', 10);
+                if (!Number.isNaN(lastAutoDl) && lastAutoDl > 0) AppState.lastAutoDownloadAt = lastAutoDl;
+                const sig = localStorage.getItem('lastAutoBackupSignature') || '';
+                if (sig) AppState.lastAutoBackupSignature = sig;
             } catch (e) {
                 console.error('Error al cargar preferencias:', e);
             }
@@ -4526,6 +4576,10 @@
                 loadData();
                 updateExportUrgencyBadge();
                 setInterval(() => { if (AppState.contacts.length) render(); else updateExportUrgencyBadge(); }, 300000);
+                setInterval(() => {
+                    if (!AppState.contacts.length) return;
+                    maybeDownloadAutomaticBackup('interval');
+                }, 60000);
             } catch (e) {
                 console.error("Error fatal en la inicialización:", e);
                 document.body.innerHTML = "<h1>Error Crítico</h1><p>La aplicación no pudo iniciarse. Por favor, borra la caché y los datos del sitio e inténtalo de nuevo.</p>";
