@@ -931,6 +931,53 @@
         .notification.error i { color: var(--accent-danger); }
         .notification.info i { color: var(--accent-primary); }
 
+        .global-announcement {
+            position: fixed;
+            top: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3200;
+            min-width: 320px;
+            max-width: min(760px, 92vw);
+            background: rgba(15,23,42,.95);
+            border: 1px solid rgba(148,163,184,.35);
+            border-radius: 12px;
+            padding: 10px 14px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 12px 30px rgba(2, 6, 23, .45);
+            animation: announceIn .25s ease-out;
+        }
+        .global-announcement.show { display: flex; }
+        .global-announcement.info { border-color: rgba(59,130,246,.45); }
+        .global-announcement.success { border-color: rgba(34,197,94,.45); }
+        .global-announcement.warn { border-color: rgba(239,68,68,.45); }
+        .global-announcement .announce-dot {
+            width: 9px; height: 9px; border-radius: 50%; background: #60a5fa;
+            animation: pulseDot 1.6s ease-in-out infinite;
+        }
+        .global-announcement.success .announce-dot { background: #34d399; }
+        .global-announcement.warn .announce-dot { background: #f87171; }
+        .global-announcement .announce-text { font-size: .86rem; color: var(--text-primary); }
+
+        @keyframes announceIn {
+            from { transform: translateX(-50%) translateY(-10px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+        @keyframes pulseDot {
+            0%, 100% { transform: scale(1); opacity: .9; }
+            50% { transform: scale(1.35); opacity: .5; }
+        }
+
+        .contact-card, .list-item {
+            animation: fadeInItem .2s ease-out;
+        }
+        @keyframes fadeInItem {
+            from { opacity: .0; transform: translateY(3px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         .ops-chip-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
         .ops-chip {
             font-size: 0.72rem;
@@ -1193,6 +1240,10 @@
     </div>
 
     <div class="container" id="mainApp" style="display: none;">
+        <div id="globalAnnouncement" class="global-announcement info" aria-live="polite">
+            <span class="announce-dot"></span>
+            <span class="announce-text">Sistema listo</span>
+        </div>
         <!-- Barra de navegación -->
         <div class="navbar">
             <div class="stats">
@@ -1598,7 +1649,8 @@
             shortcutsModal: $('#shortcutsModal'),
             userOptionsModal: $('#userOptionsModal'),
             whatsappMessageModal: $('#whatsappMessageModal'),
-            saveStateBadge: $('#saveStateBadge')
+            saveStateBadge: $('#saveStateBadge'),
+            globalAnnouncement: $('#globalAnnouncement')
         };
 
         let selectedFiles = [];
@@ -2483,6 +2535,7 @@
             reader.onload = async (e) => {
                 try {
                     showNotification('Procesando operaciones...', 'info');
+                    announceGeneral('Procesando archivo de operaciones…', 'info');
                     setSaveState('pending', 'Procesando operaciones 0%');
                     const { byAlias, importedRows } = await parseOperationsCsvChunked(String(e.target.result || ''), ({ processed = 0, total = 0 }) => {
                         const pct = total > 0 ? Math.min(99, Math.round((processed / total) * 100)) : 0;
@@ -2496,10 +2549,12 @@
                     render();
                     setSaveState('ok', `Operaciones listas ${new Date().toLocaleTimeString('es-ES')}`);
                     showNotification(`✅ Operaciones actualizadas (${importedRows} filas)`, 'success');
+                    announceGeneral(`Operaciones importadas: ${importedRows} filas`, 'success');
                 } catch (err) {
                     console.error('Error importando operaciones:', err);
                     setSaveState('warn', 'Error procesando operaciones');
                     showNotification('Error al importar operaciones', 'error');
+                    announceGeneral('No se pudo procesar operaciones. Se aplicó modo seguro.', 'warn', 4500);
                     setTimeout(() => setSaveState('pending', 'Pendiente'), 5000);
                 }
             };
@@ -2608,6 +2663,7 @@
                 localStorage.setItem('lastAutoBackupSignature', signature);
             } catch (_) {}
             showNotification(`📦 Backup auto descargado (${AppState.contacts.length} contactos)`, 'info');
+            announceGeneral(`Backup automático descargado (${AppState.contacts.length} contactos)`, 'info');
         }
 
         let lastSaveErrorAt = 0;
@@ -2688,6 +2744,7 @@
                         AppState.contacts = backupContacts;
                         localStorage.setItem('contactsData', JSON.stringify(sanitizeContactsForStorage(AppState.contacts)));
                         showNotification('Datos recuperados desde backup local', 'info');
+                        announceGeneral('Datos recuperados desde backup local', 'warn', 4200);
                     }
                 }
 
@@ -2701,6 +2758,7 @@
                     render();
                     manageAutomaticBackup();
                     setSaveState('ok', `Cargado ${new Date().toLocaleTimeString('es-ES')}`);
+                    announceGeneral(`Base cargada: ${AppState.contacts.length} contactos`, 'success');
                 } else {
                     elements.uploadScreen.classList.remove('hidden');
                 }
@@ -2717,6 +2775,20 @@
             notification.innerHTML = `<i class="fas ${icons[type]}"></i><span>${message}</span>`;
             document.body.appendChild(notification);
             setTimeout(() => notification.remove(), 4000);
+        }
+
+        let announceTimer = null;
+        function announceGeneral(message, type = 'info', timeoutMs = 3200) {
+            if (!elements.globalAnnouncement) return;
+            elements.globalAnnouncement.classList.remove('info', 'success', 'warn', 'show');
+            elements.globalAnnouncement.classList.add(type);
+            const textEl = elements.globalAnnouncement.querySelector('.announce-text');
+            if (textEl) textEl.textContent = message;
+            elements.globalAnnouncement.classList.add('show');
+            if (announceTimer) clearTimeout(announceTimer);
+            announceTimer = setTimeout(() => {
+                elements.globalAnnouncement && elements.globalAnnouncement.classList.remove('show');
+            }, timeoutMs);
         }
 
         function normalizeSearchText(value) {
