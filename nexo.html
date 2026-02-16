@@ -1254,7 +1254,7 @@
         <!-- Barra de búsqueda y filtros -->
         <div class="search-bar" style="position: relative;">
             <i class="fas fa-search" style="position: absolute; left: 35px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); pointer-events: none; z-index: 1;"></i>
-            <input type="text" id="searchInput" class="search-input" placeholder="Buscar por nombre, teléfono o origen..." style="padding-left: 40px;">
+            <input type="text" id="searchInput" class="search-input" placeholder="Buscar... (ej: pepe, 11, estado:jugando, turno:tm, origen:csv)" style="padding-left: 40px;">
             <div class="filter-group">
                 <select id="statusFilter" class="filter-select">
                     <option value="">Todos los estados</option>
@@ -1273,6 +1273,20 @@
                     <option value="matched">Con movimiento</option>
                     <option value="nomatch">Sin movimiento</option>
                 </select>
+                <select id="shiftFilter" class="filter-select">
+                    <option value="">Todos los turnos</option>
+                    <option value="tm">Turno TM</option>
+                    <option value="tt">Turno TT</option>
+                    <option value="tn">Turno TN</option>
+                </select>
+                <select id="phoneFilter" class="filter-select">
+                    <option value="all">Teléfono: todos</option>
+                    <option value="with">Con teléfono</option>
+                    <option value="without">Sin teléfono</option>
+                </select>
+                <button id="clearFiltersBtn" class="btn" title="Limpiar búsqueda y filtros">
+                    <i class="fas fa-filter-circle-xmark"></i> Limpiar
+                </button>
                 <button id="undoBtn" class="btn" title="Volver al último contacto editado (Ctrl+Z)">
                     <i class="fas fa-undo"></i> Volver
                 </button>
@@ -1507,6 +1521,8 @@
             opsProfiles: {},
             opsLastImportedAt: null,
             opsFilter: 'all',
+            shiftFilter: '',
+            phoneFilter: 'all',
             shiftMode: {
                 tm: { name: 'TM', queue: [], cursor: 0, stack: [] },
                 tt: { name: 'TT', queue: [], cursor: 0, stack: [] },
@@ -1534,6 +1550,9 @@
             statusFilter: $('#statusFilter'),
             originFilter: $('#originFilter'),
             opsSegmentFilter: $('#opsSegmentFilter'),
+            shiftFilter: $('#shiftFilter'),
+            phoneFilter: $('#phoneFilter'),
+            clearFiltersBtn: $('#clearFiltersBtn'),
             viewCardsBtn: $('#viewCardsBtn'),
             viewListBtn: $('#viewListBtn'),
             viewShiftsBtn: $('#viewShiftsBtn'),
@@ -2235,7 +2254,10 @@
         }
 
         function sanitizeContactsForStorage(contacts = []) {
-            return contacts.map(({ ops, ...rest }) => ({ ...rest }));
+            return contacts.map(contact => {
+                const { ops, _nameKey, _searchKey, _derivedSource, ...rest } = contact;
+                return { ...rest };
+            });
         }
 
         function getLatestBackupContacts() {
@@ -2401,21 +2423,90 @@
             setTimeout(() => notification.remove(), 4000);
         }
 
+        function normalizeSearchText(value) {
+            return (value || '')
+                .toString()
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[̀-ͯ]/g, '')
+                .trim();
+        }
+
+        function parseSearchQuery(rawQuery) {
+            const normalized = normalizeSearchText(rawQuery);
+            const tokens = normalized.split(/\s+/).filter(Boolean);
+            const parsed = { terms: [], status: '', origin: '', shift: '' };
+
+            tokens.forEach(token => {
+                if (token.startsWith('estado:') || token.startsWith('status:')) {
+                    parsed.status = token.split(':').slice(1).join(' ').trim();
+                    return;
+                }
+                if (token.startsWith('origen:') || token.startsWith('origin:')) {
+                    parsed.origin = token.split(':').slice(1).join(' ').trim();
+                    return;
+                }
+                if (token.startsWith('turno:') || token.startsWith('shift:')) {
+                    parsed.shift = token.split(':').slice(1).join(' ').trim();
+                    return;
+                }
+                parsed.terms.push(token);
+            });
+
+            return parsed;
+        }
+
+        function buildContactDerivedFields(contact) {
+            if (!contact) return;
+            const source = [
+                contact.name,
+                contact.phone,
+                contact.origin,
+                contact.status,
+                contact.alias,
+                contact.assignedShift,
+                contact.ops?.heat,
+                contact.ops?.suggestedStatus
+            ].map(v => v || '').join('|');
+
+            if (contact._derivedSource === source) return;
+
+            contact._nameKey = normalizeSearchText(contact.name || '');
+            contact._searchKey = normalizeSearchText([
+                contact.name,
+                contact.phone,
+                contact.origin,
+                contact.status,
+                contact.alias,
+                contact.assignedShift,
+                contact.ops?.heat,
+                contact.ops?.suggestedStatus
+            ].filter(Boolean).join(' | '));
+            contact._derivedSource = source;
+        }
+
         function applyFilters() {
+            const parsedQuery = parseSearchQuery(AppState.searchTerm);
+            const selectedStatus = AppState.statusFilter || parsedQuery.status;
+            const selectedOrigin = AppState.originFilter || parsedQuery.origin;
+            const selectedShift = AppState.shiftFilter || parsedQuery.shift;
+
             AppState.filteredContacts = AppState.contacts.filter(contact => {
-                const searchTerm = AppState.searchTerm.toLowerCase();
-                const matchesSearch = !searchTerm || 
-                    (contact.name && contact.name.toLowerCase().includes(searchTerm)) ||
-                    (contact.phone && contact.phone.includes(searchTerm)) ||
-                    (contact.origin && contact.origin.toLowerCase().includes(searchTerm));
-                
-                const matchesStatus = !AppState.statusFilter || contact.status === AppState.statusFilter;
-                const matchesOrigin = !AppState.originFilter || contact.origin === AppState.originFilter || (AppState.originFilter === 'Operaciones panel' && !!contact.ops);
+                buildContactDerivedFields(contact);
+                const matchesSearch = parsedQuery.terms.length === 0 || parsedQuery.terms.every(term => contact._searchKey.includes(term));
+                const matchesStatus = !selectedStatus || normalizeSearchText(contact.status) === selectedStatus;
+                const matchesOrigin = !selectedOrigin || normalizeSearchText(contact.origin) === selectedOrigin || (normalizeSearchText(selectedOrigin) === 'operaciones panel' && !!contact.ops);
+                const matchesShift = !selectedShift || normalizeSearchText(contact.assignedShift) === selectedShift;
+
+                let matchesPhone = true;
+                if (AppState.phoneFilter === 'with') matchesPhone = !!(contact.phone || '').trim();
+                else if (AppState.phoneFilter === 'without') matchesPhone = !(contact.phone || '').trim();
+
                 let matchesOps = true;
                 if (AppState.opsFilter === 'matched') matchesOps = !!contact.ops;
                 else if (AppState.opsFilter === 'nomatch') matchesOps = !contact.ops;
-                
-                return matchesSearch && matchesStatus && matchesOrigin && matchesOps;
+
+                return matchesSearch && matchesStatus && matchesOrigin && matchesShift && matchesPhone && matchesOps;
             });
 
             if (AppState.opsFilter === 'top50' || AppState.opsFilter === 'top100') {
@@ -2428,32 +2519,51 @@
         }
 
         function updateStats() {
-            $('#totalCount').textContent = AppState.contacts.length;
-            $('#unreviewedCount').textContent = AppState.contacts.filter(c => c.status === 'sin revisar').length;
-            $('#contactadoCount').textContent = AppState.contacts.filter(c => c.status === 'contactado').length;
+            const totals = {
+                total: AppState.contacts.length,
+                unreviewed: 0,
+                contactado: 0,
+                revisado: 0,
+                jugando: 0,
+                sinWsp: 0,
+                noInteresado: 0,
+                reviewed: 0
+            };
+            const originSet = new Set();
+
+            AppState.contacts.forEach(c => {
+                if (c.origin) originSet.add(c.origin);
+                if (c.status !== 'sin revisar') totals.reviewed++;
+                if (c.status === 'sin revisar') totals.unreviewed++;
+                else if (c.status === 'contactado') totals.contactado++;
+                else if (c.status === 'revisado') totals.revisado++;
+                else if (c.status === 'jugando') totals.jugando++;
+                else if (c.status === 'sin wsp') totals.sinWsp++;
+                else if (c.status === 'no interesado') totals.noInteresado++;
+            });
+
+            $('#totalCount').textContent = totals.total;
+            $('#unreviewedCount').textContent = totals.unreviewed;
+            $('#contactadoCount').textContent = totals.contactado;
             const revisadoCountEl = $('#revisadoCount');
-            if (revisadoCountEl) revisadoCountEl.textContent = AppState.contacts.filter(c => c.status === 'revisado').length;
-            $('#jugandoCount').textContent = AppState.contacts.filter(c => c.status === 'jugando').length;
-            $('#sinWspCount').textContent = AppState.contacts.filter(c => c.status === 'sin wsp').length;
-            $('#noInteresadoCount').textContent = AppState.contacts.filter(c => c.status === 'no interesado').length;
-            
-            const duplicateGroups = detectDuplicates();
-            const totalDuplicateEntries = duplicateGroups.reduce((sum, group) => sum + group.contacts.length, 0);
+            if (revisadoCountEl) revisadoCountEl.textContent = totals.revisado;
+            $('#jugandoCount').textContent = totals.jugando;
+            $('#sinWspCount').textContent = totals.sinWsp;
+            $('#noInteresadoCount').textContent = totals.noInteresado;
+
+            const totalDuplicateEntries = (AppState.duplicates || []).reduce((sum, group) => sum + group.contacts.length, 0);
             $('#duplicatesCount').textContent = totalDuplicateEntries;
-            
-            // Actualizar barra de progreso
-            const totalContacts = AppState.contacts.length;
-            const reviewedContacts = AppState.contacts.filter(c => c.status !== 'sin revisar').length;
+
             updateExportUrgencyBadge();
-            const progressPercentage = totalContacts > 0 ? Math.round((reviewedContacts / totalContacts) * 100) : 0;
-            
-            $('#reviewedCount').textContent = reviewedContacts;
-            $('#totalContactsCount').textContent = totalContacts;
+            const progressPercentage = totals.total > 0 ? Math.round((totals.reviewed / totals.total) * 100) : 0;
+
+            $('#reviewedCount').textContent = totals.reviewed;
+            $('#totalContactsCount').textContent = totals.total;
             $('#progressPercentage').textContent = `${progressPercentage}%`;
             $('#progressFill').style.width = `${progressPercentage}%`;
-            
-            const uniqueOrigins = [...new Set(AppState.contacts.map(c => c.origin).filter(Boolean))].sort();
-            elements.originFilter.innerHTML = '<option value="">Todos los orígenes</option>' + 
+
+            const uniqueOrigins = [...originSet].sort();
+            elements.originFilter.innerHTML = '<option value="">Todos los orígenes</option>' +
                 uniqueOrigins.map(o => `<option value="${o}">${o}</option>`).join('');
             elements.originFilter.value = AppState.originFilter;
         }
@@ -3153,7 +3263,9 @@
             AppState.filteredContacts.sort((a, b) => {
                 if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1;
                 if (AppState.opsFilter === 'top50' || AppState.opsFilter === 'top100') return (b.ops?.score || 0) - (a.ops?.score || 0);
-                return normalizeUsername(a.name).localeCompare(normalizeUsername(b.name));
+                buildContactDerivedFields(a);
+                buildContactDerivedFields(b);
+                return (a._nameKey || '').localeCompare(b._nameKey || '');
             });
             updateStats();
             elements.pagination.style.display = 'flex';
@@ -3375,8 +3487,10 @@
         }
 
         function closeAllOverlays() {
+            const addSingleWasOpen = $('#addSingleModal')?.classList.contains('active');
             $$('.modal.active').forEach(modal => modal.classList.remove('active'));
             $$('.card-status-menu').forEach(menu => menu.remove());
+            if (addSingleWasOpen) resetAddSingleModalState();
         }
 
         function openAddSingleModalForCreate() {
@@ -3405,6 +3519,12 @@
                 focusEl.focus();
                 focusEl.select();
             }
+        }
+
+        function resetAddSingleModalState() {
+            AppState.editingContactId = null;
+            $('#addSingleModal .modal-header').innerHTML = '<i class="fas fa-user-plus"></i> Agregar Contacto';
+            $('#confirmAddSingle').innerHTML = '<i class="fas fa-check"></i> Agregar';
         }
 
         function setupEventListeners() {
@@ -3551,6 +3671,40 @@
                 elements.opsSegmentFilter.onchange = (e) => {
                     AppState.opsFilter = e.target.value;
                     AppState.currentPage = 1;
+                    render();
+                };
+            }
+            if (elements.shiftFilter) {
+                elements.shiftFilter.onchange = (e) => {
+                    AppState.shiftFilter = e.target.value;
+                    AppState.currentPage = 1;
+                    render();
+                };
+            }
+
+            if (elements.phoneFilter) {
+                elements.phoneFilter.onchange = (e) => {
+                    AppState.phoneFilter = e.target.value;
+                    AppState.currentPage = 1;
+                    render();
+                };
+            }
+
+            if (elements.clearFiltersBtn) {
+                elements.clearFiltersBtn.onclick = () => {
+                    AppState.searchTerm = '';
+                    AppState.statusFilter = '';
+                    AppState.originFilter = '';
+                    AppState.opsFilter = 'all';
+                    AppState.shiftFilter = '';
+                    AppState.phoneFilter = 'all';
+                    AppState.currentPage = 1;
+                    elements.searchInput.value = '';
+                    elements.statusFilter.value = '';
+                    elements.originFilter.value = '';
+                    if (elements.opsSegmentFilter) elements.opsSegmentFilter.value = 'all';
+                    if (elements.shiftFilter) elements.shiftFilter.value = '';
+                    if (elements.phoneFilter) elements.phoneFilter.value = 'all';
                     render();
                 };
             }
@@ -3779,7 +3933,7 @@
             };
 
             $('#cancelAddSingle').onclick = () => {
-                AppState.editingContactId = null;
+                resetAddSingleModalState();
                 $('#addSingleModal').classList.remove('active');
             };
 
@@ -3798,7 +3952,7 @@
                     const contact = AppState.contacts.find(c => c.id === AppState.editingContactId);
                     if (!contact) {
                         showNotification('No se encontró el contacto a editar', 'error');
-                        AppState.editingContactId = null;
+                        resetAddSingleModalState();
                         $('#addSingleModal').classList.remove('active');
                         return;
                     }
@@ -3817,7 +3971,7 @@
                     detectDuplicates();
                     saveData();
                     render();
-                    AppState.editingContactId = null;
+                    resetAddSingleModalState();
                     $('#addSingleModal').classList.remove('active');
                     showNotification('✅ Contacto actualizado', 'success');
                     return;
@@ -3838,7 +3992,7 @@
                 detectDuplicates();
                 saveData();
                 render();
-                AppState.editingContactId = null;
+                resetAddSingleModalState();
                 $('#addSingleModal').classList.remove('active');
                 showNotification('✅ Contacto agregado', 'success');
             };
