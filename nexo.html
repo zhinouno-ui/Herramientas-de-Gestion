@@ -1131,6 +1131,9 @@
                 width: 100%;
             }
             .cards-grid { grid-template-columns: 1fr; }
+            .quick-layout { grid-template-columns: 1fr; }
+            .review-actions { grid-template-columns: 1fr; }
+            .quick-topbar { flex-direction: column; align-items: flex-start; }
         }
     
         .shifts-view { display:none; gap:14px; grid-template-columns: repeat(auto-fit,minmax(280px,1fr)); }
@@ -1140,10 +1143,22 @@
         .shift-progress { height:8px; border-radius:999px; background:rgba(148,163,184,.2); overflow:hidden; margin:8px 0; }
         .shift-progress > span { display:block; height:100%; background:linear-gradient(90deg,#34d399,#3b82f6); }
         .shift-stats { display:flex; gap:10px; font-size:.8rem; color:var(--text-secondary); flex-wrap:wrap; }
-        .review-quick { margin-top:16px; background:var(--bg-secondary); border:1px solid rgba(148,163,184,.2); border-radius:14px; padding:16px; display:none; }
-        .review-actions { display:grid; grid-template-columns: repeat(3,minmax(120px,1fr)); gap:8px; margin-top:12px; }
-        .shift-controls { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:8px; }
-        .shift-controls .btn { padding: 8px 10px; font-size: .84rem; }
+        .review-quick { margin-top:16px; background:linear-gradient(180deg, rgba(30,41,59,.98), rgba(15,23,42,.92)); border:1px solid rgba(148,163,184,.22); border-radius:16px; padding:18px; display:none; }
+        .quick-layout { display:grid; grid-template-columns: minmax(260px, 340px) 1fr; gap:14px; }
+        .quick-profile { background:rgba(15,23,42,.45); border:1px solid rgba(148,163,184,.25); border-radius:12px; padding:14px; }
+        .quick-profile-head { display:flex; gap:12px; align-items:center; }
+        .quick-avatar { width:52px; height:52px; border-radius:50%; background:linear-gradient(135deg, rgba(59,130,246,.25), rgba(16,185,129,.2)); border:1px solid rgba(96,165,250,.4); display:flex; align-items:center; justify-content:center; font-weight:800; color:#bfdbfe; font-size:1rem; }
+        .quick-name { font-size:1.25rem; font-weight:800; line-height:1.1; }
+        .quick-meta { color:var(--text-secondary); font-size:.9rem; margin-top:3px; }
+        .quick-chips { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+        .quick-chip { font-size:.74rem; padding:4px 9px; border-radius:999px; border:1px solid rgba(148,163,184,.35); color:#cbd5e1; background:rgba(30,41,59,.5); }
+        .quick-progress { margin-top:10px; color:var(--text-secondary); font-size:.82rem; }
+        .quick-panel { background:rgba(15,23,42,.24); border:1px solid rgba(148,163,184,.2); border-radius:12px; padding:12px; }
+        .quick-topbar { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px; }
+        .review-actions { display:grid; grid-template-columns: repeat(2,minmax(150px,1fr)); gap:9px; }
+        .review-actions .btn { justify-content:flex-start; padding:10px 12px; }
+        .quick-tools { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:12px; border-top:1px solid rgba(148,163,184,.22); padding-top:10px; }
+        .quick-tools .btn { padding: 8px 10px; font-size: .84rem; }
         .shift-tag { font-size:.72rem; padding:2px 8px; border-radius:999px; border:1px solid rgba(148,163,184,.35); color:#cbd5e1; }
         .strict-mode-card { grid-column: 1 / -1; border-style: dashed; }
         .strict-mode-title { font-weight:700; margin-bottom:4px; }
@@ -1498,7 +1513,8 @@
                 tn: { name: 'TN', queue: [], cursor: 0, stack: [] }
             },
             turnosStrictProgress: true,
-            activeShift: null
+            activeShift: null,
+            editingContactId: null
         };
 
         const elements = {
@@ -2567,20 +2583,42 @@
             const phoneTxt = contact.phone || 'Sin teléfono';
             const st = getStatusOption(contact.status);
             elements.quickReview.style.display = 'block';
+            const initials = (contact.name || '?').trim().slice(0, 2).toUpperCase();
+            const escapedPhone = (contact.phone || '').replace(/'/g, "\\'");
+            const totalInQueue = mode.queue.length;
+            const currentPos = Math.min(mode.cursor + 1, Math.max(1, totalInQueue));
             elements.quickReview.innerHTML = `
-                <h3>Revisión rápida ${shift.toUpperCase()} <span class="shift-tag">${AppState.shiftMode[shift].name}</span></h3>
-                <div style="font-size:1.2rem;font-weight:700;">${contact.name}</div>
-                <div style="margin-top:6px;color:var(--text-secondary)">${phoneTxt} · ${contact.origin || '-'}</div>
-                <div style="margin-top:8px;"><span class="status-badge status-${contact.status.replace(/ /g,'-')}">${st.label}</span></div>
-                <div class="review-actions">
-                    ${STATUS_OPTIONS.map(opt => `<button class="btn ${opt.id===contact.status?'btn-success':''}" onclick="reviewSetStatus(${contact.id}, '${opt.id}')"><i class="fas ${opt.icon}"></i> ${opt.label}</button>`).join('')}
-                </div>
-                <div class="shift-controls">
-                    <button class="btn" onclick="reviewPrev()"><i class="fas fa-arrow-left"></i> Anterior</button>
-                    <button class="btn" onclick="editContactField(${contact.id}, 'name')"><i class="fas fa-pencil-alt"></i> Editar nombre</button>
-                    <button class="btn" onclick="editContactField(${contact.id}, 'phone')"><i class="fas fa-phone"></i> Editar teléfono</button>
-                    ${contact.phone ? `<button class="btn btn-success" onclick="openWhatsApp('${(contact.phone||'').replace(/'/g,"\'")}', event)"><i class="fab fa-whatsapp"></i> WhatsApp</button>` : ''}
-                    <button class="btn" onclick="closeQuickReview()">Cerrar</button>
+                <div class="quick-layout">
+                    <div class="quick-profile">
+                        <div class="quick-profile-head">
+                            <div class="quick-avatar">${initials}</div>
+                            <div>
+                                <div class="quick-name">${contact.name}</div>
+                                <div class="quick-meta">${phoneTxt} · ${contact.origin || '-'}</div>
+                            </div>
+                        </div>
+                        <div class="quick-chips">
+                            <span class="quick-chip">Turno ${shift.toUpperCase()}</span>
+                            <span class="quick-chip">Operador: ${AppState.shiftMode[shift].name}</span>
+                            <span class="quick-chip">Estado: ${st.label}</span>
+                        </div>
+                        <div class="quick-progress">Usuario ${currentPos} de ${totalInQueue} en cola</div>
+                    </div>
+                    <div class="quick-panel">
+                        <div class="quick-topbar">
+                            <h3 style="margin:0;">Revisión rápida ${shift.toUpperCase()}</h3>
+                            <button class="btn" onclick="closeQuickReview()"><i class="fas fa-times"></i> Cerrar</button>
+                        </div>
+                        <div class="review-actions">
+                            ${STATUS_OPTIONS.map(opt => `<button class="btn ${opt.id===contact.status?'btn-success':''}" onclick="reviewSetStatus(${contact.id}, '${opt.id}')"><i class="fas ${opt.icon}"></i> ${opt.label}</button>`).join('')}
+                        </div>
+                        <div class="quick-tools">
+                            <button class="btn" onclick="reviewPrev()"><i class="fas fa-arrow-left"></i> Anterior</button>
+                            <button class="btn" onclick="editContactField(${contact.id}, 'name')"><i class="fas fa-pencil-alt"></i> Editar nombre</button>
+                            <button class="btn" onclick="editContactField(${contact.id}, 'phone')"><i class="fas fa-phone"></i> Editar teléfono</button>
+                            ${contact.phone ? `<button class="btn btn-success" onclick="openWhatsApp('${escapedPhone}', event)"><i class="fab fa-whatsapp"></i> WhatsApp</button>` : ''}
+                        </div>
+                    </div>
                 </div>
             `;
         }
@@ -2966,20 +3004,7 @@
             if (event) event.stopPropagation();
             const contact = AppState.contacts.find(c => c.id === id);
             if (!contact) return;
-
-            const currentValue = contact[field] || '';
-            const newValue = prompt(`Editar ${field === 'name' ? 'nombre' : 'teléfono'}:`, currentValue);
-            
-            if (newValue !== null && newValue !== currentValue) {
-                const oldValue = contact[field];
-                contact[field] = field === 'phone' ? normalizePhoneNumber(newValue) : newValue;
-                contact.lastUpdated = new Date().toISOString();
-                AppState.lastEditedContact = id;
-                addToHistory(`${field} editado`, `${contact.name}: ${oldValue} → ${contact[field]}`);
-                saveData();
-                render();
-                showNotification('Contacto actualizado', 'success');
-            }
+            openAddSingleModalForEdit(contact, field);
         };
 
         function undoToLastContact() {
@@ -3354,6 +3379,34 @@
             $$('.card-status-menu').forEach(menu => menu.remove());
         }
 
+        function openAddSingleModalForCreate() {
+            AppState.editingContactId = null;
+            $('#singleName').value = '';
+            $('#singlePhone').value = '';
+            $('#singleOrigin').value = '';
+            $('#singleStatus').value = 'sin revisar';
+            $('#addSingleModal .modal-header').innerHTML = '<i class="fas fa-user-plus"></i> Agregar Contacto';
+            $('#confirmAddSingle').innerHTML = '<i class="fas fa-check"></i> Agregar';
+            $('#addSingleModal').classList.add('active');
+        }
+
+        function openAddSingleModalForEdit(contact, focusField = 'name') {
+            if (!contact) return;
+            AppState.editingContactId = contact.id;
+            $('#singleName').value = contact.name || '';
+            $('#singlePhone').value = contact.phone || '';
+            $('#singleOrigin').value = contact.origin || '';
+            $('#singleStatus').value = contact.status || 'sin revisar';
+            $('#addSingleModal .modal-header').innerHTML = '<i class="fas fa-user-edit"></i> Editar Contacto';
+            $('#confirmAddSingle').innerHTML = '<i class="fas fa-save"></i> Guardar cambios';
+            $('#addSingleModal').classList.add('active');
+            const focusEl = focusField === 'phone' ? $('#singlePhone') : $('#singleName');
+            if (focusEl) {
+                focusEl.focus();
+                focusEl.select();
+            }
+        }
+
         function setupEventListeners() {
             elements.uploadArea.onclick = () => elements.fileInput.click();
             elements.uploadArea.ondragover = (e) => { e.preventDefault(); elements.uploadArea.style.borderColor = 'var(--accent-primary)'; };
@@ -3383,11 +3436,7 @@
                 elements.startBtn.disabled = true;
             };
             elements.addSingleBtn.onclick = () => {
-                $('#singleName').value = '';
-                $('#singlePhone').value = '';
-                $('#singleOrigin').value = '';
-                $('#singleStatus').value = 'sin revisar';
-                $('#addSingleModal').classList.add('active');
+                openAddSingleModalForCreate();
             };
             elements.settingsBtn.onclick = () => {
                 elements.userOptionsModal.classList.add('active');
@@ -3729,7 +3778,10 @@
                 }
             };
 
-            $('#cancelAddSingle').onclick = () => $('#addSingleModal').classList.remove('active');
+            $('#cancelAddSingle').onclick = () => {
+                AppState.editingContactId = null;
+                $('#addSingleModal').classList.remove('active');
+            };
 
             $('#confirmAddSingle').onclick = () => {
                 const name = $('#singleName').value.trim();
@@ -3739,6 +3791,35 @@
 
                 if (!name) {
                     showNotification('El nombre es obligatorio', 'error');
+                    return;
+                }
+
+                if (AppState.editingContactId) {
+                    const contact = AppState.contacts.find(c => c.id === AppState.editingContactId);
+                    if (!contact) {
+                        showNotification('No se encontró el contacto a editar', 'error');
+                        AppState.editingContactId = null;
+                        $('#addSingleModal').classList.remove('active');
+                        return;
+                    }
+                    const oldSnapshot = `${contact.name} | ${contact.phone || 'sin teléfono'} | ${contact.origin || 'Manual'} | ${contact.status || 'sin revisar'}`;
+                    contact.name = name;
+                    contact.phone = phone;
+                    contact.origin = origin;
+                    if (contact.status !== status) {
+                        setReviewMetadata(contact, status);
+                    }
+                    contact.status = status;
+                    contact.lastUpdated = new Date().toISOString();
+                    AppState.lastEditedContact = contact.id;
+                    const newSnapshot = `${contact.name} | ${contact.phone || 'sin teléfono'} | ${contact.origin || 'Manual'} | ${contact.status || 'sin revisar'}`;
+                    addToHistory('Contacto editado', `${oldSnapshot} → ${newSnapshot}`);
+                    detectDuplicates();
+                    saveData();
+                    render();
+                    AppState.editingContactId = null;
+                    $('#addSingleModal').classList.remove('active');
+                    showNotification('✅ Contacto actualizado', 'success');
                     return;
                 }
 
@@ -3757,6 +3838,7 @@
                 detectDuplicates();
                 saveData();
                 render();
+                AppState.editingContactId = null;
                 $('#addSingleModal').classList.remove('active');
                 showNotification('✅ Contacto agregado', 'success');
             };
