@@ -957,6 +957,19 @@
         .ops-tooltip .line { display: flex; justify-content: space-between; gap: 8px; margin: 4px 0; color: var(--text-secondary); }
         .ops-tooltip .line strong { color: var(--text-primary); }
         .btn.needs-upload { box-shadow: 0 0 0 2px rgba(239,68,68,.5) inset; }
+        .save-state-badge {
+            margin-left: 8px;
+            font-size: 0.78rem;
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(148,163,184,.35);
+            color: var(--text-secondary);
+            background: rgba(15,23,42,.35);
+            white-space: nowrap;
+        }
+        .save-state-badge.ok { color: #86efac; border-color: rgba(34,197,94,.35); }
+        .save-state-badge.warn { color: #fca5a5; border-color: rgba(239,68,68,.35); }
+        .save-state-badge.pending { color: #fcd34d; border-color: rgba(245,158,11,.35); }
 
         /* Historial */
         .history-list {
@@ -1117,6 +1130,18 @@
             }
             .cards-grid { grid-template-columns: 1fr; }
         }
+    
+        .shifts-view { display:none; gap:16px; grid-template-columns: repeat(auto-fit,minmax(280px,1fr)); }
+        .shift-card { background: var(--bg-secondary); border:1px solid rgba(148,163,184,.2); border-radius:14px; padding:14px; }
+        .shift-card h3 { margin:0 0 10px 0; display:flex; justify-content:space-between; align-items:center; }
+        .shift-progress { height:8px; border-radius:999px; background:rgba(148,163,184,.2); overflow:hidden; margin:8px 0; }
+        .shift-progress > span { display:block; height:100%; background:linear-gradient(90deg,#34d399,#3b82f6); }
+        .shift-stats { display:flex; gap:10px; font-size:.82rem; color:var(--text-secondary); flex-wrap:wrap; }
+        .review-quick { margin-top:16px; background:var(--bg-secondary); border:1px solid rgba(148,163,184,.2); border-radius:14px; padding:16px; display:none; }
+        .review-actions { display:grid; grid-template-columns: repeat(3,minmax(120px,1fr)); gap:8px; margin-top:12px; }
+        .shift-controls { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:8px; }
+        .shift-tag { font-size:.72rem; padding:2px 8px; border-radius:999px; border:1px solid rgba(148,163,184,.35); color:#cbd5e1; }
+
     </style>
 </head>
 <body __processed_06e8811e-2870-46d5-8df7-cb489419a036__="true">
@@ -1176,12 +1201,14 @@
             <div class="view-actions">
                 <button id="viewCardsBtn" class="btn active"><i class="fas fa-th"></i> Tarjetas</button>
                 <button id="viewListBtn" class="btn"><i class="fas fa-list"></i> Lista</button>
+                <button id="viewShiftsBtn" class="btn"><i class="fas fa-users-cog"></i> Turnos</button>
                 <button id="exportBtn" class="btn"><i class="fas fa-download"></i> Exportar</button>
                 <button id="historyBtn" class="btn"><i class="fas fa-history"></i> Historial</button>
                 <button id="manageDuplicatesBtn" class="btn btn-warning"><i class="fas fa-clone"></i> Duplicados</button>
                 <button id="settingsBtn" class="btn"><i class="fas fa-cog"></i> Ajustes</button>
                 <button id="importOpsBtn" class="btn" title="Importar agent_operations.csv"><i class="fas fa-chart-line"></i> Operaciones</button>
                 <button id="deleteAllBtn" class="btn btn-danger"><i class="fas fa-trash-alt"></i> Borrar Todo</button>
+                <span id="saveStateBadge" class="save-state-badge pending">● Pendiente</span>
                 <input type="file" id="opsFileInput" accept=".csv" style="display:none;">
             </div>
         </div>
@@ -1245,6 +1272,9 @@
 
         <!-- Vista de lista -->
         <div id="listView" class="list-view" style="display: none;"></div>
+
+        <div id="shiftsView" class="shifts-view"></div>
+        <div id="quickReview" class="review-quick"></div>
 
 
         <!-- Paginación -->
@@ -1452,7 +1482,14 @@
             duplicateMergeMode: 'phone-auto',
             opsProfiles: {},
             opsLastImportedAt: null,
-            opsFilter: 'all'
+            opsFilter: 'all',
+            shiftMode: {
+                tm: { name: 'TM', queue: [], cursor: 0, stack: [] },
+                tt: { name: 'TT', queue: [], cursor: 0, stack: [] },
+                tn: { name: 'TN', queue: [], cursor: 0, stack: [] }
+            },
+            turnosStrictProgress: true,
+            activeShift: null
         };
 
         const elements = {
@@ -1466,12 +1503,15 @@
             startBtn: $('#startBtn'),
             cardsView: $('#cardsView'),
             listView: $('#listView'),
+            shiftsView: $('#shiftsView'),
+            quickReview: $('#quickReview'),
             searchInput: $('#searchInput'),
             statusFilter: $('#statusFilter'),
             originFilter: $('#originFilter'),
             opsSegmentFilter: $('#opsSegmentFilter'),
             viewCardsBtn: $('#viewCardsBtn'),
             viewListBtn: $('#viewListBtn'),
+            viewShiftsBtn: $('#viewShiftsBtn'),
             exportBtn: $('#exportBtn'),
             bulkActionsBar: $('#bulkActionsBar'),
             selectedCount: $('#selectedCount'),
@@ -1494,7 +1534,8 @@
             resetTemplateBtn: $('#resetTemplateBtn'),
             shortcutsModal: $('#shortcutsModal'),
             userOptionsModal: $('#userOptionsModal'),
-            whatsappMessageModal: $('#whatsappMessageModal')
+            whatsappMessageModal: $('#whatsappMessageModal'),
+            saveStateBadge: $('#saveStateBadge')
         };
 
         let selectedFiles = [];
@@ -2230,6 +2271,13 @@
         }
 
         let lastSaveErrorAt = 0;
+        function setSaveState(type = 'pending', text = 'Pendiente') {
+            if (!elements.saveStateBadge) return;
+            elements.saveStateBadge.classList.remove('ok', 'warn', 'pending');
+            elements.saveStateBadge.classList.add(type);
+            elements.saveStateBadge.textContent = `● ${text}`;
+        }
+
         function tryStorageRecovery() {
             try {
                 const backupKeys = Object.keys(localStorage).filter(k => k.startsWith('bk_')).sort();
@@ -2255,12 +2303,14 @@
             try {
                 localStorage.setItem('contactsData', JSON.stringify(safeContacts));
                 manageAutomaticBackup();
+                setSaveState('ok', `Guardado ${new Date().toLocaleTimeString('es-ES')}`);
             } catch (e) {
                 console.error('Error al guardar datos:', e);
                 tryStorageRecovery();
                 try {
                     localStorage.setItem('contactsData', JSON.stringify(safeContacts));
                     manageAutomaticBackup();
+                    setSaveState('ok', `Guardado ${new Date().toLocaleTimeString('es-ES')}`);
                     return;
                 } catch (e2) {
                     console.error('Fallo de recuperación de guardado:', e2);
@@ -2269,6 +2319,7 @@
                         localStorage.removeItem('opsLastImportedAt');
                         localStorage.setItem('contactsData', JSON.stringify(safeContacts));
                         manageAutomaticBackup();
+                        setSaveState('warn', 'Guardado parcial (espacio justo)');
                         showNotification('Se guardaron contactos priorizando espacio local', 'info');
                         return;
                     } catch (e3) {
@@ -2278,6 +2329,7 @@
                 const now = Date.now();
                 if (now - lastSaveErrorAt > 5000) {
                     lastSaveErrorAt = now;
+                    setSaveState('warn', 'No se pudo guardar');
                 }
             }
         }
@@ -2297,6 +2349,7 @@
                 }
 
                 if (AppState.contacts.length > 0) {
+                    assignShifts();
                     detectDuplicates();
                     const syncResult = syncOpsToContacts({ createNewUsers: false });
                     if (syncResult.updatedCount > 0) saveData();
@@ -2304,6 +2357,7 @@
                     elements.mainApp.style.display = 'block';
                     render();
                     manageAutomaticBackup();
+                    setSaveState('ok', `Cargado ${new Date().toLocaleTimeString('es-ES')}`);
                 } else {
                     elements.uploadScreen.classList.remove('hidden');
                 }
@@ -2388,6 +2442,154 @@
                 contact.reviewedAt = new Date().toISOString();
             }
         }
+        function inferShiftForContact(contact, rrState) {
+            const o = normalizeUsername(contact.origin || '');
+            if (o.includes('mañana') || o.includes('manana')) return 'tm';
+            if (o.includes('tarde')) return 'tt';
+            if (o.includes('noche')) return 'tn';
+            const seq = ['tm', 'tt', 'tn'];
+            const shift = seq[rrState.i % seq.length];
+            rrState.i += 1;
+            return shift;
+        }
+
+        function assignShifts() {
+            const rr = { i: 0 };
+            AppState.contacts.forEach(c => {
+                if (!c.assignedShift) c.assignedShift = inferShiftForContact(c, rr);
+            });
+        }
+
+        function getShiftStats(shift) {
+            const assigned = AppState.contacts.filter(c => c.assignedShift === shift);
+            const total = assigned.length;
+            const revisados = AppState.turnosStrictProgress
+                ? assigned.filter(c => c.shiftReviewed).length
+                : assigned.filter(c => c.status && c.status !== 'sin revisar').length;
+            return { total, revisados, pendientes: Math.max(0, total - revisados), pct: total ? Math.round((revisados / total) * 100) : 0 };
+        }
+
+        function renderShiftsView() {
+            assignShifts();
+            const shifts = ['tm', 'tt', 'tn'];
+            elements.shiftsView.innerHTML = shifts.map(shift => {
+                const st = getShiftStats(shift);
+                const data = AppState.shiftMode[shift];
+                return `
+                <div class="shift-card">
+                    <h3>
+                        <span>${shift.toUpperCase()}</span>
+                        <input class="filter-select" style="max-width:140px;" value="${data.name}" onchange="renameShift('${shift}', this.value)">
+                    </h3>
+                    <div class="shift-stats">
+                        <span>Asignados: <strong>${st.total}</strong></span>
+                        <span>Revisados: <strong>${st.revisados}</strong></span>
+                        <span>Pendientes: <strong>${st.pendientes}</strong></span>
+                    </div>
+                    <div class="shift-progress"><span style="width:${st.pct}%"></span></div>
+                    <div class="shift-controls">
+                        <button class="btn" onclick="startShiftReview('${shift}')"><i class="fas fa-play"></i> Empezar revisión</button>
+                        <button class="btn" onclick="rebalanceShift('${shift}')"><i class="fas fa-random"></i> Rebalancear</button>
+                    </div>
+                </div>`;
+            }).join('') + `<div class="shift-card"><label><input type="checkbox" ${AppState.turnosStrictProgress ? 'checked' : ''} onchange="toggleStrictShiftProgress(this.checked)"> Progreso estricto (solo cuenta revisión en modo turnos)</label></div>`;
+            elements.shiftsView.style.display = 'grid';
+        }
+
+        window.renameShift = (shift, value) => {
+            AppState.shiftMode[shift].name = (value || shift.toUpperCase()).trim();
+            saveData();
+        };
+
+        window.toggleStrictShiftProgress = (checked) => {
+            AppState.turnosStrictProgress = !!checked;
+            renderShiftsView();
+            saveData();
+        };
+
+        window.rebalanceShift = (shift) => {
+            const unreviewed = AppState.contacts.filter(c => c.status === 'sin revisar');
+            const seq = ['tm', 'tt', 'tn'];
+            let i = 0;
+            unreviewed.forEach(c => { c.assignedShift = seq[i % 3]; i++; });
+            renderShiftsView();
+            saveData();
+            showNotification('Turnos rebalanceados', 'success');
+        };
+
+        function buildShiftQueue(shift) {
+            return AppState.contacts
+                .filter(c => c.assignedShift === shift)
+                .sort((a,b) => (a.status === 'sin revisar' ? -1 : 1) - (b.status === 'sin revisar' ? -1 : 1));
+        }
+
+        window.startShiftReview = (shift) => {
+            AppState.activeShift = shift;
+            AppState.shiftMode[shift].queue = buildShiftQueue(shift);
+            AppState.shiftMode[shift].cursor = 0;
+            AppState.shiftMode[shift].stack = [];
+            renderQuickReview();
+        };
+
+        function renderQuickReview() {
+            const shift = AppState.activeShift;
+            if (!shift) { elements.quickReview.style.display = 'none'; return; }
+            const mode = AppState.shiftMode[shift];
+            const contact = mode.queue[mode.cursor];
+            if (!contact) {
+                elements.quickReview.style.display = 'block';
+                elements.quickReview.innerHTML = `<h3>Revisión ${shift.toUpperCase()}</h3><p style="color:var(--text-secondary)">Sin más contactos en este turno.</p><button class="btn" onclick="closeQuickReview()">Cerrar</button>`;
+                return;
+            }
+            const phoneTxt = contact.phone || 'Sin teléfono';
+            const st = getStatusOption(contact.status);
+            elements.quickReview.style.display = 'block';
+            elements.quickReview.innerHTML = `
+                <h3>Revisión rápida ${shift.toUpperCase()} <span class="shift-tag">${AppState.shiftMode[shift].name}</span></h3>
+                <div style="font-size:1.2rem;font-weight:700;">${contact.name}</div>
+                <div style="margin-top:6px;color:var(--text-secondary)">${phoneTxt} · ${contact.origin || '-'}</div>
+                <div style="margin-top:8px;"><span class="status-badge status-${contact.status.replace(/ /g,'-')}">${st.label}</span></div>
+                <div class="review-actions">
+                    ${STATUS_OPTIONS.map(opt => `<button class="btn ${opt.id===contact.status?'btn-success':''}" onclick="reviewSetStatus(${contact.id}, '${opt.id}')"><i class="fas ${opt.icon}"></i> ${opt.label}</button>`).join('')}
+                </div>
+                <div class="shift-controls">
+                    <button class="btn" onclick="reviewPrev()"><i class="fas fa-arrow-left"></i> Anterior</button>
+                    <button class="btn" onclick="editContactField(${contact.id}, 'name')"><i class="fas fa-pencil-alt"></i> Editar nombre</button>
+                    <button class="btn" onclick="editContactField(${contact.id}, 'phone')"><i class="fas fa-phone"></i> Editar teléfono</button>
+                    ${contact.phone ? `<button class="btn btn-success" onclick="openWhatsApp('${(contact.phone||'').replace(/'/g,"\'")}', event)"><i class="fab fa-whatsapp"></i> WhatsApp</button>` : ''}
+                    <button class="btn" onclick="closeQuickReview()">Cerrar</button>
+                </div>
+            `;
+        }
+
+        window.reviewSetStatus = (id, status) => {
+            const shift = AppState.activeShift;
+            if (!shift) return;
+            const mode = AppState.shiftMode[shift];
+            const current = mode.queue[mode.cursor];
+            if (current) mode.stack.push(current.id);
+            changeContactStatus(id, status, null, 'shift');
+            mode.cursor += 1;
+            mode.queue = buildShiftQueue(shift);
+            renderQuickReview();
+            renderShiftsView();
+        };
+
+        window.reviewPrev = () => {
+            const shift = AppState.activeShift;
+            if (!shift) return;
+            const mode = AppState.shiftMode[shift];
+            const prevId = mode.stack.pop();
+            if (!prevId) return;
+            const idx = mode.queue.findIndex(c => c.id === prevId);
+            mode.cursor = idx >= 0 ? idx : 0;
+            renderQuickReview();
+        };
+
+        window.closeQuickReview = () => {
+            AppState.activeShift = null;
+            elements.quickReview.style.display = 'none';
+        };
 
         function getContactUrgency(contact) {
             if (contact.status !== 'revisado') return null;
@@ -2465,7 +2667,7 @@
                             <i class="fas ${statusOption.icon}"></i>
                         </div>
                         <div style="flex: 1; display: flex; align-items: center; gap: 8px;">
-                            <span class="card-name" onclick="copyToClipboard('${escapedName}', event)" style="cursor: pointer; flex: 1;" title="Click para copiar">${contact.pinned ? '📌 ' : ''}${contact.name}</span>${urgency ? `<span class=\"urgency-badge urgency-l${urgency.level}\" title=\"${urgency.title}\"><i class=\"fas fa-clock\"></i>${urgency.label}</span>` : ''}
+                            <span class="card-name" onclick="copyToClipboard('${escapedName}', event)" style="cursor: pointer; flex: 1;" title="Click para copiar">${contact.pinned ? '📌 ' : ''}${contact.name}</span>${contact.assignedShift ? `<span class=\"shift-tag\">${contact.assignedShift.toUpperCase()}</span>` : ''}${urgency ? `<span class=\"urgency-badge urgency-l${urgency.level}\" title=\"${urgency.title}\"><i class=\"fas fa-clock\"></i>${urgency.label}</span>` : ''}
                             <button class="btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="editContactField(${contact.id}, 'name', event)" title="Editar nombre">
                                 <i class="fas fa-pencil-alt"></i>
                             </button>
@@ -2514,7 +2716,7 @@
                         <i class="fas ${statusOption.icon} list-status-bg-icon"></i>
                         <div class="list-name-row">
                             <span onclick="copyToClipboard('${escapedName}', event)" style="flex: 1; cursor: pointer;" title="Click para copiar">
-                                ${contact.isDuplicate ? '<i class="fas fa-exclamation-triangle" style="color: var(--accent-warning);"></i> ' : ''}${contact.name}
+                                ${contact.isDuplicate ? '<i class=\"fas fa-exclamation-triangle\" style=\"color: var(--accent-warning);\"></i> ' : ''}${contact.name}${contact.assignedShift ? ` <span class=\"shift-tag\">${contact.assignedShift.toUpperCase()}</span>` : ''}
                             </span>
                             <button class="btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="editContactField(${contact.id}, 'name', event)" title="Editar">
                                 <i class="fas fa-pencil-alt"></i>
@@ -2665,7 +2867,15 @@
         window.changePage = (page) => {
             if (page < 1 || page > Math.ceil(AppState.filteredContacts.length / AppState.itemsPerPage)) return;
             AppState.currentPage = page;
-            renderPaginatedView(AppState.currentView === 'cards' ? createCard : createListItem);
+            if (AppState.currentView === 'shifts') {
+                elements.cardsView.style.display = 'none';
+                elements.listView.style.display = 'none';
+                elements.pagination.style.display = 'none';
+                renderShiftsView();
+            } else {
+                elements.shiftsView.style.display = 'none';
+                renderPaginatedView(AppState.currentView === 'cards' ? createCard : createListItem);
+            }
         };
 
         window.deleteContact = (id, event) => {
@@ -2691,7 +2901,7 @@
         };
 
 
-        window.changeContactStatus = (id, newStatus, event) => {
+        window.changeContactStatus = (id, newStatus, event, source = 'common') => {
             if (event) event.stopPropagation();
             const contact = AppState.contacts.find(c => c.id === id);
             if (!contact) return;
@@ -2700,10 +2910,31 @@
             if (oldStatus === newStatus) return;
 
             contact.status = newStatus;
+            if (source === 'shift') contact.shiftReviewed = newStatus !== 'sin revisar';
+            else if (!AppState.turnosStrictProgress) contact.shiftReviewed = newStatus !== 'sin revisar';
             setReviewMetadata(contact, newStatus);
             contact.lastUpdated = new Date().toISOString();
             AppState.lastEditedContact = id;
             addToHistory('Estado cambiado', `${contact.name}: ${oldStatus} → ${newStatus}`);
+            setSaveState('pending', 'Guardando cambios...');
+            saveData();
+            render();
+        };
+
+        window.applyOpsSuggestion = (id, event) => {
+            if (event) event.stopPropagation();
+            const contact = AppState.contacts.find(c => c.id === id);
+            if (!contact || !contact.ops?.suggestedStatus) return;
+            changeContactStatus(id, contact.ops.suggestedStatus);
+            showNotification(`Sugerencia aplicada a ${contact.name}`, 'success');
+        };
+
+        window.pinContact = (id, event) => {
+            if (event) event.stopPropagation();
+            const contact = AppState.contacts.find(c => c.id === id);
+            if (!contact) return;
+            contact.pinned = !contact.pinned;
+            contact.lastUpdated = new Date().toISOString();
             saveData();
             render();
         };
@@ -2896,7 +3127,15 @@
             });
             updateStats();
             elements.pagination.style.display = 'flex';
-            renderPaginatedView(AppState.currentView === 'cards' ? createCard : createListItem);
+            if (AppState.currentView === 'shifts') {
+                elements.cardsView.style.display = 'none';
+                elements.listView.style.display = 'none';
+                elements.pagination.style.display = 'none';
+                renderShiftsView();
+            } else {
+                elements.shiftsView.style.display = 'none';
+                renderPaginatedView(AppState.currentView === 'cards' ? createCard : createListItem);
+            }
             updateBulkActionsBar();
             updateOpsUploadReminder();
         }
@@ -3266,8 +3505,10 @@
                 AppState.currentView = 'cards';
                 elements.viewCardsBtn.classList.add('active');
                 elements.viewListBtn.classList.remove('active');
+                if (elements.viewShiftsBtn) elements.viewShiftsBtn.classList.remove('active');
                 elements.cardsView.style.display = 'grid';
                 elements.listView.style.display = 'none';
+                elements.shiftsView.style.display = 'none';
                 render();
             };
 
@@ -3275,10 +3516,22 @@
                 AppState.currentView = 'list';
                 elements.viewListBtn.classList.add('active');
                 elements.viewCardsBtn.classList.remove('active');
+                if (elements.viewShiftsBtn) elements.viewShiftsBtn.classList.remove('active');
                 elements.listView.style.display = 'block';
                 elements.cardsView.style.display = 'none';
+                elements.shiftsView.style.display = 'none';
                 render();
             };
+
+            if (elements.viewShiftsBtn) {
+                elements.viewShiftsBtn.onclick = () => {
+                    AppState.currentView = 'shifts';
+                    elements.viewShiftsBtn.classList.add('active');
+                    elements.viewCardsBtn.classList.remove('active');
+                    elements.viewListBtn.classList.remove('active');
+                    render();
+                };
+            }
 
             $$('.stat-box').forEach(box => {
                 box.onclick = () => {
@@ -3316,6 +3569,7 @@
                 if (isCheckbox) {
                      if (e.target.checked) AppState.selectedContacts.add(id);
                      else AppState.selectedContacts.delete(id);
+                     setSaveState('pending', 'Selección local');
                 } else {
                      if (AppState.selectedContacts.has(id)) {
                         AppState.selectedContacts.delete(id);
@@ -3326,7 +3580,15 @@
                 
                 updateBulkActionsBar();
                 elements.pagination.style.display = 'flex';
+                if (AppState.currentView === 'shifts') {
+                elements.cardsView.style.display = 'none';
+                elements.listView.style.display = 'none';
+                elements.pagination.style.display = 'none';
+                renderShiftsView();
+            } else {
+                elements.shiftsView.style.display = 'none';
                 renderPaginatedView(AppState.currentView === 'cards' ? createCard : createListItem);
+            }
             };
 
             const unifiedDblClickHandler = (e) => {
