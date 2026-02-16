@@ -1663,7 +1663,130 @@
             return { text: '❄️ Frío', cls: 'cold' };
         }
 
+        function parseOperationsCsvChunkedFallback(text, onProgress) {
+            return new Promise((resolve) => {
+                const lines = text.split('\n').map(line => line.replace(/\r$/, '')).filter(Boolean);
+                if (!lines.length) return resolve({ byAlias: {}, importedRows: 0 });
+
+                let idx = 0;
+                if (lines[0].toLowerCase().startsWith('sep=')) idx = 1;
+                const header = parseCsvRow(lines[idx] || '');
+                idx++;
+                const h = header.map(v => normalizeUsername(v));
+                const aliasIdx = h.findIndex(v => v.includes('alias'));
+                const amountIdx = h.findIndex(v => v.includes('cantidad'));
+                const dateIdx = h.findIndex(v => v.includes('fecha'));
+                const stats = new Map();
+                const now = Date.now();
+                const chunk = 700;
+                const totalRows = Math.max(0, lines.length - idx);
+                const startIdx = idx;
+                let importedRows = 0;
+
+                const process = () => {
+                    const end = Math.min(lines.length, idx + chunk);
+                    for (; idx < end; idx++) {
+                        const row = parseCsvRow(lines[idx]);
+                        const aliasRaw = row[aliasIdx] || '';
+                        const alias = normalizeAlias(aliasRaw);
+                        if (!alias) continue;
+                        const amount = parseInt((row[amountIdx] || '0').replace(/[^\d-]/g, ''), 10);
+                        if (Number.isNaN(amount)) continue;
+                        const dateRaw = row[dateIdx] || '';
+                        const ts = Date.parse(dateRaw.replace(' ', 'T')) || Date.now();
+                        const hour = new Date(ts).getHours();
+
+                        if (!stats.has(alias)) {
+                            stats.set(alias, {
+                                alias,
+                                aliasLabel: aliasRaw.trim(),
+                                cargasCount: 0,
+                                descargasCount: 0,
+                                cargadoTotal: 0,
+                                descargadoTotal: 0,
+                                netoTotal: 0,
+                                lastAt: null,
+                                lastCargaAt: null,
+                                cargasVals: [],
+                                hourHist: Array(24).fill(0),
+                                cargas30d: 0,
+                                cargado30d: 0,
+                                cargado90d: 0,
+                                weeks30: new Set(),
+                                months90: new Set()
+                            });
+                        }
+                        const st = stats.get(alias);
+                        importedRows++;
+                        st.netoTotal += amount;
+                        st.hourHist[hour] += 1;
+                        if (!st.lastAt || ts > st.lastAt) st.lastAt = ts;
+
+                        const ageDays = (now - ts) / 86400000;
+                        if (amount > 0) {
+                            st.cargasCount++;
+                            st.cargadoTotal += amount;
+                            st.cargasVals.push(amount);
+                            if (!st.lastCargaAt || ts > st.lastCargaAt) st.lastCargaAt = ts;
+                            if (ageDays <= 30) {
+                                st.cargas30d++;
+                                st.cargado30d += amount;
+                                const d = new Date(ts);
+                                const wk = `${d.getFullYear()}-${Math.ceil((((d - new Date(d.getFullYear(),0,1)) / 86400000) + d.getDay() + 1) / 7)}`;
+                                st.weeks30.add(wk);
+                            }
+                            if (ageDays <= 90) {
+                                st.cargado90d += amount;
+                                const d = new Date(ts);
+                                st.months90.add(`${d.getFullYear()}-${d.getMonth()+1}`);
+                            }
+                        } else {
+                            st.descargasCount++;
+                            st.descargadoTotal += Math.abs(amount);
+                        }
+                    }
+
+                    if (typeof onProgress === 'function') {
+                        onProgress({ processed: Math.max(0, idx - startIdx), total: totalRows });
+                    }
+
+                    if (idx < lines.length) return setTimeout(process, 0);
+
+                    const byAlias = {};
+                    for (const [alias, st] of stats.entries()) {
+                        const topHours = st.hourHist.map((v, i) => ({ h: i, v })).sort((a, b) => b.v - a.v).slice(0, 3).map(x => `${String(x.h).padStart(2, '0')}:00`);
+                        const avgCarga = st.cargasCount ? (st.cargadoTotal / st.cargasCount) : 0;
+                        const mediana = median(st.cargasVals);
+                        const loyalty = (st.weeks30.size >= 2 ? 1 : 0) + (st.months90.size >= 2 ? 1 : 0) + (st.cargado30d >= 50000 ? 1 : 0) + (st.cargas30d >= 8 ? 1 : 0);
+                        const recencyDays = st.lastCargaAt ? (Date.now() - st.lastCargaAt) / 86400000 : 999;
+                        const recencyScore = Math.max(0, 40 - recencyDays);
+                        const score = recencyScore + Math.min(35, st.cargas30d * 3) + Math.min(20, st.cargado90d / 10000) + (loyalty * 8);
+                        byAlias[alias] = {
+                            ...st,
+                            lastAt: st.lastAt ? new Date(st.lastAt).toISOString() : null,
+                            lastCargaAt: st.lastCargaAt ? new Date(st.lastCargaAt).toISOString() : null,
+                            avgCarga: Math.round(avgCarga),
+                            medianCarga: Math.round(mediana),
+                            topHours,
+                            loyalty,
+                            score: Math.round(score),
+                            suggestedStatus: getOpsSuggestedStatus(st.lastCargaAt),
+                            heat: getOpsHeatLabel(st.lastCargaAt)
+                        };
+                        delete byAlias[alias].cargasVals;
+                        delete byAlias[alias].weeks30;
+                        delete byAlias[alias].months90;
+                    }
+                    resolve({ byAlias, importedRows });
+                };
+                process();
+            });
+        }
+
         function parseOperationsCsvChunked(text, onProgress) {
+            if (typeof Worker === 'undefined') {
+                return parseOperationsCsvChunkedFallback(text, onProgress);
+            }
             return new Promise((resolve, reject) => {
                 const workerScript = `
                     const normalizeUsername = (value = '') => (value || '').toString().trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -1837,6 +1960,7 @@
                 const blob = new Blob([workerScript], { type: 'application/javascript' });
                 const workerUrl = URL.createObjectURL(blob);
                 const worker = new Worker(workerUrl);
+                let settled = false;
 
                 worker.onmessage = (event) => {
                     const { type, payload } = event.data || {};
@@ -1845,22 +1969,28 @@
                         return;
                     }
                     if (type === 'done') {
+                        if (settled) return;
+                        settled = true;
                         worker.terminate();
                         URL.revokeObjectURL(workerUrl);
                         resolve(payload || { byAlias: {}, importedRows: 0 });
                         return;
                     }
                     if (type === 'error') {
+                        if (settled) return;
+                        settled = true;
                         worker.terminate();
                         URL.revokeObjectURL(workerUrl);
-                        reject(new Error(payload || 'Error en worker de operaciones'));
+                        parseOperationsCsvChunkedFallback(text, onProgress).then(resolve).catch(reject);
                     }
                 };
 
-                worker.onerror = (err) => {
+                worker.onerror = () => {
+                    if (settled) return;
+                    settled = true;
                     worker.terminate();
                     URL.revokeObjectURL(workerUrl);
-                    reject(err);
+                    parseOperationsCsvChunkedFallback(text, onProgress).then(resolve).catch(reject);
                 };
 
                 worker.postMessage({ text: String(text || '') });
@@ -2367,6 +2497,7 @@
                     console.error('Error importando operaciones:', err);
                     setSaveState('warn', 'Error procesando operaciones');
                     showNotification('Error al importar operaciones', 'error');
+                    setTimeout(() => setSaveState('pending', 'Pendiente'), 5000);
                 }
             };
             reader.readAsText(file);
@@ -2991,7 +3122,7 @@
                             <i class="fas ${statusOption.icon}"></i>
                         </div>
                         <div style="flex: 1; display: flex; align-items: center; gap: 8px;">
-                            <span class="card-name" onclick="copyToClipboard('${escapedName}', event)" style="cursor: pointer; flex: 1;" title="Click para copiar">${contact.pinned ? '📌 ' : ''}${contact.name}</span>${contact.assignedShift ? `<span class=\"shift-tag\">${contact.assignedShift.toUpperCase()}</span>` : ''}${urgency ? `<span class=\"urgency-badge urgency-l${urgency.level}\" title=\"${urgency.title}\"><i class=\"fas fa-clock\"></i>${urgency.label}</span>` : ''}
+                            <span class="card-name" onclick="copyToClipboard('${escapedName}', event)" style="cursor: pointer; flex: 1;" title="Click para copiar">${contact.pinned ? '📌 ' : ''}${contact.name}</span>${AppState.currentView === 'shifts' && contact.assignedShift ? `<span class=\"shift-tag\">${contact.assignedShift.toUpperCase()}</span>` : ''}${urgency ? `<span class=\"urgency-badge urgency-l${urgency.level}\" title=\"${urgency.title}\"><i class=\"fas fa-clock\"></i>${urgency.label}</span>` : ''}
                             <button class="btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="editContactField(${contact.id}, 'name', event)" title="Editar nombre">
                                 <i class="fas fa-pencil-alt"></i>
                             </button>
@@ -3040,7 +3171,7 @@
                         <i class="fas ${statusOption.icon} list-status-bg-icon"></i>
                         <div class="list-name-row">
                             <span onclick="copyToClipboard('${escapedName}', event)" style="flex: 1; cursor: pointer;" title="Click para copiar">
-                                ${contact.isDuplicate ? '<i class=\"fas fa-exclamation-triangle\" style=\"color: var(--accent-warning);\"></i> ' : ''}${contact.name}${contact.assignedShift ? ` <span class=\"shift-tag\">${contact.assignedShift.toUpperCase()}</span>` : ''}
+                                ${contact.isDuplicate ? '<i class=\"fas fa-exclamation-triangle\" style=\"color: var(--accent-warning);\"></i> ' : ''}${contact.name}${AppState.currentView === 'shifts' && contact.assignedShift ? ` <span class=\"shift-tag\">${contact.assignedShift.toUpperCase()}</span>` : ''}
                             </span>
                             <button class="btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="editContactField(${contact.id}, 'name', event)" title="Editar">
                                 <i class="fas fa-pencil-alt"></i>
