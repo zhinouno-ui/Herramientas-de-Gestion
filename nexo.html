@@ -1287,6 +1287,12 @@
                 <button id="clearFiltersBtn" class="btn" title="Limpiar búsqueda y filtros">
                     <i class="fas fa-filter-circle-xmark"></i> Limpiar
                 </button>
+                <button id="selectFilteredBtn" class="btn" title="Seleccionar todos los contactos filtrados">
+                    <i class="fas fa-check-double"></i> Seleccionar filtrados
+                </button>
+                <button id="clearSelectionBtn" class="btn" title="Limpiar selección actual">
+                    <i class="fas fa-eraser"></i> Limpiar selección
+                </button>
                 <button id="undoBtn" class="btn" title="Volver al último contacto editado (Ctrl+Z)">
                     <i class="fas fa-undo"></i> Volver
                 </button>
@@ -1530,7 +1536,8 @@
             },
             turnosStrictProgress: true,
             activeShift: null,
-            editingContactId: null
+            editingContactId: null,
+            lastSelectedContactId: null
         };
 
         const elements = {
@@ -1553,6 +1560,8 @@
             shiftFilter: $('#shiftFilter'),
             phoneFilter: $('#phoneFilter'),
             clearFiltersBtn: $('#clearFiltersBtn'),
+            selectFilteredBtn: $('#selectFilteredBtn'),
+            clearSelectionBtn: $('#clearSelectionBtn'),
             viewCardsBtn: $('#viewCardsBtn'),
             viewListBtn: $('#viewListBtn'),
             viewShiftsBtn: $('#viewShiftsBtn'),
@@ -1634,8 +1643,9 @@
             if (days <= 2) return 'jugando';
             if (days <= 7) return 'contactado';
             if (days <= 21) return 'revisado';
-            if (days <= 45) return 'sin revisar';
-            return 'sin wsp';
+            // Nota: datos de operaciones no implican disponibilidad de WhatsApp.
+            // Evitamos sugerir 'sin wsp' solo por recencia.
+            return 'sin revisar';
         }
 
         function getOpsHeatLabel(lastCargaAt) {
@@ -3643,6 +3653,14 @@
                     undoToLastContact();
                     return;
                 }
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a' && !e.target.matches('input, textarea, select')) {
+                    e.preventDefault();
+                    applyFilters();
+                    AppState.filteredContacts.forEach(c => AppState.selectedContacts.add(c.id));
+                    updateBulkActionsBar();
+                    render();
+                    return;
+                }
                 if (e.target.matches('input, textarea, select')) return;
                 const code = e.code;
                 const selectedId = Array.from(AppState.selectedContacts)[0] || AppState.lastEditedContact;
@@ -3705,6 +3723,27 @@
                     if (elements.opsSegmentFilter) elements.opsSegmentFilter.value = 'all';
                     if (elements.shiftFilter) elements.shiftFilter.value = '';
                     if (elements.phoneFilter) elements.phoneFilter.value = 'all';
+                    render();
+                };
+            }
+
+            if (elements.selectFilteredBtn) {
+                elements.selectFilteredBtn.onclick = () => {
+                    applyFilters();
+                    AppState.filteredContacts.forEach(c => AppState.selectedContacts.add(c.id));
+                    showNotification(`Seleccionados ${AppState.filteredContacts.length} contactos filtrados`, 'success');
+                    updateBulkActionsBar();
+                    render();
+                };
+            }
+
+            if (elements.clearSelectionBtn) {
+                elements.clearSelectionBtn.onclick = () => {
+                    const removed = AppState.selectedContacts.size;
+                    AppState.selectedContacts.clear();
+                    AppState.lastSelectedContactId = null;
+                    if (removed) showNotification('Selección limpiada', 'info');
+                    updateBulkActionsBar();
                     render();
                 };
             }
@@ -3777,13 +3816,27 @@
                 if (isCheckbox) {
                      if (e.target.checked) AppState.selectedContacts.add(id);
                      else AppState.selectedContacts.delete(id);
+                     AppState.lastSelectedContactId = id;
                      setSaveState('pending', 'Selección local');
-                } else {
-                     if (AppState.selectedContacts.has(id)) {
-                        AppState.selectedContacts.delete(id);
-                    } else {
+                } else if (e.shiftKey && AppState.lastSelectedContactId !== null) {
+                     const currentIndex = AppState.filteredContacts.findIndex(c => c.id === id);
+                     const lastIndex = AppState.filteredContacts.findIndex(c => c.id === AppState.lastSelectedContactId);
+                     if (currentIndex !== -1 && lastIndex !== -1) {
+                        const [start, end] = currentIndex < lastIndex ? [currentIndex, lastIndex] : [lastIndex, currentIndex];
+                        for (let i = start; i <= end; i++) {
+                            AppState.selectedContacts.add(AppState.filteredContacts[i].id);
+                        }
+                     } else {
                         AppState.selectedContacts.add(id);
-                    }
+                     }
+                } else if (e.ctrlKey || e.metaKey) {
+                     if (AppState.selectedContacts.has(id)) AppState.selectedContacts.delete(id);
+                     else AppState.selectedContacts.add(id);
+                     AppState.lastSelectedContactId = id;
+                } else {
+                     AppState.selectedContacts.clear();
+                     AppState.selectedContacts.add(id);
+                     AppState.lastSelectedContactId = id;
                 }
                 
                 updateBulkActionsBar();
