@@ -213,6 +213,7 @@
             gap: 8px;
         }
         .btn:hover { background: var(--hover-color); transform: translateY(-2px); }
+        .btn:active { transform: translateY(0) scale(0.98); transition-duration: .1s; }
         .btn.active { background: var(--accent-primary); color: white; }
         .btn i { font-size: 1rem; }
         .btn-danger { background: var(--accent-danger); color: white; }
@@ -961,6 +962,39 @@
         .global-announcement.warn .announce-dot { background: #f87171; }
         .global-announcement .announce-text { font-size: .86rem; color: var(--text-primary); }
 
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 3300;
+            background: rgba(2, 6, 23, 0.72);
+            backdrop-filter: blur(2px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity .18s ease;
+            pointer-events: none;
+        }
+        .loading-overlay.show { display: flex; opacity: 1; }
+        .loading-card {
+            width: min(540px, 92vw);
+            border-radius: 14px;
+            background: linear-gradient(180deg, rgba(15,23,42,.96), rgba(15,23,42,.9));
+            border: 1px solid rgba(148,163,184,.3);
+            box-shadow: 0 16px 36px rgba(2,6,23,.48);
+            padding: 18px;
+            animation: loaderIn .2s ease;
+        }
+        .loading-title { font-weight: 700; font-size: 1.06rem; }
+        .loading-sub { color: var(--text-secondary); margin-top: 6px; font-size: .9rem; }
+        .loading-bar { margin-top: 12px; width: 100%; height: 8px; border-radius: 999px; background: rgba(148,163,184,.25); overflow: hidden; }
+        .loading-bar span { display: block; height: 100%; width: 0%; border-radius: 999px; background: linear-gradient(90deg, #60a5fa, #34d399); transition: width .16s linear; }
+        .loading-meta { margin-top: 8px; font-size: .82rem; color: var(--text-secondary); }
+        @keyframes loaderIn {
+            from { opacity: 0; transform: translateY(8px) scale(.985); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
         @keyframes announceIn {
             from { transform: translateX(-50%) translateY(-10px); opacity: 0; }
             to { transform: translateX(-50%) translateY(0); opacity: 1; }
@@ -1243,6 +1277,14 @@
         <div id="globalAnnouncement" class="global-announcement info" aria-live="polite">
             <span class="announce-dot"></span>
             <span class="announce-text">Sistema listo</span>
+        </div>
+        <div id="loadingOverlay" class="loading-overlay" aria-live="polite">
+            <div class="loading-card">
+                <div class="loading-title">Cargando contactos…</div>
+                <div class="loading-sub" id="loadingOverlayText">Preparando datos para trabajar sin bloqueos visuales.</div>
+                <div class="loading-bar"><span id="loadingOverlayProgress"></span></div>
+                <div class="loading-meta" id="loadingOverlayMeta">0%</div>
+            </div>
         </div>
         <!-- Barra de navegación -->
         <div class="navbar">
@@ -1538,7 +1580,8 @@
             <div style="display: flex; flex-direction: column; gap: 15px; margin: 20px 0;">
                 <input type="text" id="singleName" class="origin-input" placeholder="Nombre del contacto" style="margin-top: 0;">
                 <input type="text" id="singlePhone" class="origin-input" placeholder="Teléfono (opcional)" style="margin-top: 0;">
-                <input type="text" id="singleOrigin" class="origin-input" placeholder="Origen (opcional)" style="margin-top: 0;">
+                <input type="text" id="singleOrigin" class="origin-input" list="originSuggestions" placeholder="Origen (opcional)" style="margin-top: 0;">
+                <datalist id="originSuggestions"></datalist>
                 <select id="singleStatus" class="filter-select">
                     <option value="sin revisar">Sin Revisar</option>
                     <option value="contactado">Contactado</option>
@@ -1628,6 +1671,7 @@
             opsSegmentFilter: $('#opsSegmentFilter'),
             shiftFilter: $('#shiftFilter'),
             phoneFilter: $('#phoneFilter'),
+            editActivityFilter: $('#editActivityFilter'),
             clearFiltersBtn: $('#clearFiltersBtn'),
             selectFilteredBtn: $('#selectFilteredBtn'),
             clearSelectionBtn: $('#clearSelectionBtn'),
@@ -1658,7 +1702,11 @@
             userOptionsModal: $('#userOptionsModal'),
             whatsappMessageModal: $('#whatsappMessageModal'),
             saveStateBadge: $('#saveStateBadge'),
-            globalAnnouncement: $('#globalAnnouncement')
+            globalAnnouncement: $('#globalAnnouncement'),
+            loadingOverlay: $('#loadingOverlay'),
+            loadingOverlayText: $('#loadingOverlayText'),
+            loadingOverlayProgress: $('#loadingOverlayProgress'),
+            loadingOverlayMeta: $('#loadingOverlayMeta')
         };
 
         let selectedFiles = [];
@@ -2845,6 +2893,7 @@
         }
 
         function loadData() {
+            showLoadingOverlay('Cargando contactos…', 'Preparando base local, turnos y validaciones iniciales.');
             try {
                 const saved = localStorage.getItem('contactsData');
                 if (saved) {
@@ -2871,6 +2920,7 @@
                     if (syncResult.updatedCount > 0) saveData();
                     elements.uploadScreen.classList.add('hidden');
                     elements.mainApp.style.display = 'block';
+                    refreshOriginSuggestions();
                     render();
                     manageAutomaticBackup();
                     setSaveState('ok', `Cargado ${new Date().toLocaleTimeString('es-ES')}`);
@@ -2881,6 +2931,8 @@
             } catch (e) {
                 console.error('Error al cargar datos:', e);
                 elements.uploadScreen.classList.remove('hidden');
+            } finally {
+                hideLoadingOverlay();
             }
         }
 
@@ -2894,6 +2946,71 @@
         }
 
         let announceTimer = null;
+        let loadingInterval = null;
+
+        function showLoadingOverlay(message = 'Cargando contactos…', details = 'Preparando datos para trabajar sin bloqueos visuales.') {
+            if (!elements.loadingOverlay) return;
+            if (elements.loadingOverlayText) elements.loadingOverlayText.textContent = details;
+            if (elements.loadingOverlayMeta) elements.loadingOverlayMeta.textContent = '0%';
+            if (elements.loadingOverlayProgress) elements.loadingOverlayProgress.style.width = '0%';
+            elements.loadingOverlay.classList.add('show');
+            let value = 0;
+            if (loadingInterval) clearInterval(loadingInterval);
+            loadingInterval = setInterval(() => {
+                value = Math.min(92, value + Math.floor(Math.random() * 7) + 2);
+                if (elements.loadingOverlayProgress) elements.loadingOverlayProgress.style.width = `${value}%`;
+                if (elements.loadingOverlayMeta) elements.loadingOverlayMeta.textContent = `${value}%`;
+            }, 120);
+        }
+
+        function hideLoadingOverlay() {
+            if (!elements.loadingOverlay) return;
+            if (loadingInterval) {
+                clearInterval(loadingInterval);
+                loadingInterval = null;
+            }
+            if (elements.loadingOverlayProgress) elements.loadingOverlayProgress.style.width = '100%';
+            if (elements.loadingOverlayMeta) elements.loadingOverlayMeta.textContent = '100%';
+            setTimeout(() => {
+                elements.loadingOverlay.classList.remove('show');
+            }, 100);
+        }
+
+        function withSoftTransition(callback) {
+            const app = elements.mainApp;
+            if (!app) {
+                callback();
+                return;
+            }
+            app.style.transition = 'opacity .12s ease, transform .12s ease';
+            app.style.opacity = '0.88';
+            app.style.transform = 'translateY(2px)';
+            setTimeout(() => {
+                callback();
+                app.style.opacity = '1';
+                app.style.transform = 'translateY(0)';
+                setTimeout(() => {
+                    app.style.transition = '';
+                }, 140);
+            }, 100);
+        }
+
+        function refreshOriginSuggestions() {
+            const datalist = $('#originSuggestions');
+            if (!datalist) return;
+            const seen = new Set();
+            const origins = [];
+            AppState.contacts.forEach(contact => {
+                const origin = (contact.origin || '').trim();
+                if (!origin) return;
+                const key = origin.toLowerCase();
+                if (seen.has(key)) return;
+                seen.add(key);
+                origins.push(origin);
+            });
+            origins.sort((a, b) => a.localeCompare(b, 'es'));
+            datalist.innerHTML = origins.slice(0, 250).map(origin => `<option value="${origin}"></option>`).join('');
+        }
         function announceGeneral(message, type = 'info', timeoutMs = 3200) {
             if (!elements.globalAnnouncement) return;
             elements.globalAnnouncement.classList.remove('info', 'success', 'warn', 'show');
@@ -3143,6 +3260,79 @@
             } else {
                 contact.nextReviewAfter = null;
             }
+
+            const shiftContacts = AppState.contacts.filter(c => c.assignedShift === shift && c.status === 'sin revisar');
+            shiftContacts.forEach(c => { c.shiftReviewed = false; });
+            renderShiftsView();
+            saveData();
+            showNotification(`Turno ${String(shift).toUpperCase()} rebalanceado`, 'success');
+        };
+
+        function buildShiftQueue(shift) {
+            return AppState.contacts
+                .filter(c => c.assignedShift === shift)
+                .sort((a,b) => (a.status === 'sin revisar' ? -1 : 1) - (b.status === 'sin revisar' ? -1 : 1));
+        }
+
+        window.startShiftReview = (shift) => {
+            AppState.activeShift = shift;
+            AppState.shiftMode[shift].queue = buildShiftQueue(shift);
+            AppState.shiftMode[shift].cursor = 0;
+            AppState.shiftMode[shift].stack = [];
+            renderQuickReview();
+        };
+
+        function renderQuickReview() {
+            const shift = AppState.activeShift;
+            if (!shift) { elements.quickReview.style.display = 'none'; return; }
+            const mode = AppState.shiftMode[shift];
+            const contact = mode.queue[mode.cursor];
+            if (!contact) {
+                elements.quickReview.style.display = 'block';
+                elements.quickReview.innerHTML = `<h3>Revisión ${shift.toUpperCase()}</h3><p style="color:var(--text-secondary)">Sin más contactos en este turno.</p><button class="btn" onclick="closeQuickReview()">Cerrar</button>`;
+                return;
+            }
+            const phoneTxt = contact.phone || 'Sin teléfono';
+            const st = getStatusOption(contact.status);
+            elements.quickReview.style.display = 'block';
+            const initials = (contact.name || '?').trim().slice(0, 2).toUpperCase();
+            const escapedPhone = (contact.phone || '').replace(/'/g, "\\'");
+            const totalInQueue = mode.queue.length;
+            const currentPos = Math.min(mode.cursor + 1, Math.max(1, totalInQueue));
+            elements.quickReview.innerHTML = `
+                <div class="quick-layout">
+                    <div class="quick-profile">
+                        <div class="quick-profile-head">
+                            <div class="quick-avatar">${initials}</div>
+                            <div>
+                                <div class="quick-name">${contact.name}</div>
+                                <div class="quick-meta">${phoneTxt} · ${contact.origin || '-'}</div>
+                            </div>
+                        </div>
+                        <div class="quick-chips">
+                            <span class="quick-chip">Turno ${shift.toUpperCase()}</span>
+                            <span class="quick-chip">Operador: ${AppState.shiftMode[shift].name}</span>
+                            <span class="quick-chip">Estado: ${st.label}</span>
+                        </div>
+                        <div class="quick-progress">Usuario ${currentPos} de ${totalInQueue} en cola</div>
+                    </div>
+                    <div class="quick-panel">
+                        <div class="quick-topbar">
+                            <h3 style="margin:0;">Revisión rápida ${shift.toUpperCase()}</h3>
+                            <button class="btn" onclick="closeQuickReview()"><i class="fas fa-times"></i> Cerrar</button>
+                        </div>
+                        <div class="review-actions">
+                            ${STATUS_OPTIONS.map(opt => `<button class="btn ${opt.id===contact.status?'btn-success':''}" onclick="reviewSetStatus(${contact.id}, '${opt.id}')"><i class="fas ${opt.icon}"></i> ${opt.label}</button>`).join('')}
+                        </div>
+                        <div class="quick-tools">
+                            <button class="btn" onclick="reviewPrev()"><i class="fas fa-arrow-left"></i> Anterior</button>
+                            <button class="btn" onclick="editContactField(${contact.id}, 'name')"><i class="fas fa-pencil-alt"></i> Editar nombre</button>
+                            <button class="btn" onclick="editContactField(${contact.id}, 'phone')"><i class="fas fa-phone"></i> Editar teléfono</button>
+                            ${contact.phone ? `<button class="btn btn-success" onclick="openWhatsApp('${escapedPhone}', event)"><i class="fab fa-whatsapp"></i> WhatsApp</button>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
         }
         function inferShiftForContact(contact, rrState) {
             const o = normalizeUsername(contact.origin || '');
@@ -3336,195 +3526,44 @@
                 </div>
             `;
         }
-        function inferShiftForContact(contact, rrState) {
-            const o = normalizeUsername(contact.origin || '');
-            if (o.includes('mañana') || o.includes('manana')) return 'tm';
-            if (o.includes('tarde')) return 'tt';
-            if (o.includes('noche')) return 'tn';
-            const seq = ['tm', 'tt', 'tn'];
-            const shift = seq[rrState.i % seq.length];
-            rrState.i += 1;
-            return shift;
-        }
 
-        function assignShifts() {
-            const rr = { i: 0 };
-            AppState.contacts.forEach(c => {
-                if (!c.assignedShift) c.assignedShift = inferShiftForContact(c, rr);
-            });
-        }
-
-        function getShiftStats(shift) {
-            const assigned = AppState.contacts.filter(c => c.assignedShift === shift);
-            const total = assigned.length;
-            const revisados = AppState.turnosStrictProgress
-                ? assigned.filter(c => c.shiftReviewed).length
-                : assigned.filter(c => c.status && c.status !== 'sin revisar').length;
-            return { total, revisados, pendientes: Math.max(0, total - revisados), pct: total ? Math.round((revisados / total) * 100) : 0 };
-        }
-
-        function renderShiftsView() {
-            assignShifts();
-            const shifts = ['tm', 'tt', 'tn'];
-            const shiftStats = shifts.map(shift => ({ shift, st: getShiftStats(shift), data: AppState.shiftMode[shift] }));
-            const totals = shiftStats.reduce((acc, row) => {
-                acc.total += row.st.total;
-                acc.revisados += row.st.revisados;
-                acc.pendientes += row.st.pendientes;
-                return acc;
-            }, { total: 0, revisados: 0, pendientes: 0 });
-            const pct = totals.total ? Math.round((totals.revisados / totals.total) * 100) : 0;
-
-            const overviewCard = `
-                <div class="shifts-overview-card">
-                    <div>
-                        <div style="font-weight:800; font-size:1rem;">Vista de competencia por turnos</div>
-                        <div style="color:var(--text-secondary); font-size:.86rem; margin-top:2px;">En este modo ocultamos búsqueda/filtros generales para enfocarte en productividad por turno.</div>
-                        <div class="shifts-overview-stats" style="margin-top:8px;">
-                            <span>Total asignados: <strong>${totals.total}</strong></span>
-                            <span>Revisados: <strong>${totals.revisados}</strong></span>
-                            <span>Pendientes: <strong>${totals.pendientes}</strong></span>
-                            <span>Avance global: <strong>${pct}%</strong></span>
-                        </div>
-                    </div>
-                    <div class="shifts-overview-actions">
-                        <button class="btn" onclick="rebalanceShift('all')"><i class="fas fa-random"></i> Rebalancear todo</button>
-                        <button class="btn" onclick="closeQuickReview()"><i class="fas fa-times-circle"></i> Cerrar revisión rápida</button>
-                    </div>
-                </div>`;
-
-            const cards = shiftStats.map(({ shift, st, data }) => {
-                return `
-                <div class="shift-card">
-                    <h3>
-                        <span>${shift.toUpperCase()}</span>
-                        <input class="filter-select" style="max-width:130px;" value="${data.name}" onchange="renameShift('${shift}', this.value)">
-                    </h3>
-                    <div class="shift-card-sub">Operador y cola de revisión para este turno.</div>
-                    <div class="shift-stats">
-                        <span>Asignados: <strong>${st.total}</strong></span>
-                        <span>Revisados: <strong>${st.revisados}</strong></span>
-                        <span>Pendientes: <strong>${st.pendientes}</strong></span>
-                    </div>
-                    <div class="shift-progress"><span style="width:${st.pct}%"></span></div>
-                    <div class="shift-controls">
-                        <button class="btn" onclick="startShiftReview('${shift}')"><i class="fas fa-play"></i> Empezar revisión</button>
-                        <button class="btn" onclick="rebalanceShift('${shift}')"><i class="fas fa-random"></i> Rebalancear</button>
-                    </div>
-                </div>`;
-            }).join('');
-
-            const strictCard = `
-                <div class="shift-card strict-mode-card">
-                    <div class="strict-mode-title">Modo estricto de progreso</div>
-                    <div class="strict-mode-desc">Si está activo, el progreso de turnos solo sube cuando revisás desde <strong>Turnos → Revisión rápida</strong>.
-                    Así evitás que cambios hechos en Tarjetas/Lista alteren el ranking del operador.</div>
-                    <label class="strict-toggle">
-                        <input type="checkbox" ${AppState.turnosStrictProgress ? 'checked' : ''} onchange="toggleStrictShiftProgress(this.checked)">
-                        <span>${AppState.turnosStrictProgress ? 'Activo: protegido contra cruces de turnos' : 'Desactivado: cualquier cambio de estado suma al turno asignado'}</span>
-                    </label>
-                </div>`;
-
-            elements.shiftsView.innerHTML = overviewCard + cards + strictCard;
-            elements.shiftsView.style.display = 'grid';
-        }
-
-        window.renameShift = (shift, value) => {
-            AppState.shiftMode[shift].name = (value || shift.toUpperCase()).trim();
-            saveData();
-        };
-
-        window.toggleStrictShiftProgress = (checked) => {
-            AppState.turnosStrictProgress = !!checked;
+        window.reviewSetStatus = (id, status) => {
+            const shift = AppState.activeShift;
+            if (!shift) return;
+            const mode = AppState.shiftMode[shift];
+            const current = mode.queue[mode.cursor];
+            if (current) mode.stack.push(current.id);
+            changeContactStatus(id, status, null, 'shift');
+            mode.cursor += 1;
+            mode.queue = buildShiftQueue(shift);
+            renderQuickReview();
             renderShiftsView();
-            saveData();
         };
 
-        window.rebalanceShift = (shift) => {
-            const seq = ['tm', 'tt', 'tn'];
-            if (shift === 'all') {
-                const unreviewed = AppState.contacts.filter(c => c.status === 'sin revisar');
-                let i = 0;
-                unreviewed.forEach(c => { c.assignedShift = seq[i % 3]; i++; });
-                renderShiftsView();
-                saveData();
-                showNotification('Turnos rebalanceados (global)', 'success');
-                return;
-            }
-
-            const shiftContacts = AppState.contacts.filter(c => c.assignedShift === shift && c.status === 'sin revisar');
-            shiftContacts.forEach(c => { c.shiftReviewed = false; });
-            renderShiftsView();
-            saveData();
-            showNotification(`Turno ${String(shift).toUpperCase()} rebalanceado`, 'success');
-        };
-
-        function buildShiftQueue(shift) {
-            return AppState.contacts
-                .filter(c => c.assignedShift === shift)
-                .sort((a,b) => (a.status === 'sin revisar' ? -1 : 1) - (b.status === 'sin revisar' ? -1 : 1));
-        }
-
-        window.startShiftReview = (shift) => {
-            AppState.activeShift = shift;
-            AppState.shiftMode[shift].queue = buildShiftQueue(shift);
-            AppState.shiftMode[shift].cursor = 0;
-            AppState.shiftMode[shift].stack = [];
+        window.reviewPrev = () => {
+            const shift = AppState.activeShift;
+            if (!shift) return;
+            const mode = AppState.shiftMode[shift];
+            const prevId = mode.stack.pop();
+            if (!prevId) return;
+            const idx = mode.queue.findIndex(c => c.id === prevId);
+            mode.cursor = idx >= 0 ? idx : 0;
             renderQuickReview();
         };
 
-        function renderQuickReview() {
+        window.reviewSkip = () => {
             const shift = AppState.activeShift;
-            if (!shift) { elements.quickReview.style.display = 'none'; return; }
+            if (!shift) return;
             const mode = AppState.shiftMode[shift];
-            const contact = mode.queue[mode.cursor];
-            if (!contact) {
-                elements.quickReview.style.display = 'block';
-                elements.quickReview.innerHTML = `<h3>Revisión ${shift.toUpperCase()}</h3><p style="color:var(--text-secondary)">Sin más contactos en este turno.</p><button class="btn" onclick="closeQuickReview()">Cerrar</button>`;
-                return;
-            }
-            const phoneTxt = contact.phone || 'Sin teléfono';
-            const st = getStatusOption(contact.status);
-            elements.quickReview.style.display = 'block';
-            const initials = (contact.name || '?').trim().slice(0, 2).toUpperCase();
-            const escapedPhone = (contact.phone || '').replace(/'/g, "\\'");
-            const totalInQueue = mode.queue.length;
-            const currentPos = Math.min(mode.cursor + 1, Math.max(1, totalInQueue));
-            elements.quickReview.innerHTML = `
-                <div class="quick-layout">
-                    <div class="quick-profile">
-                        <div class="quick-profile-head">
-                            <div class="quick-avatar">${initials}</div>
-                            <div>
-                                <div class="quick-name">${contact.name}</div>
-                                <div class="quick-meta">${phoneTxt} · ${contact.origin || '-'}</div>
-                            </div>
-                        </div>
-                        <div class="quick-chips">
-                            <span class="quick-chip">Turno ${shift.toUpperCase()}</span>
-                            <span class="quick-chip">Operador: ${AppState.shiftMode[shift].name}</span>
-                            <span class="quick-chip">Estado: ${st.label}</span>
-                        </div>
-                        <div class="quick-progress">Usuario ${currentPos} de ${totalInQueue} en cola</div>
-                    </div>
-                    <div class="quick-panel">
-                        <div class="quick-topbar">
-                            <h3 style="margin:0;">Revisión rápida ${shift.toUpperCase()}</h3>
-                            <button class="btn" onclick="closeQuickReview()"><i class="fas fa-times"></i> Cerrar</button>
-                        </div>
-                        <div class="review-actions">
-                            ${STATUS_OPTIONS.map(opt => `<button class="btn ${opt.id===contact.status?'btn-success':''}" onclick="reviewSetStatus(${contact.id}, '${opt.id}')"><i class="fas ${opt.icon}"></i> ${opt.label}</button>`).join('')}
-                        </div>
-                        <div class="quick-tools">
-                            <button class="btn" onclick="reviewPrev()"><i class="fas fa-arrow-left"></i> Anterior</button>
-                            <button class="btn" onclick="editContactField(${contact.id}, 'name')"><i class="fas fa-pencil-alt"></i> Editar nombre</button>
-                            <button class="btn" onclick="editContactField(${contact.id}, 'phone')"><i class="fas fa-phone"></i> Editar teléfono</button>
-                            ${contact.phone ? `<button class="btn btn-success" onclick="openWhatsApp('${escapedPhone}', event)"><i class="fab fa-whatsapp"></i> WhatsApp</button>` : ''}
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
+            if (mode.cursor < mode.queue.length - 1) mode.cursor += 1;
+            else mode.cursor = mode.queue.length;
+            renderQuickReview();
+        };
+
+        window.closeQuickReview = () => {
+            AppState.activeShift = null;
+            elements.quickReview.style.display = 'none';
+        };
 
         window.reviewSetStatus = (id, status) => {
             const shift = AppState.activeShift;
@@ -4351,6 +4390,7 @@
 
         function openAddSingleModalForCreate() {
             AppState.editingContactId = null;
+            refreshOriginSuggestions();
             $('#singleName').value = '';
             $('#singlePhone').value = '';
             $('#singleOrigin').value = '';
@@ -4362,6 +4402,7 @@
 
         function openAddSingleModalForEdit(contact, focusField = 'name') {
             if (!contact) return;
+            refreshOriginSuggestions();
             AppState.editingContactId = contact.id;
             $('#singleName').value = contact.name || '';
             $('#singlePhone').value = contact.phone || '';
@@ -4604,34 +4645,40 @@
             }
 
             elements.viewCardsBtn.onclick = () => {
-                AppState.currentView = 'cards';
-                elements.viewCardsBtn.classList.add('active');
-                elements.viewListBtn.classList.remove('active');
-                if (elements.viewShiftsBtn) elements.viewShiftsBtn.classList.remove('active');
-                elements.cardsView.style.display = 'grid';
-                elements.listView.style.display = 'none';
-                elements.shiftsView.style.display = 'none';
-                render();
+                withSoftTransition(() => {
+                    AppState.currentView = 'cards';
+                    elements.viewCardsBtn.classList.add('active');
+                    elements.viewListBtn.classList.remove('active');
+                    if (elements.viewShiftsBtn) elements.viewShiftsBtn.classList.remove('active');
+                    elements.cardsView.style.display = 'grid';
+                    elements.listView.style.display = 'none';
+                    elements.shiftsView.style.display = 'none';
+                    render();
+                });
             };
 
             elements.viewListBtn.onclick = () => {
-                AppState.currentView = 'list';
-                elements.viewListBtn.classList.add('active');
-                elements.viewCardsBtn.classList.remove('active');
-                if (elements.viewShiftsBtn) elements.viewShiftsBtn.classList.remove('active');
-                elements.listView.style.display = 'block';
-                elements.cardsView.style.display = 'none';
-                elements.shiftsView.style.display = 'none';
-                render();
+                withSoftTransition(() => {
+                    AppState.currentView = 'list';
+                    elements.viewListBtn.classList.add('active');
+                    elements.viewCardsBtn.classList.remove('active');
+                    if (elements.viewShiftsBtn) elements.viewShiftsBtn.classList.remove('active');
+                    elements.listView.style.display = 'block';
+                    elements.cardsView.style.display = 'none';
+                    elements.shiftsView.style.display = 'none';
+                    render();
+                });
             };
 
             if (elements.viewShiftsBtn) {
                 elements.viewShiftsBtn.onclick = () => {
-                    AppState.currentView = 'shifts';
-                    elements.viewShiftsBtn.classList.add('active');
-                    elements.viewCardsBtn.classList.remove('active');
-                    elements.viewListBtn.classList.remove('active');
-                    render();
+                    withSoftTransition(() => {
+                        AppState.currentView = 'shifts';
+                        elements.viewShiftsBtn.classList.add('active');
+                        elements.viewCardsBtn.classList.remove('active');
+                        elements.viewListBtn.classList.remove('active');
+                        render();
+                    });
                 };
             }
 
