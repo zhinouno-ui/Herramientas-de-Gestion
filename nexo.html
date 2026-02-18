@@ -1342,6 +1342,11 @@
                     <option value="with">Con teléfono</option>
                     <option value="without">Sin teléfono</option>
                 </select>
+                <select id="editActivityFilter" class="filter-select">
+                    <option value="all">Ediciones: todas</option>
+                    <option value="today10plus">Editados hoy (si +10)</option>
+                    <option value="any10plus">Días con +10 ediciones</option>
+                </select>
                 <button id="clearFiltersBtn" class="btn" title="Limpiar búsqueda y filtros">
                     <i class="fas fa-filter-circle-xmark"></i> Limpiar
                 </button>
@@ -1587,6 +1592,7 @@
             opsFilter: 'all',
             shiftFilter: '',
             phoneFilter: 'all',
+            editActivityFilter: 'all',
             shiftMode: {
                 tm: { name: 'TM', queue: [], cursor: 0, stack: [] },
                 tt: { name: 'TT', queue: [], cursor: 0, stack: [] },
@@ -2056,9 +2062,11 @@
 
         function applyOpsHeuristicsToContact(contact) {
             if (!contact || !contact.ops?.suggestedStatus) return;
-            if (contact.status === 'sin revisar') {
-                contact.status = contact.ops.suggestedStatus;
-                contact.lastUpdated = new Date().toISOString();
+            const suggested = contact.ops.suggestedStatus;
+            const nextStatus = getHigherPriorityStatus(contact.status, suggested);
+            if (nextStatus !== contact.status) {
+                contact.status = nextStatus;
+                touchContactEdit(contact, 'ops_sync');
             }
         }
 
@@ -2095,6 +2103,9 @@
                         origin: 'Operaciones panel',
                         status: 'sin revisar',
                         lastUpdated: new Date().toISOString(),
+                        lastEditedAt: new Date().toISOString(),
+                        lastEditReason: 'ops_create',
+                        recontactAttempts: 0,
                         isDuplicate: false,
                         isNewFromOps: true,
                         ops: p
@@ -2793,8 +2804,17 @@
                 maybeDownloadAutomaticBackup('save');
                 setSaveState('ok', `Guardado ${new Date().toLocaleTimeString('es-ES')}`);
             } catch (e) {
-                console.error('Error al guardar datos:', e);
-                tryStorageRecovery();
+                console.warn('No se pudo configurar archivo de backup, se usará descarga:', e);
+                AppState.autoBackupStorageMode = 'download';
+                try { localStorage.setItem('autoBackupStorageMode', 'download'); } catch (_) {}
+                announceGeneral('Se canceló selección de archivo, usando descarga normal', 'warn', 4200);
+                return false;
+            }
+        }
+
+        async function persistAutomaticBackup(payload, fileName) {
+            const canUseFileTarget = await ensureAutoBackupTarget();
+            if (canUseFileTarget && AppState.autoBackupFileHandle) {
                 try {
                     localStorage.setItem('contactsData', JSON.stringify(safeContacts));
                     manageAutomaticBackup();
@@ -2829,6 +2849,11 @@
                 const saved = localStorage.getItem('contactsData');
                 if (saved) {
                     AppState.contacts = JSON.parse(saved);
+                    AppState.contacts.forEach(contact => {
+                        if (!contact.lastEditedAt) contact.lastEditedAt = contact.lastUpdated || new Date().toISOString();
+                        if (!contact.lastEditReason) contact.lastEditReason = 'legacy';
+                        if (typeof contact.recontactAttempts !== 'number') contact.recontactAttempts = 0;
+                    });
                 } else {
                     const backupContacts = getLatestBackupContacts();
                     if (backupContacts) {
@@ -2944,11 +2969,77 @@
             contact._derivedSource = source;
         }
 
+        function getIsoDay(value) {
+            if (!value) return '';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return '';
+            return date.toISOString().slice(0, 10);
+        }
+
+        function getEditDayStats() {
+            const dayCounts = new Map();
+            AppState.contacts.forEach(contact => {
+                const day = getIsoDay(contact.lastEditedAt);
+                if (!day) return;
+                dayCounts.set(day, (dayCounts.get(day) || 0) + 1);
+            });
+            const today = getIsoDay(new Date());
+            return {
+                dayCounts,
+                todayCount: dayCounts.get(today) || 0,
+                hotDays: new Set([...dayCounts.entries()].filter(([, count]) => count > 10).map(([day]) => day))
+            };
+        }
+
+        function touchContactEdit(contact, reason = '') {
+            if (!contact) return;
+            const nowIso = new Date().toISOString();
+            contact.lastEditedAt = nowIso;
+            contact.lastEditReason = reason || contact.lastEditReason || 'actualización';
+            contact.lastUpdated = nowIso;
+        }
+
+        function getStatusRank(status) {
+            const map = {
+                'sin revisar': 0,
+                'contactado': 1,
+                'revisado': 2,
+                'jugando': 3,
+                'no interesado': 1,
+                'sin wsp': 0
+            };
+            return map[status] ?? 0;
+        }
+
+        function getHigherPriorityStatus(currentStatus, suggestedStatus) {
+            if (!suggestedStatus) return currentStatus;
+            if (currentStatus === 'sin wsp') return currentStatus;
+            return getStatusRank(suggestedStatus) > getStatusRank(currentStatus) ? suggestedStatus : currentStatus;
+        }
+
+        function applyRecontactAutopolicy(contact, requestedStatus) {
+            const finalStatus = requestedStatus;
+            if (requestedStatus === 'contactado') {
+                contact.recontactAttempts = (contact.recontactAttempts || 0) + 1;
+                contact.lastRecontactAt = new Date().toISOString();
+                if ((contact.recontactAttempts || 0) >= 3 && contact.status !== 'jugando') {
+                    contact.autoArchivedByPolicy = true;
+                    return 'sin wsp';
+                }
+            }
+            if (requestedStatus === 'jugando') {
+                contact.recontactAttempts = 0;
+                contact.autoArchivedByPolicy = false;
+            }
+            return finalStatus;
+        }
+
         function applyFilters() {
             const parsedQuery = parseSearchQuery(AppState.searchTerm);
             const selectedStatus = AppState.statusFilter || parsedQuery.status;
             const selectedOrigin = AppState.originFilter || parsedQuery.origin;
             const selectedShift = AppState.shiftFilter || parsedQuery.shift;
+            const editStats = getEditDayStats();
 
             AppState.filteredContacts = AppState.contacts.filter(contact => {
                 buildContactDerivedFields(contact);
@@ -2965,7 +3056,16 @@
                 if (AppState.opsFilter === 'matched') matchesOps = !!contact.ops;
                 else if (AppState.opsFilter === 'nomatch') matchesOps = !contact.ops;
 
-                return matchesSearch && matchesStatus && matchesOrigin && matchesShift && matchesPhone && matchesOps;
+                let matchesEditActivity = true;
+                const editedDay = getIsoDay(contact.lastEditedAt);
+                if (AppState.editActivityFilter === 'today10plus') {
+                    const today = getIsoDay(new Date());
+                    matchesEditActivity = editStats.todayCount > 10 && editedDay === today;
+                } else if (AppState.editActivityFilter === 'any10plus') {
+                    matchesEditActivity = !!editedDay && editStats.hotDays.has(editedDay);
+                }
+
+                return matchesSearch && matchesStatus && matchesOrigin && matchesShift && matchesPhone && matchesOps && matchesEditActivity;
             });
 
             if (AppState.opsFilter === 'top50' || AppState.opsFilter === 'top100') {
@@ -3032,9 +3132,209 @@
         }
 
         function setReviewMetadata(contact, status) {
+            const nowIso = new Date().toISOString();
             if (status === 'revisado') {
-                contact.reviewedAt = new Date().toISOString();
+                contact.reviewedAt = nowIso;
             }
+            if (status === 'sin revisar') {
+                contact.nextReviewAfter = new Date(Date.now() + (6 * 60 * 60 * 1000)).toISOString();
+            } else if (status === 'contactado') {
+                contact.nextReviewAfter = new Date(Date.now() + (18 * 60 * 60 * 1000)).toISOString();
+            } else {
+                contact.nextReviewAfter = null;
+            }
+        }
+        function inferShiftForContact(contact, rrState) {
+            const o = normalizeUsername(contact.origin || '');
+            if (o.includes('mañana') || o.includes('manana')) return 'tm';
+            if (o.includes('tarde')) return 'tt';
+            if (o.includes('noche')) return 'tn';
+            const seq = ['tm', 'tt', 'tn'];
+            const shift = seq[rrState.i % seq.length];
+            rrState.i += 1;
+            return shift;
+        }
+
+        function assignShifts() {
+            const rr = { i: 0 };
+            AppState.contacts.forEach(c => {
+                if (!c.assignedShift) c.assignedShift = inferShiftForContact(c, rr);
+            });
+        }
+
+        function getShiftStats(shift) {
+            const assigned = AppState.contacts.filter(c => c.assignedShift === shift);
+            const total = assigned.length;
+            const revisados = AppState.turnosStrictProgress
+                ? assigned.filter(c => c.shiftReviewed).length
+                : assigned.filter(c => c.status && c.status !== 'sin revisar').length;
+            return { total, revisados, pendientes: Math.max(0, total - revisados), pct: total ? Math.round((revisados / total) * 100) : 0 };
+        }
+
+        function renderShiftsView() {
+            assignShifts();
+            const shifts = ['tm', 'tt', 'tn'];
+            const shiftStats = shifts.map(shift => ({ shift, st: getShiftStats(shift), data: AppState.shiftMode[shift] }));
+            const totals = shiftStats.reduce((acc, row) => {
+                acc.total += row.st.total;
+                acc.revisados += row.st.revisados;
+                acc.pendientes += row.st.pendientes;
+                return acc;
+            }, { total: 0, revisados: 0, pendientes: 0 });
+            const pct = totals.total ? Math.round((totals.revisados / totals.total) * 100) : 0;
+
+            const overviewCard = `
+                <div class="shifts-overview-card">
+                    <div>
+                        <div style="font-weight:800; font-size:1rem;">Vista de competencia por turnos</div>
+                        <div style="color:var(--text-secondary); font-size:.86rem; margin-top:2px;">En este modo ocultamos búsqueda/filtros generales para enfocarte en productividad por turno.</div>
+                        <div class="shifts-overview-stats" style="margin-top:8px;">
+                            <span>Total asignados: <strong>${totals.total}</strong></span>
+                            <span>Revisados: <strong>${totals.revisados}</strong></span>
+                            <span>Pendientes: <strong>${totals.pendientes}</strong></span>
+                            <span>Avance global: <strong>${pct}%</strong></span>
+                        </div>
+                    </div>
+                    <div class="shifts-overview-actions">
+                        <button class="btn" onclick="rebalanceShift('all')"><i class="fas fa-random"></i> Rebalancear todo</button>
+                        <button class="btn" onclick="closeQuickReview()"><i class="fas fa-times-circle"></i> Cerrar revisión rápida</button>
+                    </div>
+                </div>`;
+
+            const cards = shiftStats.map(({ shift, st, data }) => {
+                return `
+                <div class="shift-card">
+                    <h3>
+                        <span>${shift.toUpperCase()}</span>
+                        <input class="filter-select" style="max-width:130px;" value="${data.name}" onchange="renameShift('${shift}', this.value)">
+                    </h3>
+                    <div class="shift-card-sub">Operador y cola de revisión para este turno.</div>
+                    <div class="shift-stats">
+                        <span>Asignados: <strong>${st.total}</strong></span>
+                        <span>Revisados: <strong>${st.revisados}</strong></span>
+                        <span>Pendientes: <strong>${st.pendientes}</strong></span>
+                    </div>
+                    <div class="shift-progress"><span style="width:${st.pct}%"></span></div>
+                    <div class="shift-controls">
+                        <button class="btn" onclick="startShiftReview('${shift}')"><i class="fas fa-play"></i> Empezar revisión</button>
+                        <button class="btn" onclick="rebalanceShift('${shift}')"><i class="fas fa-random"></i> Rebalancear</button>
+                    </div>
+                </div>`;
+            }).join('');
+
+            const strictCard = `
+                <div class="shift-card strict-mode-card">
+                    <div class="strict-mode-title">Modo estricto de progreso</div>
+                    <div class="strict-mode-desc">Si está activo, el progreso de turnos solo sube cuando revisás desde <strong>Turnos → Revisión rápida</strong>.
+                    Así evitás que cambios hechos en Tarjetas/Lista alteren el ranking del operador.</div>
+                    <label class="strict-toggle">
+                        <input type="checkbox" ${AppState.turnosStrictProgress ? 'checked' : ''} onchange="toggleStrictShiftProgress(this.checked)">
+                        <span>${AppState.turnosStrictProgress ? 'Activo: protegido contra cruces de turnos' : 'Desactivado: cualquier cambio de estado suma al turno asignado'}</span>
+                    </label>
+                </div>`;
+
+            elements.shiftsView.innerHTML = overviewCard + cards + strictCard;
+            elements.shiftsView.style.display = 'grid';
+        }
+
+        window.renameShift = (shift, value) => {
+            AppState.shiftMode[shift].name = (value || shift.toUpperCase()).trim();
+            saveData();
+        };
+
+        window.toggleStrictShiftProgress = (checked) => {
+            AppState.turnosStrictProgress = !!checked;
+            renderShiftsView();
+            saveData();
+        };
+
+        window.rebalanceShift = (shift) => {
+            const seq = ['tm', 'tt', 'tn'];
+            if (shift === 'all') {
+                const unreviewed = AppState.contacts.filter(c => c.status === 'sin revisar');
+                let i = 0;
+                unreviewed.forEach(c => { c.assignedShift = seq[i % 3]; i++; });
+                renderShiftsView();
+                saveData();
+                showNotification('Turnos rebalanceados (global)', 'success');
+                return;
+            }
+
+            const shiftContacts = AppState.contacts.filter(c => c.assignedShift === shift && c.status === 'sin revisar');
+            shiftContacts.forEach(c => { c.shiftReviewed = false; });
+            renderShiftsView();
+            saveData();
+            showNotification(`Turno ${String(shift).toUpperCase()} rebalanceado`, 'success');
+        };
+
+        function buildShiftQueue(shift) {
+            return AppState.contacts
+                .filter(c => c.assignedShift === shift)
+                .sort((a,b) => (a.status === 'sin revisar' ? -1 : 1) - (b.status === 'sin revisar' ? -1 : 1));
+        }
+
+        window.startShiftReview = (shift) => {
+            AppState.activeShift = shift;
+            AppState.shiftMode[shift].queue = buildShiftQueue(shift);
+            AppState.shiftMode[shift].cursor = 0;
+            AppState.shiftMode[shift].stack = [];
+            renderQuickReview();
+        };
+
+        function renderQuickReview() {
+            const shift = AppState.activeShift;
+            if (!shift) { elements.quickReview.style.display = 'none'; return; }
+            const mode = AppState.shiftMode[shift];
+            const contact = mode.queue[mode.cursor];
+            if (!contact) {
+                elements.quickReview.style.display = 'block';
+                elements.quickReview.innerHTML = `<h3>Revisión ${shift.toUpperCase()}</h3><p style="color:var(--text-secondary)">Sin más contactos en este turno.</p><button class="btn" onclick="closeQuickReview()">Cerrar</button>`;
+                return;
+            }
+            const phoneTxt = contact.phone || 'Sin teléfono';
+            const st = getStatusOption(contact.status);
+            elements.quickReview.style.display = 'block';
+            const initials = (contact.name || '?').trim().slice(0, 2).toUpperCase();
+            const escapedName = (contact.name || '').replace(/'/g, "\\'");
+            const escapedPhone = (contact.phone || '').replace(/'/g, "\\'");
+            const totalInQueue = mode.queue.length;
+            const currentPos = Math.min(mode.cursor + 1, Math.max(1, totalInQueue));
+            elements.quickReview.innerHTML = `
+                <div class="quick-layout">
+                    <div class="quick-profile">
+                        <div class="quick-profile-head">
+                            <div class="quick-avatar">${initials}</div>
+                            <div>
+                                <div class="quick-name">${contact.name}</div>
+                                <div class="quick-meta">${phoneTxt} · ${contact.origin || '-'}</div>
+                            </div>
+                        </div>
+                        <div class="quick-chips">
+                            <span class="quick-chip">Turno ${shift.toUpperCase()}</span>
+                            <span class="quick-chip">Operador: ${AppState.shiftMode[shift].name}</span>
+                            <span class="quick-chip">Estado: ${st.label}</span>
+                        </div>
+                        <div class="quick-progress">Usuario ${currentPos} de ${totalInQueue} en cola</div>
+                    </div>
+                    <div class="quick-panel">
+                        <div class="quick-topbar">
+                            <h3 style="margin:0;">Revisión rápida ${shift.toUpperCase()}</h3>
+                            <button class="btn" onclick="closeQuickReview()"><i class="fas fa-times"></i> Cerrar</button>
+                        </div>
+                        <div class="review-actions">
+                            ${STATUS_OPTIONS.map(opt => `<button class="btn ${opt.id===contact.status?'btn-success':''}" onclick="reviewSetStatus(${contact.id}, '${opt.id}')"><i class="fas ${opt.icon}"></i> ${opt.label}</button>`).join('')}
+                        </div>
+                        <div class="quick-tools">
+                            <button class="btn" onclick="reviewPrev()"><i class="fas fa-arrow-left"></i> Anterior</button>
+                            <button class="btn" onclick="reviewSkip()"><i class="fas fa-forward"></i> Saltar</button>
+                            <button class="btn" onclick="copyToClipboard('${escapedName}')"><i class="fas fa-copy"></i> Copiar usuario</button>
+                            ${contact.phone ? `<button class="btn" onclick="copyToClipboard('${escapedPhone}')"><i class="fas fa-copy"></i> Copiar teléfono</button>` : ''}
+                            <button class="btn" onclick="editContactField(${contact.id}, 'name')"><i class="fas fa-pen"></i> Editar</button>
+                            ${contact.phone ? `<button class="btn btn-success" onclick="openWhatsApp('${escapedPhone}', event)"><i class="fab fa-whatsapp"></i> WhatsApp</button>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
         }
         function inferShiftForContact(contact, rrState) {
             const o = normalizeUsername(contact.origin || '');
@@ -3255,6 +3555,44 @@
             elements.quickReview.style.display = 'none';
         };
 
+        window.reviewSetStatus = (id, status) => {
+            const shift = AppState.activeShift;
+            if (!shift) return;
+            const mode = AppState.shiftMode[shift];
+            const current = mode.queue[mode.cursor];
+            if (current) mode.stack.push(current.id);
+            changeContactStatus(id, status, null, 'shift');
+            mode.cursor += 1;
+            mode.queue = buildShiftQueue(shift);
+            renderQuickReview();
+            renderShiftsView();
+        };
+
+        window.reviewPrev = () => {
+            const shift = AppState.activeShift;
+            if (!shift) return;
+            const mode = AppState.shiftMode[shift];
+            const prevId = mode.stack.pop();
+            if (!prevId) return;
+            const idx = mode.queue.findIndex(c => c.id === prevId);
+            mode.cursor = idx >= 0 ? idx : 0;
+            renderQuickReview();
+        };
+
+        window.reviewSkip = () => {
+            const shift = AppState.activeShift;
+            if (!shift) return;
+            const mode = AppState.shiftMode[shift];
+            if (mode.cursor < mode.queue.length - 1) mode.cursor += 1;
+            else mode.cursor = mode.queue.length;
+            renderQuickReview();
+        };
+
+        window.closeQuickReview = () => {
+            AppState.activeShift = null;
+            elements.quickReview.style.display = 'none';
+        };
+
         function getContactUrgency(contact) {
             if (contact.status !== 'revisado') return null;
             const base = contact.reviewedAt || contact.lastUpdated;
@@ -3321,6 +3659,7 @@
             const urgency = getContactUrgency(contact);
             const sentBadge = getMessageSentBadge(contact);
             const opsMini = getOpsMiniHtml(contact);
+            const editedAtLabel = contact.lastEditedAt ? new Date(contact.lastEditedAt).toLocaleString('es-ES') : '-';
             
             return `
                 <div class="contact-card ${AppState.selectedContacts.has(contact.id) ? 'selected' : ''} ${contact.isDuplicate ? 'duplicate' : ''}" style="--status-rgb: ${statusOption.rgb};" data-id="${contact.id}">
@@ -3359,7 +3698,7 @@
                     </div>
                     ${opsMini}
                     <div class="card-footer">
-                        <span><i class="fas fa-calendar"></i> ${new Date(contact.lastUpdated).toLocaleDateString('es-ES')}</span>
+                        <span><i class="fas fa-calendar"></i> ${new Date(contact.lastUpdated).toLocaleDateString('es-ES')}</span><span title="Última edición"><i class="fas fa-pen"></i> ${editedAtLabel}</span>
                         <button class="btn btn-danger" style="padding: 5px 10px; font-size: 0.75rem;" onclick="deleteContact(${contact.id}, event)"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
@@ -3372,6 +3711,7 @@
             const escapedPhone = (contact.phone || '').replace(/'/g, "\\'");
             const sentBadge = getMessageSentBadge(contact);
             const opsMini = getOpsMiniHtml(contact);
+            const editedAtLabel = contact.lastEditedAt ? new Date(contact.lastEditedAt).toLocaleString('es-ES') : '-';
             
             return `
                 <div class="list-item ${AppState.selectedContacts.has(contact.id) ? 'selected' : ''} ${contact.isDuplicate ? 'duplicate' : ''}" style="--status-rgb: ${statusOption.rgb};" data-id="${contact.id}">
@@ -3397,7 +3737,7 @@
                         </div>
                     </div>
                     <div class="list-item-origin">${contact.origin}</div>
-                    <div class="list-item-date">${new Date(contact.lastUpdated).toLocaleDateString('es-ES')}</div>
+                    <div class="list-item-date" title="Última edición: ${editedAtLabel}">${new Date(contact.lastUpdated).toLocaleDateString('es-ES')}<br><small style="color:var(--text-secondary);">✎ ${editedAtLabel.split(',')[0] || editedAtLabel}</small></div>
                     <div class="whatsapp-cell">
                         ${contact.phone ? `
                             <button class="btn whatsapp-btn" onclick="openWhatsApp('${escapedPhone}', event)" title="Abrir WhatsApp">
@@ -3571,15 +3911,21 @@
             if (!contact) return;
 
             const oldStatus = contact.status;
-            if (oldStatus === newStatus) return;
+            let requestedStatus = applyRecontactAutopolicy(contact, newStatus);
+            if (contact.ops?.suggestedStatus) {
+                requestedStatus = getHigherPriorityStatus(requestedStatus, contact.ops.suggestedStatus);
+            }
+            if (oldStatus === requestedStatus) return;
 
-            contact.status = newStatus;
-            if (source === 'shift') contact.shiftReviewed = newStatus !== 'sin revisar';
-            else if (!AppState.turnosStrictProgress) contact.shiftReviewed = newStatus !== 'sin revisar';
-            setReviewMetadata(contact, newStatus);
-            contact.lastUpdated = new Date().toISOString();
+            contact.status = requestedStatus;
+            if (source === 'shift') contact.shiftReviewed = requestedStatus !== 'sin revisar';
+            else if (!AppState.turnosStrictProgress) contact.shiftReviewed = requestedStatus !== 'sin revisar';
+            setReviewMetadata(contact, requestedStatus);
+            touchContactEdit(contact, source === 'shift' ? 'turno_status' : 'status_change');
             AppState.lastEditedContact = id;
-            addToHistory('Estado cambiado', `${contact.name}: ${oldStatus} → ${newStatus}`);
+            const policyNote = (requestedStatus !== newStatus && requestedStatus === 'sin wsp') ? ' (autopolítica 3 recontactos)' : '';
+            addToHistory('Estado cambiado', `${contact.name}: ${oldStatus} → ${requestedStatus}${policyNote}`);
+            if (policyNote) announceGeneral('Autopolítica aplicada: 3 recontactos sin respuesta → sin WhatsApp.', 'warn', 3000);
             setSaveState('pending', 'Guardando cambios...');
             saveData();
             render();
@@ -3598,7 +3944,7 @@
             const contact = AppState.contacts.find(c => c.id === id);
             if (!contact) return;
             contact.pinned = !contact.pinned;
-            contact.lastUpdated = new Date().toISOString();
+            touchContactEdit(contact, 'pin_toggle');
             saveData();
             render();
         };
@@ -3688,7 +4034,7 @@
             const url = `https://wa.me/${cleanPhone}${message ? `?text=${encodeURIComponent(message)}` : ''}`;
             if (contact) {
                 contact.lastMessageSentAt = new Date().toISOString();
-                contact.lastUpdated = new Date().toISOString();
+                touchContactEdit(contact, 'whatsapp_open');
                 saveData();
                 render();
             }
@@ -3729,7 +4075,7 @@
                         const old = contact.status;
                         contact.status = next;
                         setReviewMetadata(contact, next);
-                        contact.lastUpdated = new Date().toISOString();
+                        touchContactEdit(contact, 'inline_status');
                         AppState.lastEditedContact = id;
                         addToHistory('Estado cambiado', `${contact.name}: ${old} → ${next}`);
                         saveData();
@@ -3774,6 +4120,8 @@
                 return;
             }
 
+            elements.quickReview.style.display = 'none';
+            AppState.activeShift = null;
             applyFilters();
             AppState.filteredContacts.sort((a, b) => {
                 if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1;
@@ -4205,6 +4553,13 @@
                     render();
                 };
             }
+            if (elements.editActivityFilter) {
+                elements.editActivityFilter.onchange = (e) => {
+                    AppState.editActivityFilter = e.target.value;
+                    AppState.currentPage = 1;
+                    render();
+                };
+            }
 
             if (elements.clearFiltersBtn) {
                 elements.clearFiltersBtn.onclick = () => {
@@ -4214,6 +4569,7 @@
                     AppState.opsFilter = 'all';
                     AppState.shiftFilter = '';
                     AppState.phoneFilter = 'all';
+                    AppState.editActivityFilter = 'all';
                     AppState.currentPage = 1;
                     elements.searchInput.value = '';
                     elements.statusFilter.value = '';
@@ -4221,6 +4577,7 @@
                     if (elements.opsSegmentFilter) elements.opsSegmentFilter.value = 'all';
                     if (elements.shiftFilter) elements.shiftFilter.value = '';
                     if (elements.phoneFilter) elements.phoneFilter.value = 'all';
+                    if (elements.editActivityFilter) elements.editActivityFilter.value = 'all';
                     render();
                 };
             }
@@ -4381,7 +4738,7 @@
                         const oldStatus = contact.status;
                         contact.status = select.value;
                         setReviewMetadata(contact, select.value);
-                        contact.lastUpdated = new Date().toISOString();
+                        touchContactEdit(contact, 'inline_status');
                         addToHistory('Estado cambiado', `${contact.name}: ${oldStatus} → ${select.value}`);
                         saveData();
                         render();
@@ -4418,7 +4775,7 @@
                         if (contact) {
                             contact.status = newStatus;
                             setReviewMetadata(contact, newStatus);
-                            contact.lastUpdated = new Date().toISOString();
+                            touchContactEdit(contact, 'inline_status');
                         }
                    });
                    addToHistory('Cambio de estado masivo', `${selectedCount} contactos → ${newStatus}`);
@@ -4515,7 +4872,7 @@
                         setReviewMetadata(contact, status);
                     }
                     contact.status = status;
-                    contact.lastUpdated = new Date().toISOString();
+                    touchContactEdit(contact, 'modal_edit');
                     AppState.lastEditedContact = contact.id;
                     const newSnapshot = `${contact.name} | ${contact.phone || 'sin teléfono'} | ${contact.origin || 'Manual'} | ${contact.status || 'sin revisar'}`;
                     addToHistory('Contacto editado', `${oldSnapshot} → ${newSnapshot}`);
@@ -4535,6 +4892,9 @@
                     origin: origin,
                     status: status,
                     lastUpdated: new Date().toISOString(),
+                    lastEditedAt: new Date().toISOString(),
+                    lastEditReason: 'manual_create',
+                    recontactAttempts: 0,
                     isDuplicate: false
                 };
 
