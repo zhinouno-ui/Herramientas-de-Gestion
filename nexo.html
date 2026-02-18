@@ -1230,8 +1230,8 @@
             <p style="color: var(--text-secondary); margin-bottom: 20px;">Importa tus contactos desde archivos CSV</p>
             <div class="file-upload-area" id="uploadArea">
                 <i class="fas fa-file-csv" style="font-size: 3rem; color: var(--accent-primary);"></i>
-                <p style="margin-top: 15px; color: var(--text-secondary);">Arrastra archivos CSV o VCF aquí o haz clic para seleccionar</p>
-                <input type="file" id="fileInput" accept=".csv,.vcf" multiple="" style="display: none;">
+                <p style="margin-top: 15px; color: var(--text-secondary);">Arrastra archivos CSV, VCF o JSON aquí o haz clic para seleccionar</p>
+                <input type="file" id="fileInput" accept=".csv,.vcf,.json" multiple="" style="display: none;">
             </div>
             <div class="file-list" id="fileList"></div>
             <input type="text" id="originInput" class="origin-input" placeholder="Origen de los contactos (ej: Turno Mañana, Facebook, etc.)">
@@ -1598,7 +1598,9 @@
             lastSelectedContactId: null,
             autoDownloadBackupIntervalMs: 30 * 60 * 1000,
             lastAutoDownloadAt: 0,
-            lastAutoBackupSignature: ''
+            lastAutoBackupSignature: '',
+            autoBackupStorageMode: 'ask',
+            autoBackupFileHandle: null
         };
 
         const elements = {
@@ -2458,8 +2460,32 @@
             return contacts;
         }
 
-        function loadFiles() {
-            const origin = elements.originInput.value.trim() || 'Sin especificar';
+        function parseBackupJson(text) {
+            let parsed;
+            try {
+                parsed = JSON.parse(text);
+            } catch (e) {
+                throw new Error('JSON inválido');
+            }
+            const list = Array.isArray(parsed) ? parsed : (Array.isArray(parsed?.contacts) ? parsed.contacts : null);
+            if (!list) throw new Error('El JSON no contiene una lista de contactos válida');
+            return list
+                .map(c => ({
+                    name: (c?.name || '').toString().trim(),
+                    phone: normalizePhoneNumber(c?.phone || ''),
+                    status: c?.status || 'sin revisar',
+                    origin: (c?.origin || 'Backup JSON').toString().trim()
+                }))
+                .filter(c => c.name);
+        }
+
+        function parseContactsByFile(fileName, text) {
+            const lower = (fileName || '').toLowerCase();
+            if (lower.endsWith('.json')) return parseBackupJson(text);
+            return parseCSV(text);
+        }
+
+        function loadFiles() {            const origin = elements.originInput.value.trim() || 'Sin especificar';
             let totalNewContacts = 0;
             let totalMerged = 0;
             let filesProcessed = 0;
@@ -2469,7 +2495,7 @@
             selectedFiles.forEach(file => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    const parsedContacts = parseCSV(e.target.result);
+                    const parsedContacts = parseContactsByFile(file.name, String(e.target.result || ""));
                     
                     parsedContacts.forEach(newContact => {
                         const normalizedName = normalizeUsername(newContact.name);
@@ -2638,6 +2664,64 @@
             ].join('|');
         }
 
+        async function ensureAutoBackupTarget() {
+            if (AppState.autoBackupStorageMode === 'file' && AppState.autoBackupFileHandle) return true;
+            if (AppState.autoBackupStorageMode === 'download') return false;
+            if (typeof window.showSaveFilePicker !== 'function') {
+                AppState.autoBackupStorageMode = 'download';
+                try { localStorage.setItem('autoBackupStorageMode', 'download'); } catch (_) {}
+                return false;
+            }
+
+            const consent = confirm('¿Querés elegir un archivo para que el backup automático se guarde siempre ahí? Podés renombrarlo al elegirlo.');
+            if (!consent) {
+                AppState.autoBackupStorageMode = 'download';
+                try { localStorage.setItem('autoBackupStorageMode', 'download'); } catch (_) {}
+                announceGeneral('Backup automático seguirá en descargas del navegador', 'info');
+                return false;
+            }
+
+            try {
+                const stamp = new Date().toISOString().slice(0, 10);
+                const handle = await window.showSaveFilePicker({
+                    suggestedName: `nexo_backup_auto_${stamp}.json`,
+                    types: [{
+                        description: 'Backup JSON de Nexo',
+                        accept: { 'application/json': ['.json'] }
+                    }]
+                });
+                AppState.autoBackupFileHandle = handle;
+                AppState.autoBackupStorageMode = 'file';
+                try { localStorage.setItem('autoBackupStorageMode', 'file'); } catch (_) {}
+                announceGeneral('Backup automático guardará en el archivo elegido', 'success');
+                return true;
+            } catch (e) {
+                console.warn('No se pudo configurar archivo de backup, se usará descarga:', e);
+                AppState.autoBackupStorageMode = 'download';
+                try { localStorage.setItem('autoBackupStorageMode', 'download'); } catch (_) {}
+                announceGeneral('Se canceló selección de archivo, usando descarga normal', 'warn', 4200);
+                return false;
+            }
+        }
+
+        async function persistAutomaticBackup(payload, fileName) {
+            const canUseFileTarget = await ensureAutoBackupTarget();
+            if (canUseFileTarget && AppState.autoBackupFileHandle) {
+                try {
+                    const writable = await AppState.autoBackupFileHandle.createWritable();
+                    await writable.write(JSON.stringify(payload, null, 2));
+                    await writable.close();
+                    return 'file';
+                } catch (e) {
+                    console.warn('Fallo escritura sobre archivo elegido, se cae a descarga:', e);
+                    AppState.autoBackupStorageMode = 'download';
+                    try { localStorage.setItem('autoBackupStorageMode', 'download'); } catch (_) {}
+                }
+            }
+            downloadFile(JSON.stringify(payload, null, 2), fileName, 'application/json;charset=utf-8;');
+            return 'download';
+        }
+
         function maybeDownloadAutomaticBackup(reason = 'interval') {
             if (!AppState.contacts || AppState.contacts.length === 0) return;
             const now = Date.now();
@@ -2654,16 +2738,23 @@
                 contactsCount: AppState.contacts.length,
                 contacts: sanitizeContactsForStorage(AppState.contacts)
             };
-            downloadFile(JSON.stringify(payload, null, 2), fileName, 'application/json;charset=utf-8;');
 
-            AppState.lastAutoDownloadAt = now;
-            AppState.lastAutoBackupSignature = signature;
-            try {
-                localStorage.setItem('lastAutoBackupDownloadAt', String(now));
-                localStorage.setItem('lastAutoBackupSignature', signature);
-            } catch (_) {}
-            showNotification(`📦 Backup auto descargado (${AppState.contacts.length} contactos)`, 'info');
-            announceGeneral(`Backup automático descargado (${AppState.contacts.length} contactos)`, 'info');
+            persistAutomaticBackup(payload, fileName).then((mode) => {
+                AppState.lastAutoDownloadAt = now;
+                AppState.lastAutoBackupSignature = signature;
+                try {
+                    localStorage.setItem('lastAutoBackupDownloadAt', String(now));
+                    localStorage.setItem('lastAutoBackupSignature', signature);
+                } catch (_) {}
+                const text = mode === 'file'
+                    ? `📦 Backup auto guardado en archivo elegido (${AppState.contacts.length} contactos)`
+                    : `📦 Backup auto descargado (${AppState.contacts.length} contactos)`;
+                showNotification(text, 'info');
+                announceGeneral(text, 'info');
+            }).catch((e) => {
+                console.error('Error en backup automático:', e);
+                announceGeneral('No se pudo guardar el backup automático', 'warn', 4200);
+            });
         }
 
         let lastSaveErrorAt = 0;
@@ -3545,6 +3636,10 @@
                 if (!Number.isNaN(lastAutoDl) && lastAutoDl > 0) AppState.lastAutoDownloadAt = lastAutoDl;
                 const sig = localStorage.getItem('lastAutoBackupSignature') || '';
                 if (sig) AppState.lastAutoBackupSignature = sig;
+                const backupMode = localStorage.getItem('autoBackupStorageMode');
+                if (backupMode === 'download' || backupMode === 'file' || backupMode === 'ask') {
+                    AppState.autoBackupStorageMode = backupMode;
+                }
             } catch (e) {
                 console.error('Error al cargar preferencias:', e);
             }
@@ -3947,7 +4042,7 @@
             elements.uploadArea.ondrop = (e) => {
                 e.preventDefault();
                 elements.uploadArea.style.borderColor = 'var(--border-color)';
-                const files = Array.from(e.dataTransfer.files).filter(f => f.name.endsWith('.csv') || f.name.endsWith('.vcf'));
+                const files = Array.from(e.dataTransfer.files).filter(f => f.name.toLowerCase().endsWith('.csv') || f.name.toLowerCase().endsWith('.vcf') || f.name.toLowerCase().endsWith('.json'));
                 if (files.length > 0) {
                     selectedFiles.push(...files);
                     updateFileList();
