@@ -192,10 +192,12 @@
 
         .view-actions {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             align-items: center;
             flex-wrap: wrap;
         }
+        .view-actions .btn { padding: 8px 12px; font-size: 0.84rem; border-radius: 10px; }
+        .view-actions .btn i { font-size: 0.9rem; }
 
         .btn {
             background: var(--bg-card);
@@ -211,6 +213,7 @@
             gap: 8px;
         }
         .btn:hover { background: var(--hover-color); transform: translateY(-2px); }
+        .btn:active { transform: translateY(0) scale(0.98); transition-duration: .1s; }
         .btn.active { background: var(--accent-primary); color: white; }
         .btn i { font-size: 1rem; }
         .btn-danger { background: var(--accent-danger); color: white; }
@@ -303,6 +306,7 @@
             transform: translateY(-5px);
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
             border-color: var(--accent-primary);
+            z-index: 40;
         }
         .contact-card.selected { border-color: var(--accent-primary); background: var(--selection-bg); }
         .contact-card::before {
@@ -438,7 +442,7 @@
 
         .card-status-menu {
             position: absolute;
-            top: calc(100% + 8px);
+            bottom: calc(100% + 8px);
             left: 0;
             min-width: 190px;
             background: #1e293b;
@@ -495,7 +499,7 @@
         .list-view {
             background: var(--bg-secondary);
             border-radius: 15px;
-            overflow: hidden;
+            overflow: visible;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
             border: 1px solid rgba(148, 163, 184, 0.14);
         }
@@ -518,7 +522,7 @@
         
         .list-item {
             position: relative;
-            overflow: hidden;
+            overflow: visible;
             padding: 15px 20px;
             display: grid;
             grid-template-columns: 50px 2fr 1.5fr 1.2fr 1fr 80px 380px;
@@ -531,7 +535,7 @@
 
         .list-item-main {
             position: relative;
-            overflow: hidden;
+            overflow: visible;
             border-radius: 12px;
             padding: 10px 12px;
             background: rgba(15, 23, 42, 0.18);
@@ -928,10 +932,148 @@
         .notification.error i { color: var(--accent-danger); }
         .notification.info i { color: var(--accent-primary); }
 
+        .global-announcement {
+            position: fixed;
+            top: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3200;
+            min-width: 320px;
+            max-width: min(760px, 92vw);
+            background: rgba(15,23,42,.95);
+            border: 1px solid rgba(148,163,184,.35);
+            border-radius: 12px;
+            padding: 10px 14px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 12px 30px rgba(2, 6, 23, .45);
+            animation: announceIn .25s ease-out;
+        }
+        .global-announcement.show { display: flex; }
+        .global-announcement.info { border-color: rgba(59,130,246,.45); }
+        .global-announcement.success { border-color: rgba(34,197,94,.45); }
+        .global-announcement.warn { border-color: rgba(239,68,68,.45); }
+        .global-announcement .announce-dot {
+            width: 9px; height: 9px; border-radius: 50%; background: #60a5fa;
+            animation: pulseDot 1.6s ease-in-out infinite;
+        }
+        .global-announcement.success .announce-dot { background: #34d399; }
+        .global-announcement.warn .announce-dot { background: #f87171; }
+        .global-announcement .announce-text { font-size: .86rem; color: var(--text-primary); }
+
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 3300;
+            background: rgba(2, 6, 23, 0.72);
+            backdrop-filter: blur(2px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity .18s ease;
+            pointer-events: none;
+        }
+        .loading-overlay.show { display: flex; opacity: 1; }
+        .loading-card {
+            width: min(540px, 92vw);
+            border-radius: 14px;
+            background: linear-gradient(180deg, rgba(15,23,42,.96), rgba(15,23,42,.9));
+            border: 1px solid rgba(148,163,184,.3);
+            box-shadow: 0 16px 36px rgba(2,6,23,.48);
+            padding: 18px;
+            animation: loaderIn .2s ease;
+        }
+        .loading-title { font-weight: 700; font-size: 1.06rem; }
+        .loading-sub { color: var(--text-secondary); margin-top: 6px; font-size: .9rem; }
+        .loading-bar { margin-top: 12px; width: 100%; height: 8px; border-radius: 999px; background: rgba(148,163,184,.25); overflow: hidden; }
+        .loading-bar span { display: block; height: 100%; width: 0%; border-radius: 999px; background: linear-gradient(90deg, #60a5fa, #34d399); transition: width .16s linear; }
+        .loading-meta { margin-top: 8px; font-size: .82rem; color: var(--text-secondary); }
+        @keyframes loaderIn {
+            from { opacity: 0; transform: translateY(8px) scale(.985); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        @keyframes announceIn {
+            from { transform: translateX(-50%) translateY(-10px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+        @keyframes pulseDot {
+            0%, 100% { transform: scale(1); opacity: .9; }
+            50% { transform: scale(1.35); opacity: .5; }
+        }
+
+        .contact-card, .list-item {
+            animation: fadeInItem .2s ease-out;
+        }
+        @keyframes fadeInItem {
+            from { opacity: .0; transform: translateY(3px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .ops-chip-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
+        .ops-chip {
+            font-size: 0.72rem;
+            padding: 2px 7px;
+            border-radius: 999px;
+            background: rgba(59,130,246,.16);
+            border: 1px solid rgba(96,165,250,.32);
+            color: #bfdbfe;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .ops-chip.hot { background: rgba(16,185,129,.18); border-color: rgba(16,185,129,.4); color: #a7f3d0; }
+        .ops-chip.cold { background: rgba(148,163,184,.16); border-color: rgba(148,163,184,.35); color: #cbd5e1; }
+        .ops-info-wrap { position: relative; display: inline-flex; }
+        .ops-info-btn {
+            width: 20px; height: 20px; border-radius: 50%; border: 1px solid rgba(148,163,184,.35);
+            background: rgba(15,23,42,.5); color: #cbd5e1; font-size: .72rem; cursor: help;
+        }
+        .ops-tooltip {
+            position: absolute; z-index: 90; top: 24px; right: 0; width: 280px;
+            background: #0f172a; border: 1px solid rgba(148,163,184,.35); border-radius: 10px;
+            padding: 10px; display: none; box-shadow: 0 12px 24px rgba(2,6,23,.5); font-size: .78rem;
+        }
+        .ops-info-wrap:hover .ops-tooltip { display: block; }
+        .ops-tooltip .line { display: flex; justify-content: space-between; gap: 8px; margin: 4px 0; color: var(--text-secondary); }
+        .ops-tooltip .line strong { color: var(--text-primary); }
+        .btn.needs-upload { box-shadow: 0 0 0 2px rgba(239,68,68,.5) inset; }
+        .save-state-badge {
+            margin-left: 8px;
+            font-size: 0.78rem;
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(148,163,184,.35);
+            color: var(--text-secondary);
+            background: rgba(15,23,42,.35);
+            white-space: nowrap;
+        }
+        .save-state-badge.ok { color: #86efac; border-color: rgba(34,197,94,.35); }
+        .save-state-badge.warn { color: #fca5a5; border-color: rgba(239,68,68,.35); }
+        .storage-meter {
+            margin-left: 6px;
+            font-size: 0.78rem;
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(148,163,184,.35);
+            color: #cbd5e1;
+            background: rgba(15,23,42,.35);
+            white-space: nowrap;
+            cursor: help;
+        }
+        .storage-meter.ok { color: #86efac; border-color: rgba(34,197,94,.35); }
+        .storage-meter.warn { color: #fde68a; border-color: rgba(245,158,11,.4); }
+        .storage-meter.critical { color: #fca5a5; border-color: rgba(239,68,68,.45); }
+        .save-state-badge.pending { color: #fcd34d; border-color: rgba(245,158,11,.35); }
+
         /* Historial */
         .history-list {
-            max-height: 400px;
+            max-height: none;
             overflow-y: auto;
+            flex: 1;
+            min-height: 260px;
         }
         .history-item {
             background: var(--bg-card);
@@ -948,6 +1090,38 @@
         }
         .history-action {
             color: var(--text-primary);
+        }
+        .history-modal-content {
+            max-height: 82vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .history-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .history-toolbar #historySearchInput { flex: 1; }
+        .history-count-label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+        .history-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .history-item-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .history-item-muted {
+            border-left-color: rgba(148, 163, 184, 0.45);
+            opacity: 0.85;
         }
 
         /* Duplicados */
@@ -1008,26 +1182,6 @@
         .template-actions { display: flex; gap: 8px; flex-wrap: wrap; }
         .template-help { color: var(--text-secondary); font-size: 0.82rem; }
 
-        .timeline-view {
-            background: var(--bg-secondary);
-            border-radius: 15px;
-            border: 1px solid rgba(148, 163, 184, 0.14);
-            padding: 16px;
-            display: none;
-        }
-        .timeline-day { margin-bottom: 16px; }
-        .timeline-day-title { font-weight: 700; color: var(--accent-primary); margin-bottom: 8px; }
-        .timeline-event {
-            background: var(--bg-card);
-            border-left: 3px solid var(--accent-primary);
-            border-radius: 8px;
-            padding: 10px;
-            margin: 6px 0;
-            font-size: 0.88rem;
-            color: var(--text-secondary);
-        }
-        .timeline-event strong { color: var(--text-primary); }
-
         .duplicates-config {
             margin: 12px 0;
             padding: 10px;
@@ -1072,7 +1226,50 @@
                 width: 100%;
             }
             .cards-grid { grid-template-columns: 1fr; }
+            .quick-layout { grid-template-columns: 1fr; }
+            .review-actions { grid-template-columns: 1fr; }
+            .quick-topbar { flex-direction: column; align-items: flex-start; }
         }
+    
+        #mainApp.shifts-mode .search-bar { display: none; }
+        #mainApp.shifts-mode .bulk-actions-bar { display: none !important; }
+        #mainApp.shifts-mode .shifts-view { margin-top: 0; }
+        .shifts-overview-card { grid-column: 1 / -1; background: linear-gradient(180deg, rgba(15,23,42,.9), rgba(15,23,42,.75)); border:1px solid rgba(96,165,250,.28); border-radius:14px; padding:14px; display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between; }
+        .shifts-overview-stats { display:flex; flex-wrap:wrap; gap:14px; color:var(--text-secondary); font-size:.9rem; }
+        .shifts-overview-stats strong { color:var(--text-primary); }
+        .shifts-overview-actions { display:flex; gap:8px; flex-wrap:wrap; }
+        .shifts-view { display:none; gap:14px; grid-template-columns: repeat(auto-fit,minmax(280px,1fr)); }
+        .shift-card { background: linear-gradient(180deg, rgba(30,41,59,.95), rgba(30,41,59,.82)); border:1px solid rgba(148,163,184,.2); border-radius:14px; padding:14px; }
+        .shift-card h3 { margin:0 0 8px 0; display:flex; justify-content:space-between; align-items:center; font-size:1.05rem; }
+        .shift-card-sub { color: var(--text-secondary); font-size: .8rem; margin-bottom: 8px; }
+        .shift-progress { height:8px; border-radius:999px; background:rgba(148,163,184,.2); overflow:hidden; margin:8px 0; }
+        .shift-progress > span { display:block; height:100%; background:linear-gradient(90deg,#34d399,#3b82f6); }
+        .shift-stats { display:flex; gap:10px; font-size:.8rem; color:var(--text-secondary); flex-wrap:wrap; }
+        .review-quick { margin-top:16px; background:linear-gradient(180deg, rgba(30,41,59,.98), rgba(15,23,42,.92)); border:1px solid rgba(148,163,184,.22); border-radius:16px; padding:18px; display:none; }
+        .quick-layout { display:grid; grid-template-columns: minmax(260px, 340px) 1fr; gap:14px; }
+        .quick-profile { background:rgba(15,23,42,.45); border:1px solid rgba(148,163,184,.25); border-radius:12px; padding:14px; }
+        .quick-profile-head { display:flex; gap:12px; align-items:center; }
+        .quick-avatar { width:52px; height:52px; border-radius:50%; background:linear-gradient(135deg, rgba(59,130,246,.25), rgba(16,185,129,.2)); border:1px solid rgba(96,165,250,.4); display:flex; align-items:center; justify-content:center; font-weight:800; color:#bfdbfe; font-size:1rem; }
+        .quick-name { font-size:1.25rem; font-weight:800; line-height:1.1; }
+        .quick-meta { color:var(--text-secondary); font-size:.9rem; margin-top:3px; }
+        .quick-chips { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+        .quick-chip { font-size:.74rem; padding:4px 9px; border-radius:999px; border:1px solid rgba(148,163,184,.35); color:#cbd5e1; background:rgba(30,41,59,.5); }
+        .quick-progress { margin-top:10px; color:var(--text-secondary); font-size:.82rem; }
+        .quick-panel { background:rgba(15,23,42,.24); border:1px solid rgba(148,163,184,.2); border-radius:12px; padding:12px; }
+        .quick-topbar { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px; }
+        .review-actions { display:grid; grid-template-columns: repeat(2,minmax(150px,1fr)); gap:9px; }
+        .review-actions .btn { justify-content:flex-start; padding:10px 12px; }
+        .review-actions .btn.applied { box-shadow: 0 0 0 2px rgba(52,211,153,.45) inset; transform: scale(0.98); }
+        .quick-panel.updating { opacity: .82; transition: opacity .1s linear; }
+        .quick-tools { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:12px; border-top:1px solid rgba(148,163,184,.22); padding-top:10px; }
+        .quick-tools .btn { padding: 8px 10px; font-size: .84rem; }
+        .shift-tag { font-size:.72rem; padding:2px 8px; border-radius:999px; border:1px solid rgba(148,163,184,.35); color:#cbd5e1; }
+        .strict-mode-card { grid-column: 1 / -1; border-style: dashed; }
+        .strict-mode-title { font-weight:700; margin-bottom:4px; }
+        .strict-mode-desc { color: var(--text-secondary); font-size: .85rem; line-height: 1.35; margin-bottom: 10px; }
+        .strict-toggle { display:flex; align-items:center; gap:10px; background:rgba(15,23,42,.35); border:1px solid rgba(148,163,184,.3); border-radius:10px; padding:10px; }
+        .strict-toggle input { width:18px; height:18px; accent-color:#34d399; }
+
     </style>
 </head>
 <body __processed_06e8811e-2870-46d5-8df7-cb489419a036__="true">
@@ -1083,8 +1280,8 @@
             <p style="color: var(--text-secondary); margin-bottom: 20px;">Importa tus contactos desde archivos CSV</p>
             <div class="file-upload-area" id="uploadArea">
                 <i class="fas fa-file-csv" style="font-size: 3rem; color: var(--accent-primary);"></i>
-                <p style="margin-top: 15px; color: var(--text-secondary);">Arrastra archivos CSV o VCF aquí o haz clic para seleccionar</p>
-                <input type="file" id="fileInput" accept=".csv,.vcf" multiple="" style="display: none;">
+                <p style="margin-top: 15px; color: var(--text-secondary);">Arrastra archivos CSV, VCF o JSON aquí o haz clic para seleccionar</p>
+                <input type="file" id="fileInput" accept=".csv,.vcf,.json" multiple="" style="display: none;">
             </div>
             <div class="file-list" id="fileList"></div>
             <input type="text" id="originInput" class="origin-input" placeholder="Origen de los contactos (ej: Turno Mañana, Facebook, etc.)">
@@ -1093,6 +1290,18 @@
     </div>
 
     <div class="container" id="mainApp" style="display: none;">
+        <div id="globalAnnouncement" class="global-announcement info" aria-live="polite">
+            <span class="announce-dot"></span>
+            <span class="announce-text">Sistema listo</span>
+        </div>
+        <div id="loadingOverlay" class="loading-overlay" aria-live="polite">
+            <div class="loading-card">
+                <div class="loading-title">Cargando contactos…</div>
+                <div class="loading-sub" id="loadingOverlayText">Preparando datos para trabajar sin bloqueos visuales.</div>
+                <div class="loading-bar"><span id="loadingOverlayProgress"></span></div>
+                <div class="loading-meta" id="loadingOverlayMeta">0%</div>
+            </div>
+        </div>
         <!-- Barra de navegación -->
         <div class="navbar">
             <div class="stats">
@@ -1132,12 +1341,16 @@
             <div class="view-actions">
                 <button id="viewCardsBtn" class="btn active"><i class="fas fa-th"></i> Tarjetas</button>
                 <button id="viewListBtn" class="btn"><i class="fas fa-list"></i> Lista</button>
-                <button id="timelineBtn" class="btn"><i class="fas fa-stream"></i> Timeline</button>
+                <button id="viewShiftsBtn" class="btn"><i class="fas fa-users-cog"></i> Turnos</button>
                 <button id="exportBtn" class="btn"><i class="fas fa-download"></i> Exportar</button>
                 <button id="historyBtn" class="btn"><i class="fas fa-history"></i> Historial</button>
                 <button id="manageDuplicatesBtn" class="btn btn-warning"><i class="fas fa-clone"></i> Duplicados</button>
-                <button id="shortcutsInfoBtn" class="btn"><i class="fas fa-keyboard"></i> Atajos</button>
+                <button id="settingsBtn" class="btn"><i class="fas fa-cog"></i> Ajustes</button>
+                <button id="importOpsBtn" class="btn" title="Importar agent_operations.csv"><i class="fas fa-chart-line"></i> Operaciones</button>
                 <button id="deleteAllBtn" class="btn btn-danger"><i class="fas fa-trash-alt"></i> Borrar Todo</button>
+                <span id="saveStateBadge" class="save-state-badge pending">● Pendiente</span>
+                <span id="storageMeter" class="storage-meter" title="Diagnóstico de almacenamiento">Storage --</span>
+                <input type="file" id="opsFileInput" accept=".csv" style="display:none;">
             </div>
         </div>
 
@@ -1158,7 +1371,7 @@
         <!-- Barra de búsqueda y filtros -->
         <div class="search-bar" style="position: relative;">
             <i class="fas fa-search" style="position: absolute; left: 35px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); pointer-events: none; z-index: 1;"></i>
-            <input type="text" id="searchInput" class="search-input" placeholder="Buscar por nombre, teléfono o origen..." style="padding-left: 40px;">
+            <input type="text" id="searchInput" class="search-input" placeholder="Buscar... (ej: pepe, 11, estado:jugando, turno:tm, origen:csv)" style="padding-left: 40px;">
             <div class="filter-group">
                 <select id="statusFilter" class="filter-select">
                     <option value="">Todos los estados</option>
@@ -1170,12 +1383,43 @@
                     <option value="no interesado">No Interesado</option>
                 </select>
                 <select id="originFilter" class="filter-select"><option value="">Todos los orígenes</option></select>
+                <select id="opsSegmentFilter" class="filter-select">
+                    <option value="all">Todos</option>
+                    <option value="top50">Top 50</option>
+                    <option value="top100">Top 100</option>
+                    <option value="matched">Con movimiento</option>
+                    <option value="nomatch">Sin movimiento</option>
+                </select>
+                <select id="shiftFilter" class="filter-select">
+                    <option value="">Todos los turnos</option>
+                    <option value="tm">Turno TM</option>
+                    <option value="tt">Turno TT</option>
+                    <option value="tn">Turno TN</option>
+                </select>
+                <select id="phoneFilter" class="filter-select">
+                    <option value="all">Teléfono: todos</option>
+                    <option value="with">Con teléfono</option>
+                    <option value="without">Sin teléfono</option>
+                </select>
+                <select id="editActivityFilter" class="filter-select">
+                    <option value="all">Ediciones: todas</option>
+                    <option value="today10plus">Editados hoy (si +10)</option>
+                    <option value="any10plus">Días con +10 ediciones</option>
+                </select>
+                <button id="clearFiltersBtn" class="btn" title="Limpiar búsqueda y filtros">
+                    <i class="fas fa-filter-circle-xmark"></i> Limpiar
+                </button>
+                <button id="selectFilteredBtn" class="btn" title="Seleccionar todos los contactos filtrados">
+                    <i class="fas fa-check-double"></i> Seleccionar filtrados
+                </button>
+                <button id="clearSelectionBtn" class="btn" title="Limpiar selección actual">
+                    <i class="fas fa-eraser"></i> Limpiar selección
+                </button>
                 <button id="undoBtn" class="btn" title="Volver al último contacto editado (Ctrl+Z)">
                     <i class="fas fa-undo"></i> Volver
                 </button>
                 <button id="addMoreBtn" class="btn btn-success"><i class="fas fa-file-upload"></i> Importar CSV</button>
                 <button id="addSingleBtn" class="btn btn-success"><i class="fas fa-user-plus"></i> Crear Usuario</button>
-                <button id="settingsBtn" class="btn"><i class="fas fa-cog"></i> Ajustes</button>
             </div>
         </div>
 
@@ -1194,6 +1438,9 @@
 
         <!-- Vista de lista -->
         <div id="listView" class="list-view" style="display: none;"></div>
+
+        <div id="shiftsView" class="shifts-view"></div>
+        <div id="quickReview" class="review-quick"></div>
 
 
         <!-- Paginación -->
@@ -1266,8 +1513,12 @@
 
     <!-- Modal de historial -->
     <div class="modal" id="historyModal">
-        <div class="modal-content" style="max-width: 700px;">
+        <div class="modal-content history-modal-content" style="max-width: 900px;">
             <div class="modal-header"><i class="fas fa-history"></i> Historial de Cambios</div>
+            <div class="history-toolbar">
+                <input type="text" id="historySearchInput" class="filter-select" placeholder="Filtrar historial por usuario o acción...">
+                <span id="historyCountLabel" class="history-count-label"></span>
+            </div>
             <div class="history-list" id="historyList"></div>
             <div class="modal-actions">
                 <button id="closeHistoryModal" class="btn"><i class="fas fa-times"></i> Cerrar</button>
@@ -1289,21 +1540,10 @@
                 <div class="shortcut-item"><kbd>Numpad 5</kbd> Estado: No interesado</div>
                 <div class="shortcut-item"><kbd>Numpad 0</kbd> Volver al último contacto</div>
                 <div class="shortcut-item"><kbd>Numpad +</kbd> Cambiar a vista Lista</div>
-                <div class="shortcut-item"><kbd>Numpad -</kbd> Cambiar a vista Timeline</div>
+                <div class="shortcut-item"><kbd>Esc</kbd> Cerrar modales y menús abiertos</div>
             </div>
             <div class="modal-actions">
                 <button id="closeShortcutsModal" class="btn btn-success"><i class="fas fa-check"></i> Entendido</button>
-            </div>
-        </div>
-    </div>
-
-
-    <div class="modal" id="timelineModal">
-        <div class="modal-content" style="max-width: 760px;">
-            <div class="modal-header"><i class="fas fa-stream"></i> Timeline de Interacciones</div>
-            <div id="timelineContent"></div>
-            <div class="modal-actions">
-                <button id="closeTimelineModal" class="btn"><i class="fas fa-times"></i> Cerrar</button>
             </div>
         </div>
     </div>
@@ -1357,7 +1597,8 @@
             <div style="display: flex; flex-direction: column; gap: 15px; margin: 20px 0;">
                 <input type="text" id="singleName" class="origin-input" placeholder="Nombre del contacto" style="margin-top: 0;">
                 <input type="text" id="singlePhone" class="origin-input" placeholder="Teléfono (opcional)" style="margin-top: 0;">
-                <input type="text" id="singleOrigin" class="origin-input" placeholder="Origen (opcional)" style="margin-top: 0;">
+                <input type="text" id="singleOrigin" class="origin-input" list="originSuggestions" placeholder="Origen (opcional)" style="margin-top: 0;">
+                <datalist id="originSuggestions"></datalist>
                 <select id="singleStatus" class="filter-select">
                     <option value="sin revisar">Sin Revisar</option>
                     <option value="contactado">Contactado</option>
@@ -1405,25 +1646,57 @@
             undoStack: [],
             currentView: 'cards',
             whatsappTemplate: 'Hola {usuario}, ¿cómo estás? Te escribo por la propuesta que vimos.',
-            duplicateMergeMode: 'phone-auto'
+            duplicateMergeMode: 'phone-auto',
+            opsProfiles: {},
+            opsLastImportedAt: null,
+            opsFilter: 'all',
+            shiftFilter: '',
+            phoneFilter: 'all',
+            editActivityFilter: 'all',
+            shiftMode: {
+                tm: { name: 'TM', queue: [], cursor: 0, stack: [] },
+                tt: { name: 'TT', queue: [], cursor: 0, stack: [] },
+                tn: { name: 'TN', queue: [], cursor: 0, stack: [] }
+            },
+            turnosStrictProgress: false,
+            activeShift: null,
+            editingContactId: null,
+            lastSelectedContactId: null,
+            autoDownloadBackupIntervalMs: 30 * 60 * 1000,
+            lastAutoDownloadAt: 0,
+            lastAutoBackupSignature: '',
+            autoBackupStorageMode: 'download',
+            autoBackupFileHandle: null,
+            storageEstimate: null,
+            lastStorageWarnAt: 0
         };
 
         const elements = {
             uploadScreen: $('#uploadScreen'),
             mainApp: $('#mainApp'),
             fileInput: $('#fileInput'),
+            opsFileInput: $('#opsFileInput'),
             uploadArea: $('#uploadArea'),
             fileList: $('#fileList'),
             originInput: $('#originInput'),
             startBtn: $('#startBtn'),
             cardsView: $('#cardsView'),
             listView: $('#listView'),
+            shiftsView: $('#shiftsView'),
+            quickReview: $('#quickReview'),
             searchInput: $('#searchInput'),
             statusFilter: $('#statusFilter'),
             originFilter: $('#originFilter'),
+            opsSegmentFilter: $('#opsSegmentFilter'),
+            shiftFilter: $('#shiftFilter'),
+            phoneFilter: $('#phoneFilter'),
+            editActivityFilter: $('#editActivityFilter'),
+            clearFiltersBtn: $('#clearFiltersBtn'),
+            selectFilteredBtn: $('#selectFilteredBtn'),
+            clearSelectionBtn: $('#clearSelectionBtn'),
             viewCardsBtn: $('#viewCardsBtn'),
             viewListBtn: $('#viewListBtn'),
-            timelineBtn: $('#timelineBtn'),
+            viewShiftsBtn: $('#viewShiftsBtn'),
             exportBtn: $('#exportBtn'),
             bulkActionsBar: $('#bulkActionsBar'),
             selectedCount: $('#selectedCount'),
@@ -1438,6 +1711,7 @@
             historyBtn: $('#historyBtn'),
             historyModal: $('#historyModal'),
             deleteAllBtn: $('#deleteAllBtn'),
+            importOpsBtn: $('#importOpsBtn'),
             undoBtn: $('#undoBtn'),
             whatsappTemplateInput: $('#whatsappTemplateInput'),
             saveTemplateBtn: $('#saveTemplateBtn'),
@@ -1445,8 +1719,19 @@
             resetTemplateBtn: $('#resetTemplateBtn'),
             shortcutsModal: $('#shortcutsModal'),
             userOptionsModal: $('#userOptionsModal'),
-            whatsappMessageModal: $('#whatsappMessageModal')
+            whatsappMessageModal: $('#whatsappMessageModal'),
+            saveStateBadge: $('#saveStateBadge'),
+            storageMeter: $('#storageMeter'),
+            globalAnnouncement: $('#globalAnnouncement'),
+            loadingOverlay: $('#loadingOverlay'),
+            loadingOverlayText: $('#loadingOverlayText'),
+            loadingOverlayProgress: $('#loadingOverlayProgress'),
+            loadingOverlayMeta: $('#loadingOverlayMeta')
         };
+
+        // Compatibilidad defensiva: evita ReferenceError en handlers legacy cacheados por el navegador.
+        let shift = '';
+        let mode = '';
 
         let selectedFiles = [];
 
@@ -1458,6 +1743,543 @@
         function normalizeUsername(name) {
             if (!name) return '';
             return name.toString().toLowerCase().trim();
+        }
+
+        function normalizeAlias(alias) {
+            return normalizeUsername(alias).replace(/\s+/g, '');
+        }
+
+        function extractPrimaryAlias(name = '') {
+            const base = (name || '').split('/')[0].trim();
+            const token = base.split(/\s+/)[0] || base;
+            return token.trim();
+        }
+
+        function parseCsvRow(line) {
+            const out = [];
+            let cur = '';
+            let q = false;
+            for (let i = 0; i < line.length; i++) {
+                const ch = line[i];
+                if (ch === '"') {
+                    if (q && line[i + 1] === '"') { cur += '"'; i++; }
+                    else q = !q;
+                } else if (ch === ',' && !q) {
+                    out.push(cur); cur = '';
+                } else cur += ch;
+            }
+            out.push(cur);
+            return out.map(v => v.trim());
+        }
+
+        function median(values) {
+            if (!values.length) return 0;
+            const sorted = [...values].sort((a, b) => a - b);
+            const mid = Math.floor(sorted.length / 2);
+            return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+        }
+
+        function getOpsSuggestedStatus(lastCargaAt) {
+            if (!lastCargaAt) return 'sin revisar';
+            const days = (Date.now() - new Date(lastCargaAt).getTime()) / 86400000;
+            if (days <= 2) return 'jugando';
+            if (days <= 7) return 'contactado';
+            if (days <= 21) return 'revisado';
+            // Nota: datos de operaciones no implican disponibilidad de WhatsApp.
+            // Evitamos sugerir 'sin wsp' solo por recencia.
+            return 'sin revisar';
+        }
+
+        function getOpsHeatLabel(lastCargaAt) {
+            if (!lastCargaAt) return { text: 'Sin datos', cls: 'cold' };
+            const days = (Date.now() - new Date(lastCargaAt).getTime()) / 86400000;
+            if (days <= 7) return { text: '🔥 Activo', cls: 'hot' };
+            if (days <= 21) return { text: '⏳ Tibio', cls: '' };
+            return { text: '❄️ Frío', cls: 'cold' };
+        }
+
+        function parseOperationsCsvChunkedFallback(text, onProgress) {
+            return new Promise((resolve) => {
+                const lines = text.split('\n').map(line => line.replace(/\r$/, '')).filter(Boolean);
+                if (!lines.length) return resolve({ byAlias: {}, importedRows: 0 });
+
+                let idx = 0;
+                if (lines[0].toLowerCase().startsWith('sep=')) idx = 1;
+                const header = parseCsvRow(lines[idx] || '');
+                idx++;
+                const h = header.map(v => normalizeUsername(v));
+                const aliasIdx = h.findIndex(v => v.includes('alias'));
+                const amountIdx = h.findIndex(v => v.includes('cantidad'));
+                const dateIdx = h.findIndex(v => v.includes('fecha'));
+                const stats = new Map();
+                const now = Date.now();
+                const chunk = 700;
+                const totalRows = Math.max(0, lines.length - idx);
+                const startIdx = idx;
+                let importedRows = 0;
+
+                const process = () => {
+                    const end = Math.min(lines.length, idx + chunk);
+                    for (; idx < end; idx++) {
+                        const row = parseCsvRow(lines[idx]);
+                        const aliasRaw = row[aliasIdx] || '';
+                        const alias = normalizeAlias(aliasRaw);
+                        if (!alias) continue;
+                        const amount = parseInt((row[amountIdx] || '0').replace(/[^\d-]/g, ''), 10);
+                        if (Number.isNaN(amount)) continue;
+                        const dateRaw = row[dateIdx] || '';
+                        const ts = Date.parse(dateRaw.replace(' ', 'T')) || Date.now();
+                        const hour = new Date(ts).getHours();
+
+                        if (!stats.has(alias)) {
+                            stats.set(alias, {
+                                alias,
+                                aliasLabel: aliasRaw.trim(),
+                                cargasCount: 0,
+                                descargasCount: 0,
+                                cargadoTotal: 0,
+                                descargadoTotal: 0,
+                                netoTotal: 0,
+                                lastAt: null,
+                                lastCargaAt: null,
+                                cargasVals: [],
+                                hourHist: Array(24).fill(0),
+                                cargas30d: 0,
+                                cargado30d: 0,
+                                cargado90d: 0,
+                                weeks30: new Set(),
+                                months90: new Set()
+                            });
+                        }
+                        const st = stats.get(alias);
+                        importedRows++;
+                        st.netoTotal += amount;
+                        st.hourHist[hour] += 1;
+                        if (!st.lastAt || ts > st.lastAt) st.lastAt = ts;
+
+                        const ageDays = (now - ts) / 86400000;
+                        if (amount > 0) {
+                            st.cargasCount++;
+                            st.cargadoTotal += amount;
+                            st.cargasVals.push(amount);
+                            if (!st.lastCargaAt || ts > st.lastCargaAt) st.lastCargaAt = ts;
+                            if (ageDays <= 30) {
+                                st.cargas30d++;
+                                st.cargado30d += amount;
+                                const d = new Date(ts);
+                                const wk = `${d.getFullYear()}-${Math.ceil((((d - new Date(d.getFullYear(),0,1)) / 86400000) + d.getDay() + 1) / 7)}`;
+                                st.weeks30.add(wk);
+                            }
+                            if (ageDays <= 90) {
+                                st.cargado90d += amount;
+                                const d = new Date(ts);
+                                st.months90.add(`${d.getFullYear()}-${d.getMonth()+1}`);
+                            }
+                        } else {
+                            st.descargasCount++;
+                            st.descargadoTotal += Math.abs(amount);
+                        }
+                    }
+
+                    if (typeof onProgress === 'function') {
+                        onProgress({ processed: Math.max(0, idx - startIdx), total: totalRows });
+                    }
+
+                    if (idx < lines.length) return setTimeout(process, 0);
+
+                    const byAlias = {};
+                    for (const [alias, st] of stats.entries()) {
+                        const topHours = st.hourHist.map((v, i) => ({ h: i, v })).sort((a, b) => b.v - a.v).slice(0, 3).map(x => `${String(x.h).padStart(2, '0')}:00`);
+                        const avgCarga = st.cargasCount ? (st.cargadoTotal / st.cargasCount) : 0;
+                        const mediana = median(st.cargasVals);
+                        const loyalty = (st.weeks30.size >= 2 ? 1 : 0) + (st.months90.size >= 2 ? 1 : 0) + (st.cargado30d >= 50000 ? 1 : 0) + (st.cargas30d >= 8 ? 1 : 0);
+                        const recencyDays = st.lastCargaAt ? (Date.now() - st.lastCargaAt) / 86400000 : 999;
+                        const recencyScore = Math.max(0, 40 - recencyDays);
+                        const score = recencyScore + Math.min(35, st.cargas30d * 3) + Math.min(20, st.cargado90d / 10000) + (loyalty * 8);
+                        byAlias[alias] = {
+                            ...st,
+                            lastAt: st.lastAt ? new Date(st.lastAt).toISOString() : null,
+                            lastCargaAt: st.lastCargaAt ? new Date(st.lastCargaAt).toISOString() : null,
+                            avgCarga: Math.round(avgCarga),
+                            medianCarga: Math.round(mediana),
+                            topHours,
+                            loyalty,
+                            score: Math.round(score),
+                            suggestedStatus: getOpsSuggestedStatus(st.lastCargaAt),
+                            heat: getOpsHeatLabel(st.lastCargaAt)
+                        };
+                        delete byAlias[alias].cargasVals;
+                        delete byAlias[alias].weeks30;
+                        delete byAlias[alias].months90;
+                    }
+                    resolve({ byAlias, importedRows });
+                };
+                process();
+            });
+        }
+
+        function parseOperationsCsvChunked(text, onProgress) {
+            if (typeof Worker === 'undefined') {
+                return parseOperationsCsvChunkedFallback(text, onProgress);
+            }
+            return new Promise((resolve, reject) => {
+                const workerScript = `
+                    const normalizeUsername = (value = '') => (value || '').toString().trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                    const normalizeAlias = (value = '') => normalizeUsername(value).replace(/\s+/g, '');
+                    const parseCsvRow = (line = '') => {
+                        const out = [];
+                        let cur = '';
+                        let inQuotes = false;
+                        for (let i = 0; i < line.length; i++) {
+                            const ch = line[i];
+                            if (ch === '"') {
+                                if (inQuotes && line[i + 1] === '"') { cur += '"'; i++; }
+                                else inQuotes = !inQuotes;
+                            } else if (ch === ',' && !inQuotes) {
+                                out.push(cur);
+                                cur = '';
+                            } else cur += ch;
+                        }
+                        out.push(cur);
+                        return out.map(v => v.trim());
+                    };
+                    const median = (values) => {
+                        if (!values.length) return 0;
+                        const sorted = [...values].sort((a, b) => a - b);
+                        const mid = Math.floor(sorted.length / 2);
+                        return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+                    };
+                    const getOpsSuggestedStatus = (lastCargaAt) => {
+                        if (!lastCargaAt) return 'sin revisar';
+                        const days = (Date.now() - new Date(lastCargaAt).getTime()) / 86400000;
+                        if (days <= 2) return 'jugando';
+                        if (days <= 7) return 'contactado';
+                        if (days <= 21) return 'revisado';
+                        return 'sin revisar';
+                    };
+                    const getOpsHeatLabel = (lastCargaAt) => {
+                        if (!lastCargaAt) return { text: 'Sin datos', cls: 'cold' };
+                        const days = (Date.now() - new Date(lastCargaAt).getTime()) / 86400000;
+                        if (days <= 7) return { text: '🔥 Activo', cls: 'hot' };
+                        if (days <= 21) return { text: '⏳ Tibio', cls: '' };
+                        return { text: '❄️ Frío', cls: 'cold' };
+                    };
+
+                    self.onmessage = (event) => {
+                        try {
+                            const text = String(event.data && event.data.text || '');
+                            const lines = text.split(/\r?\n/).filter(Boolean);
+                            if (!lines.length) {
+                                self.postMessage({ type: 'done', payload: { byAlias: {}, importedRows: 0 } });
+                                return;
+                            }
+
+                            let idx = 0;
+                            if ((lines[0] || '').toLowerCase().startsWith('sep=')) idx = 1;
+                            const header = parseCsvRow(lines[idx] || '');
+                            idx++;
+                            const h = header.map(v => normalizeUsername(v));
+                            const aliasIdx = h.findIndex(v => v.includes('alias'));
+                            const amountIdx = h.findIndex(v => v.includes('cantidad'));
+                            const dateIdx = h.findIndex(v => v.includes('fecha'));
+                            const stats = new Map();
+                            const now = Date.now();
+                            const chunk = 1200;
+                            const totalRows = Math.max(0, lines.length - idx);
+                            let importedRows = 0;
+
+                            while (idx < lines.length) {
+                                const end = Math.min(lines.length, idx + chunk);
+                                for (; idx < end; idx++) {
+                                    const row = parseCsvRow(lines[idx]);
+                                    const aliasRaw = row[aliasIdx] || '';
+                                    const alias = normalizeAlias(aliasRaw);
+                                    if (!alias) continue;
+                                    const amount = parseInt((row[amountIdx] || '0').replace(/[^\d-]/g, ''), 10);
+                                    if (Number.isNaN(amount)) continue;
+                                    const dateRaw = row[dateIdx] || '';
+                                    const ts = Date.parse(dateRaw.replace(' ', 'T')) || Date.now();
+                                    const hour = new Date(ts).getHours();
+
+                                    if (!stats.has(alias)) {
+                                        stats.set(alias, {
+                                            alias,
+                                            aliasLabel: aliasRaw.trim(),
+                                            cargasCount: 0,
+                                            descargasCount: 0,
+                                            cargadoTotal: 0,
+                                            descargadoTotal: 0,
+                                            netoTotal: 0,
+                                            lastAt: null,
+                                            lastCargaAt: null,
+                                            cargasVals: [],
+                                            hourHist: Array(24).fill(0),
+                                            cargas30d: 0,
+                                            cargado30d: 0,
+                                            cargado90d: 0,
+                                            weeks30: new Set(),
+                                            months90: new Set()
+                                        });
+                                    }
+
+                                    const st = stats.get(alias);
+                                    importedRows++;
+                                    st.netoTotal += amount;
+                                    st.hourHist[hour] += 1;
+                                    if (!st.lastAt || ts > st.lastAt) st.lastAt = ts;
+
+                                    const ageDays = (now - ts) / 86400000;
+                                    if (amount > 0) {
+                                        st.cargasCount++;
+                                        st.cargadoTotal += amount;
+                                        st.cargasVals.push(amount);
+                                        if (!st.lastCargaAt || ts > st.lastCargaAt) st.lastCargaAt = ts;
+                                        if (ageDays <= 30) {
+                                            st.cargas30d++;
+                                            st.cargado30d += amount;
+                                            const d = new Date(ts);
+                                            const wk = String(d.getFullYear()) + '-' + String(Math.ceil((((d - new Date(d.getFullYear(), 0, 1)) / 86400000) + d.getDay() + 1) / 7));
+                                            st.weeks30.add(wk);
+                                        }
+                                        if (ageDays <= 90) {
+                                            st.cargado90d += amount;
+                                            const d = new Date(ts);
+                                            st.months90.add(String(d.getFullYear()) + '-' + String(d.getMonth() + 1));
+                                        }
+                                    } else {
+                                        st.descargasCount++;
+                                        st.descargadoTotal += Math.abs(amount);
+                                    }
+                                }
+
+                                self.postMessage({ type: 'progress', payload: { processed: Math.max(0, idx - (lines[0].toLowerCase().startsWith('sep=') ? 2 : 1)), total: totalRows } });
+                            }
+
+                            const byAlias = {};
+                            for (const [alias, st] of stats.entries()) {
+                                const topHours = st.hourHist
+                                    .map((v, i) => ({ h: i, v }))
+                                    .sort((a, b) => b.v - a.v)
+                                    .slice(0, 3)
+                                    .map(x => String(x.h).padStart(2, '0') + ':00');
+                                const avgCarga = st.cargasCount ? (st.cargadoTotal / st.cargasCount) : 0;
+                                const mediana = median(st.cargasVals);
+                                const loyalty = (st.weeks30.size >= 2 ? 1 : 0) + (st.months90.size >= 2 ? 1 : 0) + (st.cargado30d >= 50000 ? 1 : 0) + (st.cargas30d >= 8 ? 1 : 0);
+                                const recencyDays = st.lastCargaAt ? (Date.now() - st.lastCargaAt) / 86400000 : 999;
+                                const recencyScore = Math.max(0, 40 - recencyDays);
+                                const score = recencyScore + Math.min(35, st.cargas30d * 3) + Math.min(20, st.cargado90d / 10000) + (loyalty * 8);
+                                byAlias[alias] = {
+                                    ...st,
+                                    lastAt: st.lastAt ? new Date(st.lastAt).toISOString() : null,
+                                    lastCargaAt: st.lastCargaAt ? new Date(st.lastCargaAt).toISOString() : null,
+                                    avgCarga: Math.round(avgCarga),
+                                    medianCarga: Math.round(mediana),
+                                    topHours,
+                                    loyalty,
+                                    score: Math.round(score),
+                                    suggestedStatus: getOpsSuggestedStatus(st.lastCargaAt),
+                                    heat: getOpsHeatLabel(st.lastCargaAt)
+                                };
+                                delete byAlias[alias].cargasVals;
+                                delete byAlias[alias].weeks30;
+                                delete byAlias[alias].months90;
+                            }
+
+                            self.postMessage({ type: 'done', payload: { byAlias, importedRows } });
+                        } catch (err) {
+                            self.postMessage({ type: 'error', payload: String((err && err.message) || err || 'Error procesando CSV de operaciones') });
+                        }
+                    };
+                `;
+
+                const blob = new Blob([workerScript], { type: 'application/javascript' });
+                const workerUrl = URL.createObjectURL(blob);
+                const worker = new Worker(workerUrl);
+                let settled = false;
+
+                worker.onmessage = (event) => {
+                    const { type, payload } = event.data || {};
+                    if (type === 'progress' && typeof onProgress === 'function') {
+                        onProgress(payload || {});
+                        return;
+                    }
+                    if (type === 'done') {
+                        if (settled) return;
+                        settled = true;
+                        worker.terminate();
+                        URL.revokeObjectURL(workerUrl);
+                        resolve(payload || { byAlias: {}, importedRows: 0 });
+                        return;
+                    }
+                    if (type === 'error') {
+                        if (settled) return;
+                        settled = true;
+                        worker.terminate();
+                        URL.revokeObjectURL(workerUrl);
+                        parseOperationsCsvChunkedFallback(text, onProgress).then(resolve).catch(reject);
+                    }
+                };
+
+                worker.onerror = () => {
+                    if (settled) return;
+                    settled = true;
+                    worker.terminate();
+                    URL.revokeObjectURL(workerUrl);
+                    parseOperationsCsvChunkedFallback(text, onProgress).then(resolve).catch(reject);
+                };
+
+                worker.postMessage({ text: String(text || '') });
+            });
+        }
+
+        function applyOpsHeuristicsToContact(contact) {
+            if (!contact || !contact.ops?.suggestedStatus) return;
+            const suggested = contact.ops.suggestedStatus;
+            const nextStatus = getHigherPriorityStatus(contact.status, suggested);
+            if (nextStatus !== contact.status) {
+                contact.status = nextStatus;
+                touchContactEdit(contact, 'ops_sync');
+            }
+        }
+
+        function syncOpsToContacts({ createNewUsers = true } = {}) {
+            const profiles = AppState.opsProfiles || {};
+            const matchedAliases = new Set();
+            let updatedCount = 0;
+            let createdCount = 0;
+
+            AppState.contacts.forEach(contact => {
+                const prevStatus = contact.status;
+                const prevAlias = contact.alias || '';
+                const keys = [normalizeAlias(contact.alias || ''), normalizeAlias(extractPrimaryAlias(contact.name || '')), normalizeAlias(contact.name || '')].filter(Boolean);
+                const foundKey = keys.find(k => profiles[k]);
+                contact.ops = foundKey ? profiles[foundKey] : null;
+                if (foundKey) {
+                    contact.alias = contact.alias || extractPrimaryAlias(contact.name || '') || profiles[foundKey].aliasLabel;
+                    matchedAliases.add(foundKey);
+                    applyOpsHeuristicsToContact(contact);
+                }
+                if (contact.status !== prevStatus || (contact.alias || '') !== prevAlias) updatedCount++;
+            });
+
+            if (createNewUsers) {
+                Object.keys(profiles).forEach(alias => {
+                    if (matchedAliases.has(alias)) return;
+                    const p = profiles[alias];
+                    const newId = Date.now() + Math.random();
+                    AppState.contacts.push({
+                        id: newId,
+                        name: p.aliasLabel || alias,
+                        alias: p.aliasLabel || alias,
+                        phone: '',
+                        origin: 'Operaciones panel',
+                        status: 'sin revisar',
+                        lastUpdated: new Date().toISOString(),
+                        lastEditedAt: new Date().toISOString(),
+                        lastEditReason: 'ops_create',
+                        recontactAttempts: 0,
+                        isDuplicate: false,
+                        isNewFromOps: true,
+                        ops: p
+                    });
+                    applyOpsHeuristicsToContact(AppState.contacts[AppState.contacts.length - 1]);
+                    addToHistory('Nuevo usuario desde operaciones', p.aliasLabel || alias);
+                    createdCount++;
+                });
+            }
+            return { updatedCount, createdCount };
+        }
+
+        function mergeOpsProfiles(newProfiles) {
+            const merged = { ...(AppState.opsProfiles || {}) };
+            Object.entries(newProfiles || {}).forEach(([alias, n]) => {
+                const prev = merged[alias];
+                if (!prev) { merged[alias] = n; return; }
+                merged[alias] = {
+                    ...n,
+                    cargasCount: (prev.cargasCount || 0) + (n.cargasCount || 0),
+                    descargasCount: (prev.descargasCount || 0) + (n.descargasCount || 0),
+                    cargadoTotal: (prev.cargadoTotal || 0) + (n.cargadoTotal || 0),
+                    descargadoTotal: (prev.descargadoTotal || 0) + (n.descargadoTotal || 0),
+                    netoTotal: (prev.netoTotal || 0) + (n.netoTotal || 0),
+                    cargas30d: Math.max(prev.cargas30d || 0, n.cargas30d || 0),
+                    cargado30d: Math.max(prev.cargado30d || 0, n.cargado30d || 0),
+                    cargado90d: Math.max(prev.cargado90d || 0, n.cargado90d || 0),
+                    lastAt: (!prev.lastAt || (n.lastAt && n.lastAt > prev.lastAt)) ? n.lastAt : prev.lastAt,
+                    lastCargaAt: (!prev.lastCargaAt || (n.lastCargaAt && n.lastCargaAt > prev.lastCargaAt)) ? n.lastCargaAt : prev.lastCargaAt,
+                    avgCarga: Math.round(((prev.avgCarga || 0) + (n.avgCarga || 0)) / 2),
+                    medianCarga: Math.round(((prev.medianCarga || 0) + (n.medianCarga || 0)) / 2),
+                    loyalty: Math.max(prev.loyalty || 0, n.loyalty || 0),
+                    score: Math.max(prev.score || 0, n.score || 0),
+                    suggestedStatus: n.suggestedStatus || prev.suggestedStatus,
+                    heat: n.heat || prev.heat,
+                    topHours: n.topHours?.length ? n.topHours : (prev.topHours || [])
+                };
+            });
+            AppState.opsProfiles = merged;
+            AppState.opsLastImportedAt = new Date().toISOString();
+            saveOpsData();
+        }
+
+        function saveOpsData() {
+            try {
+                localStorage.setItem('opsProfilesData', JSON.stringify(AppState.opsProfiles || {}));
+                localStorage.setItem('opsLastImportedAt', AppState.opsLastImportedAt || '');
+            } catch (e) {
+                console.error('Error guardando operaciones:', e);
+            }
+        }
+
+        function loadOpsData() {
+            try {
+                AppState.opsProfiles = JSON.parse(localStorage.getItem('opsProfilesData') || '{}');
+                AppState.opsLastImportedAt = localStorage.getItem('opsLastImportedAt') || null;
+            } catch (e) {
+                AppState.opsProfiles = {};
+                AppState.opsLastImportedAt = null;
+            }
+        }
+
+        function updateOpsUploadReminder() {
+            if (!elements.importOpsBtn) return;
+            elements.importOpsBtn.classList.remove('needs-upload');
+            if (!AppState.opsLastImportedAt) {
+                elements.importOpsBtn.classList.add('needs-upload');
+                elements.importOpsBtn.title = 'Importá operaciones (sin importación previa)';
+                return;
+            }
+            const hours = (Date.now() - new Date(AppState.opsLastImportedAt).getTime()) / 36e5;
+            if (hours >= 48) elements.importOpsBtn.classList.add('needs-upload');
+            elements.importOpsBtn.title = `Última importación: ${new Date(AppState.opsLastImportedAt).toLocaleString('es-ES')}`;
+        }
+
+        function getOpsMiniHtml(contact) {
+            if (!contact.ops) return '';
+            const o = contact.ops;
+            const heat = o.heat || getOpsHeatLabel(o.lastCargaAt);
+            const last = o.lastCargaAt ? new Date(o.lastCargaAt).toLocaleString('es-ES') : '-';
+            const topHours = (o.topHours || []).join(' / ') || '-';
+            return `
+                <div class="ops-chip-row">
+                    <span class="ops-chip ${heat.cls}">${heat.text}</span>
+                    <span class="ops-chip">↑${o.cargasCount || 0} ↓${o.descargasCount || 0}</span>
+                    <span class="ops-chip">Σ $${Math.round(o.netoTotal || 0)}</span>
+                    <span class="ops-chip">Score ${o.score || 0}</span>
+                    <div class="ops-info-wrap">
+                        <button class="ops-info-btn" type="button" onclick="event.stopPropagation()">ℹ️</button>
+                        <div class="ops-tooltip" onclick="event.stopPropagation()">
+                            <div class="line"><span>Última actividad</span><strong>${last}</strong></div>
+                            <div class="line"><span>Promedio / Mediana</span><strong>$${Math.round(o.avgCarga || 0)} / $${Math.round(o.medianCarga || 0)}</strong></div>
+                            <div class="line"><span>Cargado 30d / 90d</span><strong>$${Math.round(o.cargado30d || 0)} / $${Math.round(o.cargado90d || 0)}</strong></div>
+                            <div class="line"><span>Horas top</span><strong>${topHours}</strong></div>
+                            <div class="line"><span>Lealtad</span><strong>${o.loyalty || 0}/4</strong></div>
+                            <div style="display:flex; gap:6px; margin-top:8px;">
+                                <button class="btn" style="padding:4px 8px;font-size:.72rem;" onclick="applyOpsSuggestion(${contact.id}, event)">Aplicar ${o.suggestedStatus || 'sin revisar'}</button>
+                                <button class="btn" style="padding:4px 8px;font-size:.72rem;" onclick="pinContact(${contact.id}, event)">${contact.pinned ? 'Desfijar' : 'Pin'}</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
         }
 
         function addToHistory(action, details) {
@@ -1643,8 +2465,32 @@
             return contacts;
         }
 
-        function loadFiles() {
-            const origin = elements.originInput.value.trim() || 'Sin especificar';
+        function parseBackupJson(text) {
+            let parsed;
+            try {
+                parsed = JSON.parse(text);
+            } catch (e) {
+                throw new Error('JSON inválido');
+            }
+            const list = Array.isArray(parsed) ? parsed : (Array.isArray(parsed?.contacts) ? parsed.contacts : null);
+            if (!list) throw new Error('El JSON no contiene una lista de contactos válida');
+            return list
+                .map(c => ({
+                    name: (c?.name || '').toString().trim(),
+                    phone: normalizePhoneNumber(c?.phone || ''),
+                    status: c?.status || 'sin revisar',
+                    origin: (c?.origin || 'Backup JSON').toString().trim()
+                }))
+                .filter(c => c.name);
+        }
+
+        function parseContactsByFile(fileName, text) {
+            const lower = (fileName || '').toLowerCase();
+            if (lower.endsWith('.json')) return parseBackupJson(text);
+            return parseCSV(text);
+        }
+
+        function loadFiles() {            const origin = elements.originInput.value.trim() || 'Sin especificar';
             let totalNewContacts = 0;
             let totalMerged = 0;
             let filesProcessed = 0;
@@ -1654,7 +2500,7 @@
             selectedFiles.forEach(file => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    const parsedContacts = parseCSV(e.target.result);
+                    const parsedContacts = parseContactsByFile(file.name, String(e.target.result || ""));
                     
                     parsedContacts.forEach(newContact => {
                         const normalizedName = normalizeUsername(newContact.name);
@@ -1713,8 +2559,75 @@
             });
         }
 
+
+        function importOperationsFile(file) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    showNotification('Procesando operaciones...', 'info');
+                    announceGeneral('Procesando archivo de operaciones…', 'info');
+                    setSaveState('pending', 'Procesando operaciones 0%');
+                    const { byAlias, importedRows } = await parseOperationsCsvChunked(String(e.target.result || ''), ({ processed = 0, total = 0 }) => {
+                        const pct = total > 0 ? Math.min(99, Math.round((processed / total) * 100)) : 0;
+                        setSaveState('pending', `Procesando operaciones ${pct}%`);
+                    });
+                    mergeOpsProfiles(byAlias);
+                    syncOpsToContacts({ createNewUsers: true });
+                    detectDuplicates();
+                    saveData();
+                    addToHistory('Operaciones importadas', `${importedRows} filas procesadas`);
+                    render();
+                    setSaveState('ok', `Operaciones listas ${new Date().toLocaleTimeString('es-ES')}`);
+                    showNotification(`✅ Operaciones actualizadas (${importedRows} filas)`, 'success');
+                    announceGeneral(`Operaciones importadas: ${importedRows} filas`, 'success');
+                } catch (err) {
+                    console.error('Error importando operaciones:', err);
+                    setSaveState('warn', 'Error procesando operaciones');
+                    showNotification('Error al importar operaciones', 'error');
+                    announceGeneral('No se pudo procesar operaciones. Se aplicó modo seguro.', 'warn', 4500);
+                    setTimeout(() => setSaveState('pending', 'Pendiente'), 5000);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function sanitizeContactsForStorage(contacts = []) {
+            return contacts.map(contact => {
+                const { ops, _nameKey, _searchKey, _derivedSource, ...rest } = contact;
+                return { ...rest };
+            });
+        }
+
+        function getLatestBackupContacts() {
+            try {
+                const backupKeys = Object.keys(localStorage)
+                    .filter(k => k.startsWith('bk_'))
+                    .sort()
+                    .reverse();
+                for (const key of backupKeys) {
+                    const raw = localStorage.getItem(key);
+                    if (!raw) continue;
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed) && parsed.length) return parsed;
+                }
+            } catch (e) {
+                console.error('Error leyendo backups:', e);
+            }
+            return null;
+        }
+
         function manageAutomaticBackup() {
             if (!AppState.contacts || AppState.contacts.length === 0) return;
+            const currentPct = AppState.storageEstimate?.pct || 0;
+            if (currentPct >= 90) {
+                const nowTs = Date.now();
+                if (nowTs - (AppState.lastStorageWarnAt || 0) > 60000) {
+                    AppState.lastStorageWarnAt = nowTs;
+                    announceGeneral('Espacio local crítico: se omite backup interno para evitar bloqueo.', 'warn', 4200);
+                }
+                return;
+            }
 
             const now = new Date();
             const hour = now.getHours();
@@ -1732,7 +2645,7 @@
             if (localStorage.getItem(backupKey)) return;
 
             try {
-                const backupData = JSON.stringify(AppState.contacts);
+                const backupData = JSON.stringify(sanitizeContactsForStorage(AppState.contacts));
                 localStorage.setItem(backupKey, backupData);
                 console.log(`Backup automático creado: ${backupKey}`);
                 
@@ -1752,62 +2665,279 @@
             }
         }
 
+        function computeAutoBackupSignature() {
+            if (!AppState.contacts || AppState.contacts.length === 0) return 'empty';
+            const first = AppState.contacts[0];
+            const last = AppState.contacts[AppState.contacts.length - 1];
+            return [
+                AppState.contacts.length,
+                first?.id || '-',
+                first?.lastUpdated || '-',
+                last?.id || '-',
+                last?.lastUpdated || '-'
+            ].join('|');
+        }
+
+        async function ensureAutoBackupTarget() {
+            if (AppState.autoBackupStorageMode === 'file' && AppState.autoBackupFileHandle) return true;
+            if (AppState.autoBackupStorageMode === 'download') return false;
+            if (typeof window.showSaveFilePicker !== 'function') {
+                AppState.autoBackupStorageMode = 'download';
+                try { localStorage.setItem('autoBackupStorageMode', 'download'); } catch (_) {}
+                return false;
+            }
+
+            // Evitamos prompts/avisos intrusivos en flujos automáticos.
+            AppState.autoBackupStorageMode = 'download';
+            try { localStorage.setItem('autoBackupStorageMode', 'download'); } catch (_) {}
+            return false;
+        }
+
+        async function persistAutomaticBackup(payload, fileName) {
+            const canUseFileTarget = await ensureAutoBackupTarget();
+            if (canUseFileTarget && AppState.autoBackupFileHandle) {
+                try {
+                    const writable = await AppState.autoBackupFileHandle.createWritable();
+                    await writable.write(JSON.stringify(payload, null, 2));
+                    await writable.close();
+                    return 'file';
+                } catch (e) {
+                    console.warn('Fallo escritura sobre archivo elegido, se cae a descarga:', e);
+                    AppState.autoBackupStorageMode = 'download';
+                    try { localStorage.setItem('autoBackupStorageMode', 'download'); } catch (_) {}
+                }
+            }
+            downloadFile(JSON.stringify(payload, null, 2), fileName, 'application/json;charset=utf-8;');
+            return 'download';
+        }
+
+        function maybeDownloadAutomaticBackup(reason = 'interval') {
+            if (!AppState.contacts || AppState.contacts.length === 0) return;
+            const now = Date.now();
+            if (now - AppState.lastAutoDownloadAt < AppState.autoDownloadBackupIntervalMs) return;
+
+            const signature = computeAutoBackupSignature();
+            if (signature === AppState.lastAutoBackupSignature && reason !== 'manual-force') return;
+
+            const stamp = new Date(now).toISOString().replace(/[:T]/g, '-').slice(0, 16);
+            const fileName = `nexo_backup_auto_${stamp}.json`;
+            const payload = {
+                exportedAt: new Date(now).toISOString(),
+                reason,
+                contactsCount: AppState.contacts.length,
+                contacts: sanitizeContactsForStorage(AppState.contacts)
+            };
+
+            persistAutomaticBackup(payload, fileName).then((mode) => {
+                AppState.lastAutoDownloadAt = now;
+                AppState.lastAutoBackupSignature = signature;
+                try {
+                    localStorage.setItem('lastAutoBackupDownloadAt', String(now));
+                    localStorage.setItem('lastAutoBackupSignature', signature);
+                } catch (_) {}
+                const text = mode === 'file'
+                    ? `📦 Backup auto guardado en archivo elegido (${AppState.contacts.length} contactos)`
+                    : `📦 Backup auto descargado (${AppState.contacts.length} contactos)`;
+                showNotification(text, 'info');
+                announceGeneral(text, 'info');
+            }).catch((e) => {
+                console.error('Error en backup automático:', e);
+                announceGeneral('No se pudo guardar el backup automático', 'warn', 4200);
+            });
+        }
+
         let lastSaveErrorAt = 0;
+        function setSaveState(type = 'pending', text = 'Pendiente') {
+            if (!elements.saveStateBadge) return;
+            elements.saveStateBadge.classList.remove('ok', 'warn', 'pending');
+            elements.saveStateBadge.classList.add(type);
+            const pct = AppState.storageEstimate?.pct;
+            const suffix = Number.isFinite(pct) ? ` · Storage ${pct}%` : '';
+            elements.saveStateBadge.textContent = `● ${text}${suffix}`;
+        }
+
         function tryStorageRecovery() {
             try {
                 const backupKeys = Object.keys(localStorage).filter(k => k.startsWith('bk_')).sort();
-                while (backupKeys.length > 3) {
+                while (backupKeys.length > 2) {
                     localStorage.removeItem(backupKeys.shift());
                 }
                 if (AppState.history.length > 25) {
                     AppState.history = AppState.history.slice(0, 25);
                     localStorage.setItem('contactsHistory', JSON.stringify(AppState.history));
                 }
+                const opsRaw = localStorage.getItem('opsProfilesData');
+                if (opsRaw && opsRaw.length > 1200000) {
+                    localStorage.removeItem('opsProfilesData');
+                    localStorage.removeItem('opsLastImportedAt');
+                    AppState.opsProfiles = {};
+                    AppState.opsLastImportedAt = null;
+                }
             } catch (_) {}
         }
 
-        function saveData() {
+        async function refreshStorageDiagnostics() {
             try {
-                localStorage.setItem('contactsData', JSON.stringify(AppState.contacts));
+                const usageBytes = (() => {
+                    let total = 0;
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i) || '';
+                        const val = localStorage.getItem(key) || '';
+                        total += (key.length + val.length) * 2;
+                    }
+                    return total;
+                })();
+
+                let quotaBytes = 5 * 1024 * 1024;
+                if (navigator.storage && typeof navigator.storage.estimate === 'function') {
+                    const estimate = await navigator.storage.estimate();
+                    if (estimate?.quota) quotaBytes = estimate.quota;
+                }
+
+                const pct = Math.min(100, Math.round((usageBytes / Math.max(1, quotaBytes)) * 100));
+                AppState.storageEstimate = { usageBytes, quotaBytes, pct };
+
+                const mb = (n) => `${(n / (1024 * 1024)).toFixed(2)} MB`;
+                const detail = `Almacenamiento local: ${mb(usageBytes)} / ${mb(quotaBytes)} (${pct}%)`;
+                if (elements.saveStateBadge) {
+                    elements.saveStateBadge.title = detail;
+                }
+                if (elements.storageMeter) {
+                    elements.storageMeter.classList.remove('ok', 'warn', 'critical');
+                    elements.storageMeter.classList.add(pct >= 92 ? 'critical' : (pct >= 80 ? 'warn' : 'ok'));
+                    elements.storageMeter.textContent = `Storage ${pct}%`;
+                    elements.storageMeter.title = `${detail}. Ejecutá getStorageStatus() en consola para más detalle.`;
+                }
+                if (pct >= 92) {
+                    setSaveState('warn', `Espacio crítico ${pct}%`);
+                }
+            } catch (e) {
+                console.warn('No se pudo estimar almacenamiento:', e);
+            }
+        }
+
+        let saveDebounceTimer = null;
+        function queueSaveData(delayMs = 120) {
+            if (saveDebounceTimer) clearTimeout(saveDebounceTimer);
+            saveDebounceTimer = setTimeout(() => {
+                saveDebounceTimer = null;
+                saveDataImmediate();
+            }, delayMs);
+        }
+
+        function flushSaveQueue() {
+            if (saveDebounceTimer) {
+                clearTimeout(saveDebounceTimer);
+                saveDebounceTimer = null;
+            }
+            saveDataImmediate();
+        }
+
+        window.getStorageStatus = () => {
+            const est = AppState.storageEstimate;
+            if (!est) return 'Aún sin medición. Probá guardar o recargar.';
+            const mb = (n) => `${(n / (1024 * 1024)).toFixed(2)}MB`;
+            const free = Math.max(0, est.quotaBytes - est.usageBytes);
+            return `Uso ${mb(est.usageBytes)} / ${mb(est.quotaBytes)} (${est.pct}%), libre ${mb(free)}.`;
+        };
+
+        function saveDataImmediate() {
+            const safeContacts = sanitizeContactsForStorage(AppState.contacts);
+            try {
+                localStorage.setItem('contactsData', JSON.stringify(safeContacts));
                 manageAutomaticBackup();
+                maybeDownloadAutomaticBackup('save');
+                setSaveState('ok', `Guardado ${new Date().toLocaleTimeString('es-ES')}`);
+                refreshStorageDiagnostics();
             } catch (e) {
                 console.error('Error al guardar datos:', e);
                 tryStorageRecovery();
                 try {
-                    localStorage.setItem('contactsData', JSON.stringify(AppState.contacts));
+                    localStorage.setItem('contactsData', JSON.stringify(safeContacts));
                     manageAutomaticBackup();
+                    maybeDownloadAutomaticBackup('save-recovery');
+                    setSaveState('ok', `Guardado ${new Date().toLocaleTimeString('es-ES')}`);
+                    refreshStorageDiagnostics();
                     return;
                 } catch (e2) {
                     console.error('Fallo de recuperación de guardado:', e2);
+                    try {
+                        localStorage.removeItem('opsProfilesData');
+                        localStorage.removeItem('opsLastImportedAt');
+                        localStorage.setItem('contactsData', JSON.stringify(safeContacts));
+                        manageAutomaticBackup();
+                        maybeDownloadAutomaticBackup('save-critical-space');
+                        setSaveState('warn', 'Guardado parcial (espacio justo)');
+                        refreshStorageDiagnostics();
+                        showNotification('Se guardaron contactos priorizando espacio local', 'info');
+                        return;
+                    } catch (e3) {
+                        console.error('Fallo crítico de guardado:', e3);
+                    }
                 }
                 const now = Date.now();
                 if (now - lastSaveErrorAt > 5000) {
-                    showNotification('⚠️ Error al guardar datos (almacenamiento lleno).', 'error');
                     lastSaveErrorAt = now;
+                    setSaveState('warn', 'No se pudo guardar');
                 }
             }
         }
 
+        function saveData() {
+            queueSaveData(120);
+        }
+
         function loadData() {
+            showLoadingOverlay('Cargando contactos…', 'Preparando base local, turnos y validaciones iniciales.');
             try {
                 const saved = localStorage.getItem('contactsData');
                 if (saved) {
                     AppState.contacts = JSON.parse(saved);
-                    if (AppState.contacts.length > 0) {
-                        detectDuplicates();
-                        elements.uploadScreen.classList.add('hidden');
-                        elements.mainApp.style.display = 'block';
-                        render();
-                        manageAutomaticBackup();
-                    } else {
-                        elements.uploadScreen.classList.remove('hidden');
+                    AppState.contacts.forEach(contact => {
+                        if (!contact.lastEditedAt) contact.lastEditedAt = contact.lastUpdated || new Date().toISOString();
+                        if (!contact.lastEditReason) contact.lastEditReason = 'legacy';
+                        if (typeof contact.recontactAttempts !== 'number') contact.recontactAttempts = 0;
+                        if (typeof contact.shiftReviewed !== 'boolean') contact.shiftReviewed = !!(contact.status && contact.status !== 'sin revisar');
+                        if (!contact.shiftReviewedByShift && contact.shiftReviewed) {
+                            contact.shiftReviewedByShift = contact.assignedShift || getLocalCompetitionShift(new Date(contact.lastUpdated || Date.now()));
+                        }
+                    });
+                } else {
+                    const backupContacts = getLatestBackupContacts();
+                    if (backupContacts) {
+                        AppState.contacts = backupContacts;
+                        try {
+                            localStorage.setItem('contactsData', JSON.stringify(sanitizeContactsForStorage(AppState.contacts)));
+                        } catch (persistErr) {
+                            console.warn('No se pudo reescribir contactsData durante recuperación (storage lleno):', persistErr);
+                            setSaveState('warn', 'Recovery sin persistir (storage lleno)');
+                        }
+                        showNotification('Datos recuperados desde backup local', 'info');
+                        announceGeneral('Datos recuperados desde backup local', 'warn', 4200);
                     }
+                }
+
+                if (AppState.contacts.length > 0) {
+                    assignShifts();
+                    detectDuplicates();
+                    const syncResult = syncOpsToContacts({ createNewUsers: false });
+                    if (syncResult.updatedCount > 0) saveData();
+                    elements.uploadScreen.classList.add('hidden');
+                    elements.mainApp.style.display = 'block';
+                    refreshOriginSuggestions();
+                    render();
+                    manageAutomaticBackup();
+                    setSaveState('ok', `Cargado ${new Date().toLocaleTimeString('es-ES')}`);
+                    refreshStorageDiagnostics();
+                    announceGeneral(`Base cargada: ${AppState.contacts.length} contactos`, 'success');
                 } else {
                     elements.uploadScreen.classList.remove('hidden');
                 }
             } catch (e) {
                 console.error('Error al cargar datos:', e);
                 elements.uploadScreen.classList.remove('hidden');
+            } finally {
+                hideLoadingOverlay();
             }
         }
 
@@ -1820,49 +2950,301 @@
             setTimeout(() => notification.remove(), 4000);
         }
 
-        function applyFilters() {
-            AppState.filteredContacts = AppState.contacts.filter(contact => {
-                const searchTerm = AppState.searchTerm.toLowerCase();
-                const matchesSearch = !searchTerm || 
-                    (contact.name && contact.name.toLowerCase().includes(searchTerm)) ||
-                    (contact.phone && contact.phone.includes(searchTerm)) ||
-                    (contact.origin && contact.origin.toLowerCase().includes(searchTerm));
-                
-                const matchesStatus = !AppState.statusFilter || contact.status === AppState.statusFilter;
-                const matchesOrigin = !AppState.originFilter || contact.origin === AppState.originFilter;
-                
-                return matchesSearch && matchesStatus && matchesOrigin;
+        let announceTimer = null;
+        let loadingInterval = null;
+
+        function showLoadingOverlay(message = 'Cargando contactos…', details = 'Preparando datos para trabajar sin bloqueos visuales.') {
+            if (!elements.loadingOverlay) return;
+            if (elements.loadingOverlayText) elements.loadingOverlayText.textContent = details;
+            if (elements.loadingOverlayMeta) elements.loadingOverlayMeta.textContent = '0%';
+            if (elements.loadingOverlayProgress) elements.loadingOverlayProgress.style.width = '0%';
+            elements.loadingOverlay.classList.add('show');
+            let value = 0;
+            if (loadingInterval) clearInterval(loadingInterval);
+            loadingInterval = setInterval(() => {
+                value = Math.min(92, value + Math.floor(Math.random() * 7) + 2);
+                if (elements.loadingOverlayProgress) elements.loadingOverlayProgress.style.width = `${value}%`;
+                if (elements.loadingOverlayMeta) elements.loadingOverlayMeta.textContent = `${value}%`;
+            }, 120);
+        }
+
+        function hideLoadingOverlay() {
+            if (!elements.loadingOverlay) return;
+            if (loadingInterval) {
+                clearInterval(loadingInterval);
+                loadingInterval = null;
+            }
+            if (elements.loadingOverlayProgress) elements.loadingOverlayProgress.style.width = '100%';
+            if (elements.loadingOverlayMeta) elements.loadingOverlayMeta.textContent = '100%';
+            setTimeout(() => {
+                elements.loadingOverlay.classList.remove('show');
+            }, 100);
+        }
+
+        function withSoftTransition(callback) {
+            const app = elements.mainApp;
+            if (!app) {
+                callback();
+                return;
+            }
+            app.style.transition = 'opacity .12s ease, transform .12s ease';
+            app.style.opacity = '0.88';
+            app.style.transform = 'translateY(2px)';
+            setTimeout(() => {
+                callback();
+                app.style.opacity = '1';
+                app.style.transform = 'translateY(0)';
+                setTimeout(() => {
+                    app.style.transition = '';
+                }, 140);
+            }, 100);
+        }
+
+        function refreshOriginSuggestions() {
+            const datalist = $('#originSuggestions');
+            if (!datalist) return;
+            const seen = new Set();
+            const origins = [];
+            AppState.contacts.forEach(contact => {
+                const origin = (contact.origin || '').trim();
+                if (!origin) return;
+                const key = origin.toLowerCase();
+                if (seen.has(key)) return;
+                seen.add(key);
+                origins.push(origin);
             });
-            
+            origins.sort((a, b) => a.localeCompare(b, 'es'));
+            datalist.innerHTML = origins.slice(0, 250).map(origin => `<option value="${origin}"></option>`).join('');
+        }
+        function announceGeneral(message, type = 'info', timeoutMs = 3200) {
+            if (!elements.globalAnnouncement) return;
+            elements.globalAnnouncement.classList.remove('info', 'success', 'warn', 'show');
+            elements.globalAnnouncement.classList.add(type);
+            const textEl = elements.globalAnnouncement.querySelector('.announce-text');
+            if (textEl) textEl.textContent = message;
+            elements.globalAnnouncement.classList.add('show');
+            if (announceTimer) clearTimeout(announceTimer);
+            announceTimer = setTimeout(() => {
+                elements.globalAnnouncement && elements.globalAnnouncement.classList.remove('show');
+            }, timeoutMs);
+        }
+
+        function normalizeSearchText(value) {
+            return (value || '')
+                .toString()
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[̀-ͯ]/g, '')
+                .trim();
+        }
+
+        function parseSearchQuery(rawQuery) {
+            const normalized = normalizeSearchText(rawQuery);
+            const tokens = normalized.split(/\s+/).filter(Boolean);
+            const parsed = { terms: [], status: '', origin: '', shift: '' };
+
+            tokens.forEach(token => {
+                if (token.startsWith('estado:') || token.startsWith('status:')) {
+                    parsed.status = token.split(':').slice(1).join(' ').trim();
+                    return;
+                }
+                if (token.startsWith('origen:') || token.startsWith('origin:')) {
+                    parsed.origin = token.split(':').slice(1).join(' ').trim();
+                    return;
+                }
+                if (token.startsWith('turno:') || token.startsWith('shift:')) {
+                    parsed.shift = token.split(':').slice(1).join(' ').trim();
+                    return;
+                }
+                parsed.terms.push(token);
+            });
+
+            return parsed;
+        }
+
+        function buildContactDerivedFields(contact) {
+            if (!contact) return;
+            const source = [
+                contact.name,
+                contact.phone,
+                contact.origin,
+                contact.status,
+                contact.alias,
+                contact.assignedShift,
+                contact.ops?.heat,
+                contact.ops?.suggestedStatus
+            ].map(v => v || '').join('|');
+
+            if (contact._derivedSource === source) return;
+
+            contact._nameKey = normalizeSearchText(contact.name || '');
+            contact._searchKey = normalizeSearchText([
+                contact.name,
+                contact.phone,
+                contact.origin,
+                contact.status,
+                contact.alias,
+                contact.assignedShift,
+                contact.ops?.heat,
+                contact.ops?.suggestedStatus
+            ].filter(Boolean).join(' | '));
+            contact._derivedSource = source;
+        }
+
+        function getIsoDay(value) {
+            if (!value) return '';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return '';
+            return date.toISOString().slice(0, 10);
+        }
+
+        function getEditDayStats() {
+            const dayCounts = new Map();
+            AppState.contacts.forEach(contact => {
+                const day = getIsoDay(contact.lastEditedAt);
+                if (!day) return;
+                dayCounts.set(day, (dayCounts.get(day) || 0) + 1);
+            });
+            const today = getIsoDay(new Date());
+            return {
+                dayCounts,
+                todayCount: dayCounts.get(today) || 0,
+                hotDays: new Set([...dayCounts.entries()].filter(([, count]) => count > 10).map(([day]) => day))
+            };
+        }
+
+        function touchContactEdit(contact, reason = '') {
+            if (!contact) return;
+            const nowIso = new Date().toISOString();
+            contact.lastEditedAt = nowIso;
+            contact.lastEditReason = reason || contact.lastEditReason || 'actualización';
+            contact.lastUpdated = nowIso;
+        }
+
+        function getStatusRank(status) {
+            const map = {
+                'sin revisar': 0,
+                'contactado': 1,
+                'revisado': 2,
+                'jugando': 3,
+                'no interesado': 1,
+                'sin wsp': 0
+            };
+            return map[status] ?? 0;
+        }
+
+        function getHigherPriorityStatus(currentStatus, suggestedStatus) {
+            if (!suggestedStatus) return currentStatus;
+            if (currentStatus === 'sin wsp') return currentStatus;
+            return getStatusRank(suggestedStatus) > getStatusRank(currentStatus) ? suggestedStatus : currentStatus;
+        }
+
+        function applyRecontactAutopolicy(contact, requestedStatus) {
+            const finalStatus = requestedStatus;
+            if (requestedStatus === 'contactado') {
+                contact.recontactAttempts = (contact.recontactAttempts || 0) + 1;
+                contact.lastRecontactAt = new Date().toISOString();
+                if ((contact.recontactAttempts || 0) >= 3 && contact.status !== 'jugando') {
+                    contact.autoArchivedByPolicy = true;
+                    return 'sin wsp';
+                }
+            }
+            if (requestedStatus === 'jugando') {
+                contact.recontactAttempts = 0;
+                contact.autoArchivedByPolicy = false;
+            }
+            return finalStatus;
+        }
+
+        function applyFilters() {
+            const parsedQuery = parseSearchQuery(AppState.searchTerm);
+            const selectedStatus = AppState.statusFilter || parsedQuery.status;
+            const selectedOrigin = AppState.originFilter || parsedQuery.origin;
+            const selectedShift = AppState.shiftFilter || parsedQuery.shift;
+            const editStats = getEditDayStats();
+
+            AppState.filteredContacts = AppState.contacts.filter(contact => {
+                buildContactDerivedFields(contact);
+                const matchesSearch = parsedQuery.terms.length === 0 || parsedQuery.terms.every(term => contact._searchKey.includes(term));
+                const matchesStatus = !selectedStatus || normalizeSearchText(contact.status) === selectedStatus;
+                const matchesOrigin = !selectedOrigin || normalizeSearchText(contact.origin) === selectedOrigin || (normalizeSearchText(selectedOrigin) === 'operaciones panel' && !!contact.ops);
+                const matchesShift = !selectedShift || normalizeSearchText(contact.assignedShift) === selectedShift;
+
+                let matchesPhone = true;
+                if (AppState.phoneFilter === 'with') matchesPhone = !!(contact.phone || '').trim();
+                else if (AppState.phoneFilter === 'without') matchesPhone = !(contact.phone || '').trim();
+
+                let matchesOps = true;
+                if (AppState.opsFilter === 'matched') matchesOps = !!contact.ops;
+                else if (AppState.opsFilter === 'nomatch') matchesOps = !contact.ops;
+
+                let matchesEditActivity = true;
+                const editedDay = getIsoDay(contact.lastEditedAt);
+                if (AppState.editActivityFilter === 'today10plus') {
+                    const today = getIsoDay(new Date());
+                    matchesEditActivity = editStats.todayCount > 10 && editedDay === today;
+                } else if (AppState.editActivityFilter === 'any10plus') {
+                    matchesEditActivity = !!editedDay && editStats.hotDays.has(editedDay);
+                }
+
+                return matchesSearch && matchesStatus && matchesOrigin && matchesShift && matchesPhone && matchesOps && matchesEditActivity;
+            });
+
+            if (AppState.opsFilter === 'top50' || AppState.opsFilter === 'top100') {
+                const limit = AppState.opsFilter === 'top50' ? 50 : 100;
+                AppState.filteredContacts = AppState.filteredContacts
+                    .filter(c => c.ops)
+                    .sort((a, b) => (b.ops?.score || 0) - (a.ops?.score || 0))
+                    .slice(0, limit);
+            }
         }
 
         function updateStats() {
-            $('#totalCount').textContent = AppState.contacts.length;
-            $('#unreviewedCount').textContent = AppState.contacts.filter(c => c.status === 'sin revisar').length;
-            $('#contactadoCount').textContent = AppState.contacts.filter(c => c.status === 'contactado').length;
+            const totals = {
+                total: AppState.contacts.length,
+                unreviewed: 0,
+                contactado: 0,
+                revisado: 0,
+                jugando: 0,
+                sinWsp: 0,
+                noInteresado: 0,
+                reviewed: 0
+            };
+            const originSet = new Set();
+
+            AppState.contacts.forEach(c => {
+                if (c.origin) originSet.add(c.origin);
+                if (c.status !== 'sin revisar') totals.reviewed++;
+                if (c.status === 'sin revisar') totals.unreviewed++;
+                else if (c.status === 'contactado') totals.contactado++;
+                else if (c.status === 'revisado') totals.revisado++;
+                else if (c.status === 'jugando') totals.jugando++;
+                else if (c.status === 'sin wsp') totals.sinWsp++;
+                else if (c.status === 'no interesado') totals.noInteresado++;
+            });
+
+            $('#totalCount').textContent = totals.total;
+            $('#unreviewedCount').textContent = totals.unreviewed;
+            $('#contactadoCount').textContent = totals.contactado;
             const revisadoCountEl = $('#revisadoCount');
-            if (revisadoCountEl) revisadoCountEl.textContent = AppState.contacts.filter(c => c.status === 'revisado').length;
-            $('#jugandoCount').textContent = AppState.contacts.filter(c => c.status === 'jugando').length;
-            $('#sinWspCount').textContent = AppState.contacts.filter(c => c.status === 'sin wsp').length;
-            $('#noInteresadoCount').textContent = AppState.contacts.filter(c => c.status === 'no interesado').length;
-            
-            const duplicateGroups = detectDuplicates();
-            const totalDuplicateEntries = duplicateGroups.reduce((sum, group) => sum + group.contacts.length, 0);
+            if (revisadoCountEl) revisadoCountEl.textContent = totals.revisado;
+            $('#jugandoCount').textContent = totals.jugando;
+            $('#sinWspCount').textContent = totals.sinWsp;
+            $('#noInteresadoCount').textContent = totals.noInteresado;
+
+            const totalDuplicateEntries = (AppState.duplicates || []).reduce((sum, group) => sum + group.contacts.length, 0);
             $('#duplicatesCount').textContent = totalDuplicateEntries;
-            
-            // Actualizar barra de progreso
-            const totalContacts = AppState.contacts.length;
-            const reviewedContacts = AppState.contacts.filter(c => c.status !== 'sin revisar').length;
+
             updateExportUrgencyBadge();
-            const progressPercentage = totalContacts > 0 ? Math.round((reviewedContacts / totalContacts) * 100) : 0;
-            
-            $('#reviewedCount').textContent = reviewedContacts;
-            $('#totalContactsCount').textContent = totalContacts;
+            const progressPercentage = totals.total > 0 ? Math.round((totals.reviewed / totals.total) * 100) : 0;
+
+            $('#reviewedCount').textContent = totals.reviewed;
+            $('#totalContactsCount').textContent = totals.total;
             $('#progressPercentage').textContent = `${progressPercentage}%`;
             $('#progressFill').style.width = `${progressPercentage}%`;
-            
-            const uniqueOrigins = [...new Set(AppState.contacts.map(c => c.origin).filter(Boolean))].sort();
-            elements.originFilter.innerHTML = '<option value="">Todos los orígenes</option>' + 
+
+            const uniqueOrigins = [...originSet].sort();
+            elements.originFilter.innerHTML = '<option value="">Todos los orígenes</option>' +
                 uniqueOrigins.map(o => `<option value="${o}">${o}</option>`).join('');
             elements.originFilter.value = AppState.originFilter;
         }
@@ -1872,10 +3254,275 @@
         }
 
         function setReviewMetadata(contact, status) {
-            if (status === 'revisado') {
-                contact.reviewedAt = new Date().toISOString();
+            if (!contact) return;
+            try {
+                const nowIso = new Date().toISOString();
+                const safeStatus = (typeof status === 'string' && status.trim()) ? status : (contact.status || 'sin revisar');
+                if (safeStatus === 'revisado') {
+                    contact.reviewedAt = nowIso;
+                }
+                if (safeStatus === 'sin revisar') {
+                    contact.nextReviewAfter = new Date(Date.now() + (6 * 60 * 60 * 1000)).toISOString();
+                } else if (safeStatus === 'contactado') {
+                    contact.nextReviewAfter = new Date(Date.now() + (18 * 60 * 60 * 1000)).toISOString();
+                } else {
+                    contact.nextReviewAfter = null;
+                }
+            } catch (e) {
+                console.error('setReviewMetadata fallback:', e);
             }
         }
+        function inferShiftForContact(contact, rrState) {
+            const o = normalizeUsername(contact.origin || '');
+            if (o.includes('mañana') || o.includes('manana')) return 'tm';
+            if (o.includes('tarde')) return 'tt';
+            if (o.includes('noche')) return 'tn';
+            const seq = ['tm', 'tt', 'tn'];
+            const shift = seq[rrState.i % seq.length];
+            rrState.i += 1;
+            return shift;
+        }
+
+        function getLocalCompetitionShift(date = new Date()) {
+            const hour = date.getHours();
+            if (hour >= 6 && hour < 14) return 'tm';
+            if (hour >= 14 && hour < 22) return 'tt';
+            return 'tn';
+        }
+
+        function updateCompetitionCredit(contact, newStatus, source = 'common', { forceTransfer = false } = {}) {
+            if (!contact) return false;
+
+            if (newStatus === 'sin revisar') {
+                const changed = !!(contact.shiftReviewed || contact.shiftReviewedByShift || contact.shiftReviewedAt);
+                contact.shiftReviewed = false;
+                contact.shiftReviewedByShift = null;
+                contact.shiftReviewedAt = null;
+                return changed;
+            }
+
+            const localShift = getLocalCompetitionShift(new Date());
+            const changed = forceTransfer || !contact.shiftReviewed || contact.shiftReviewedByShift !== localShift;
+            contact.shiftReviewed = true;
+            contact.shiftReviewedByShift = localShift;
+            if (changed) contact.shiftReviewedAt = new Date().toISOString();
+            return changed;
+        }
+
+        function assignShifts() {
+            const rr = { i: 0 };
+            AppState.contacts.forEach(c => {
+                if (!c.assignedShift) c.assignedShift = inferShiftForContact(c, rr);
+            });
+        }
+
+        function getShiftStats(shift) {
+            const pendingPool = AppState.contacts.filter(c => c.assignedShift === shift && !c.shiftReviewed);
+            const total = pendingPool.length;
+
+            // Conteo competitivo por franja local (turno real de trabajo), sin toggle estricto.
+            const revisados = AppState.contacts.filter(c => c.shiftReviewed && c.shiftReviewedByShift === shift).length;
+
+            const pendientes = total;
+            const denom = revisados + pendientes;
+            const pct = denom ? Math.min(100, Math.round((revisados / denom) * 100)) : 0;
+            return { total, revisados, pendientes, pct };
+        }
+
+        function renderShiftsView() {
+            assignShifts();
+            const shifts = ['tm', 'tt', 'tn'];
+            const shiftStats = shifts.map(shift => ({ shift, st: getShiftStats(shift), data: AppState.shiftMode[shift] }));
+            const totals = shiftStats.reduce((acc, row) => {
+                acc.total += row.st.total;
+                acc.revisados += row.st.revisados;
+                acc.pendientes += row.st.pendientes;
+                return acc;
+            }, { total: 0, revisados: 0, pendientes: 0 });
+            const pct = totals.total ? Math.round((totals.revisados / totals.total) * 100) : 0;
+
+            const overviewCard = `
+                <div class="shifts-overview-card">
+                    <div>
+                        <div style="font-weight:800; font-size:1rem;">Vista de competencia por turnos</div>
+                        <div style="color:var(--text-secondary); font-size:.86rem; margin-top:2px;">En este modo ocultamos búsqueda/filtros generales para enfocarte en productividad por turno.</div>
+                        <div class="shifts-overview-stats" style="margin-top:8px;">
+                            <span>Total asignados: <strong>${totals.total}</strong></span>
+                            <span>Revisados: <strong>${totals.revisados}</strong></span>
+                            <span>Pendientes: <strong>${totals.pendientes}</strong></span>
+                            <span>Avance global: <strong>${pct}%</strong></span>
+                        </div>
+                    </div>
+                    <div class="shifts-overview-actions">
+                        <button class="btn" onclick="rebalanceShift('all')"><i class="fas fa-random"></i> Rebalancear todo</button>
+                        <button class="btn" onclick="closeQuickReview()"><i class="fas fa-times-circle"></i> Cerrar revisión rápida</button>
+                    </div>
+                </div>`;
+
+            const cards = shiftStats.map(({ shift, st, data }) => {
+                return `
+                <div class="shift-card">
+                    <h3>
+                        <span>${shift.toUpperCase()}</span>
+                        <input class="filter-select" style="max-width:130px;" value="${data.name}" onchange="renameShift('${shift}', this.value)">
+                    </h3>
+                    <div class="shift-card-sub">Operador y cola de revisión para este turno.</div>
+                    <div class="shift-stats">
+                        <span>Asignados: <strong>${st.total}</strong></span>
+                        <span>Revisados: <strong>${st.revisados}</strong></span>
+                        <span>Pendientes: <strong>${st.pendientes}</strong></span>
+                    </div>
+                    <div class="shift-progress"><span style="width:${st.pct}%"></span></div>
+                    <div class="shift-controls">
+                        <button class="btn" onclick="startShiftReview('${shift}')"><i class="fas fa-play"></i> Empezar revisión</button>
+                        <button class="btn" onclick="rebalanceShift('${shift}')"><i class="fas fa-random"></i> Rebalancear</button>
+                    </div>
+                </div>`;
+            }).join('');
+
+            elements.shiftsView.innerHTML = overviewCard + cards;
+            elements.shiftsView.style.display = 'grid';
+        }
+
+        window.renameShift = (shift, value) => {
+            AppState.shiftMode[shift].name = (value || shift.toUpperCase()).trim();
+            saveData();
+        };
+
+        window.rebalanceShift = (shift) => {
+            const seq = ['tm', 'tt', 'tn'];
+            if (shift === 'all') {
+                const unreviewed = AppState.contacts.filter(c => c.status === 'sin revisar');
+                let i = 0;
+                unreviewed.forEach(c => { c.assignedShift = seq[i % 3]; i++; });
+                renderShiftsView();
+                saveData();
+                showNotification('Turnos rebalanceados (global)', 'success');
+                return;
+            }
+
+            const shiftContacts = AppState.contacts.filter(c => c.assignedShift === shift && c.status === 'sin revisar');
+            shiftContacts.forEach(c => { c.shiftReviewed = false; });
+            renderShiftsView();
+            saveData();
+            showNotification(`Turno ${String(shift).toUpperCase()} rebalanceado`, 'success');
+        };
+
+        function buildShiftQueue(shift) {
+            return AppState.contacts
+                .filter(c => c.assignedShift === shift && !c.shiftReviewed)
+                .sort((a, b) => (new Date(a.lastUpdated || 0).getTime()) - (new Date(b.lastUpdated || 0).getTime()));
+        }
+
+        window.startShiftReview = (shift) => {
+            AppState.activeShift = shift;
+            AppState.shiftMode[shift].queue = buildShiftQueue(shift);
+            AppState.shiftMode[shift].cursor = 0;
+            AppState.shiftMode[shift].stack = [];
+            renderQuickReview();
+        };
+
+        function renderQuickReview() {
+            const shift = AppState.activeShift;
+            if (!shift) { elements.quickReview.style.display = 'none'; return; }
+            const mode = AppState.shiftMode[shift];
+            const contact = mode.queue[mode.cursor];
+            if (!contact) {
+                elements.quickReview.style.display = 'block';
+                elements.quickReview.innerHTML = `<h3>Revisión ${shift.toUpperCase()}</h3><p style="color:var(--text-secondary)">Sin más contactos en este turno.</p><button class="btn" onclick="closeQuickReview()">Cerrar</button>`;
+                return;
+            }
+            const phoneTxt = contact.phone || 'Sin teléfono';
+            const st = getStatusOption(contact.status);
+            elements.quickReview.style.display = 'block';
+            const initials = (contact.name || '?').trim().slice(0, 2).toUpperCase();
+            const escapedName = (contact.name || '').replace(/'/g, "\\'");
+            const escapedPhone = (contact.phone || '').replace(/'/g, "\\'");
+            const totalInQueue = mode.queue.length;
+            const currentPos = Math.min(mode.cursor + 1, Math.max(1, totalInQueue));
+            elements.quickReview.innerHTML = `
+                <div class="quick-layout">
+                    <div class="quick-profile">
+                        <div class="quick-profile-head">
+                            <div class="quick-avatar">${initials}</div>
+                            <div>
+                                <div class="quick-name">${contact.name}</div>
+                                <div class="quick-meta">${phoneTxt} · ${contact.origin || '-'}</div>
+                            </div>
+                        </div>
+                        <div class="quick-chips">
+                            <span class="quick-chip">Turno ${shift.toUpperCase()}</span>
+                            <span class="quick-chip">Operador: ${AppState.shiftMode[shift].name}</span>
+                            <span class="quick-chip">Competencia: Pendiente</span>
+                            <span class="quick-chip">Cuenta para: ${getLocalCompetitionShift(new Date()).toUpperCase()}</span>
+                            ${contact.status !== 'sin revisar' ? `<span class="quick-chip" style="border-color:rgba(251,191,36,.45);color:#fde68a;">Preestado: ${st.label}</span>` : ''}
+                        </div>
+                        <div class="quick-progress">Usuario ${currentPos} de ${totalInQueue} en cola</div>
+                    </div>
+                    <div class="quick-panel">
+                        <div class="quick-topbar">
+                            <h3 style="margin:0;">Revisión rápida ${shift.toUpperCase()}</h3>
+                            <button class="btn" onclick="closeQuickReview()"><i class="fas fa-times"></i> Cerrar</button>
+                        </div>
+                        <div class="review-actions">
+                            ${STATUS_OPTIONS.map(opt => `<button class="btn" onclick="reviewSetStatus(${contact.id}, '${opt.id}', event)"><i class="fas ${opt.icon}"></i> ${opt.label}</button>`).join('')}
+                        </div>
+                        <div class="quick-tools">
+                            <button class="btn" onclick="reviewPrev()"><i class="fas fa-arrow-left"></i> Anterior</button>
+                            <button class="btn" onclick="reviewSkip()"><i class="fas fa-forward"></i> Saltar</button>
+                            <button class="btn" onclick="copyToClipboard('${escapedName}')"><i class="fas fa-copy"></i> Copiar usuario</button>
+                            ${contact.phone ? `<button class="btn" onclick="copyToClipboard('${escapedPhone}')"><i class="fas fa-copy"></i> Copiar teléfono</button>` : ''}
+                            <button class="btn" onclick="editContactField(${contact.id}, 'name')"><i class="fas fa-pen"></i> Editar</button>
+                            ${contact.phone ? `<button class="btn btn-success" onclick="openWhatsApp('${escapedPhone}', event)"><i class="fab fa-whatsapp"></i> WhatsApp</button>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        window.reviewSetStatus = (id, status, event) => {
+            const shift = AppState.activeShift;
+            if (!shift) return;
+            const mode = AppState.shiftMode[shift];
+            const current = mode.queue[mode.cursor];
+            if (!current) return;
+            if (event && event.currentTarget) event.currentTarget.classList.add('applied');
+            const quickPanel = elements.quickReview.querySelector('.quick-panel');
+            if (quickPanel) quickPanel.classList.add('updating');
+            mode.stack.push(current.id);
+            changeContactStatus(id, status, null, 'shift');
+            setTimeout(() => {
+                mode.cursor += 1;
+                mode.queue = buildShiftQueue(shift);
+                renderQuickReview();
+                renderShiftsView();
+            }, 130);
+        };
+
+        window.reviewPrev = () => {
+            const shift = AppState.activeShift;
+            if (!shift) return;
+            const mode = AppState.shiftMode[shift];
+            const prevId = mode.stack.pop();
+            if (!prevId) return;
+            const idx = mode.queue.findIndex(c => c.id === prevId);
+            mode.cursor = idx >= 0 ? idx : 0;
+            renderQuickReview();
+        };
+
+        window.reviewSkip = () => {
+            const shift = AppState.activeShift;
+            if (!shift) return;
+            const mode = AppState.shiftMode[shift];
+            if (mode.cursor < mode.queue.length - 1) mode.cursor += 1;
+            else mode.cursor = mode.queue.length;
+            renderQuickReview();
+        };
+
+        window.closeQuickReview = () => {
+            AppState.activeShift = null;
+            elements.quickReview.style.display = 'none';
+        };
 
         function getContactUrgency(contact) {
             if (contact.status !== 'revisado') return null;
@@ -1942,6 +3589,8 @@
             const escapedPhone = (contact.phone || '').replace(/'/g, "\\'");
             const urgency = getContactUrgency(contact);
             const sentBadge = getMessageSentBadge(contact);
+            const opsMini = getOpsMiniHtml(contact);
+            const editedAtLabel = contact.lastEditedAt ? new Date(contact.lastEditedAt).toLocaleString('es-ES') : '-';
             
             return `
                 <div class="contact-card ${AppState.selectedContacts.has(contact.id) ? 'selected' : ''} ${contact.isDuplicate ? 'duplicate' : ''}" style="--status-rgb: ${statusOption.rgb};" data-id="${contact.id}">
@@ -1952,7 +3601,7 @@
                             <i class="fas ${statusOption.icon}"></i>
                         </div>
                         <div style="flex: 1; display: flex; align-items: center; gap: 8px;">
-                            <span class="card-name" onclick="copyToClipboard('${escapedName}', event)" style="cursor: pointer; flex: 1;" title="Click para copiar">${contact.name}</span>${urgency ? `<span class=\"urgency-badge urgency-l${urgency.level}\" title=\"${urgency.title}\"><i class=\"fas fa-clock\"></i>${urgency.label}</span>` : ''}
+                            <span class="card-name" onclick="copyToClipboard('${escapedName}', event)" style="cursor: pointer; flex: 1;" title="Click para copiar">${contact.pinned ? '📌 ' : ''}${contact.name}</span>${AppState.currentView === 'shifts' && contact.assignedShift ? `<span class=\"shift-tag\">${contact.assignedShift.toUpperCase()}</span>` : ''}${urgency ? `<span class=\"urgency-badge urgency-l${urgency.level}\" title=\"${urgency.title}\"><i class=\"fas fa-clock\"></i>${urgency.label}</span>` : ''}
                             <button class="btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="editContactField(${contact.id}, 'name', event)" title="Editar nombre">
                                 <i class="fas fa-pencil-alt"></i>
                             </button>
@@ -1978,8 +3627,9 @@
                             <span class="card-status-inline" id="cardStatusInline-${contact.id}"><span class="status-badge status-${contact.status.replace(/ /g, '-')}" onclick="openCardStatusMenu(${contact.id}, event)">${statusOption.label}</span></span>
                         </div>
                     </div>
+                    ${opsMini}
                     <div class="card-footer">
-                        <span><i class="fas fa-calendar"></i> ${new Date(contact.lastUpdated).toLocaleDateString('es-ES')}</span>
+                        <span><i class="fas fa-calendar"></i> ${new Date(contact.lastUpdated).toLocaleDateString('es-ES')}</span><span title="Última edición"><i class="fas fa-pen"></i> ${editedAtLabel}</span>
                         <button class="btn btn-danger" style="padding: 5px 10px; font-size: 0.75rem;" onclick="deleteContact(${contact.id}, event)"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
@@ -1990,6 +3640,9 @@
             const statusOption = getStatusOption(contact.status);
             const escapedName = (contact.name || '').replace(/'/g, "\\'");
             const escapedPhone = (contact.phone || '').replace(/'/g, "\\'");
+            const sentBadge = getMessageSentBadge(contact);
+            const opsMini = getOpsMiniHtml(contact);
+            const editedAtLabel = contact.lastEditedAt ? new Date(contact.lastEditedAt).toLocaleString('es-ES') : '-';
             
             return `
                 <div class="list-item ${AppState.selectedContacts.has(contact.id) ? 'selected' : ''} ${contact.isDuplicate ? 'duplicate' : ''}" style="--status-rgb: ${statusOption.rgb};" data-id="${contact.id}">
@@ -1998,26 +3651,24 @@
                         <i class="fas ${statusOption.icon} list-status-bg-icon"></i>
                         <div class="list-name-row">
                             <span onclick="copyToClipboard('${escapedName}', event)" style="flex: 1; cursor: pointer;" title="Click para copiar">
-                                ${contact.isDuplicate ? '<i class="fas fa-exclamation-triangle" style="color: var(--accent-warning);"></i> ' : ''}${contact.name}
+                                ${contact.isDuplicate ? '<i class=\"fas fa-exclamation-triangle\" style=\"color: var(--accent-warning);\"></i> ' : ''}${contact.name}${AppState.currentView === 'shifts' && contact.assignedShift ? ` <span class=\"shift-tag\">${contact.assignedShift.toUpperCase()}</span>` : ''}
                             </span>
                             <button class="btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="editContactField(${contact.id}, 'name', event)" title="Editar">
                                 <i class="fas fa-pencil-alt"></i>
                             </button>
                         </div>
-                        <span class="list-status-chip"><i class="fas ${statusOption.icon}"></i>${statusOption.label}</span>
+                        <span class="list-status-chip"><i class="fas ${statusOption.icon}"></i>${statusOption.label}</span>${opsMini}
                     </div>
                     <div class="list-item-phone">
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <span onclick="copyToClipboard('${escapedPhone}', event)" style="flex: 1; font-family: monospace; cursor: pointer;" title="Click para copiar">${contact.phone || 'Sin teléfono'}</span>
-                            ${contact.phone ? `
-                                <button class="btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="editContactField(${contact.id}, 'phone', event)" title="Editar">
-                                    <i class="fas fa-pencil-alt"></i>
-                                </button>
-                            ` : ''}
+                            <button class="btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="editContactField(${contact.id}, 'phone', event)" title="${contact.phone ? 'Editar' : 'Agregar teléfono'}">
+                                <i class="fas fa-pencil-alt"></i>
+                            </button>
                         </div>
                     </div>
                     <div class="list-item-origin">${contact.origin}</div>
-                    <div class="list-item-date">${new Date(contact.lastUpdated).toLocaleDateString('es-ES')}</div>
+                    <div class="list-item-date" title="Última edición: ${editedAtLabel}">${new Date(contact.lastUpdated).toLocaleDateString('es-ES')}<br><small style="color:var(--text-secondary);">✎ ${editedAtLabel.split(',')[0] || editedAtLabel}</small></div>
                     <div class="whatsapp-cell">
                         ${contact.phone ? `
                             <button class="btn whatsapp-btn" onclick="openWhatsApp('${escapedPhone}', event)" title="Abrir WhatsApp">
@@ -2151,7 +3802,15 @@
         window.changePage = (page) => {
             if (page < 1 || page > Math.ceil(AppState.filteredContacts.length / AppState.itemsPerPage)) return;
             AppState.currentPage = page;
-            renderPaginatedView(AppState.currentView === 'cards' ? createCard : createListItem);
+            if (AppState.currentView === 'shifts') {
+                elements.cardsView.style.display = 'none';
+                elements.listView.style.display = 'none';
+                elements.pagination.style.display = 'none';
+                renderShiftsView();
+            } else {
+                elements.shiftsView.style.display = 'none';
+                renderPaginatedView(AppState.currentView === 'cards' ? createCard : createListItem);
+            }
         };
 
         window.deleteContact = (id, event) => {
@@ -2176,19 +3835,55 @@
             });
         };
 
-        window.changeContactStatus = (id, newStatus, event) => {
+
+        window.changeContactStatus = (id, newStatus, event, source = 'common') => {
             if (event) event.stopPropagation();
             const contact = AppState.contacts.find(c => c.id === id);
             if (!contact) return;
 
             const oldStatus = contact.status;
-            if (oldStatus === newStatus) return;
+            let requestedStatus = applyRecontactAutopolicy(contact, newStatus);
+            if (contact.ops?.suggestedStatus) {
+                requestedStatus = getHigherPriorityStatus(requestedStatus, contact.ops.suggestedStatus);
+            }
+            if (oldStatus === requestedStatus) {
+                const moved = updateCompetitionCredit(contact, requestedStatus, source, { forceTransfer: true });
+                if (!moved) return;
+                touchContactEdit(contact, source === 'shift' ? 'turno_transfer' : 'status_transfer');
+                addToHistory('Crédito de competencia transferido', `${contact.name}: ahora cuenta para ${String(contact.shiftReviewedByShift || '-').toUpperCase()}`);
+                setSaveState('pending', 'Guardando cambios...');
+                saveData();
+                render();
+                return;
+            }
 
-            contact.status = newStatus;
-            setReviewMetadata(contact, newStatus);
-            contact.lastUpdated = new Date().toISOString();
+            contact.status = requestedStatus;
+            updateCompetitionCredit(contact, requestedStatus, source);
+            try { setReviewMetadata(contact, requestedStatus); } catch (e) { console.error('Error metadata estado:', e); }
+            touchContactEdit(contact, source === 'shift' ? 'turno_status' : 'status_change');
             AppState.lastEditedContact = id;
-            addToHistory('Estado cambiado', `${contact.name}: ${oldStatus} → ${newStatus}`);
+            const policyNote = (requestedStatus !== newStatus && requestedStatus === 'sin wsp') ? ' (autopolítica 3 recontactos)' : '';
+            addToHistory('Estado cambiado', `${contact.name}: ${oldStatus} → ${requestedStatus}${policyNote}`);
+            if (policyNote) announceGeneral('Autopolítica aplicada: 3 recontactos sin respuesta → sin WhatsApp.', 'warn', 3000);
+            setSaveState('pending', 'Guardando cambios...');
+            saveData();
+            render();
+        };
+
+        window.applyOpsSuggestion = (id, event) => {
+            if (event) event.stopPropagation();
+            const contact = AppState.contacts.find(c => c.id === id);
+            if (!contact || !contact.ops?.suggestedStatus) return;
+            changeContactStatus(id, contact.ops.suggestedStatus);
+            showNotification(`Sugerencia aplicada a ${contact.name}`, 'success');
+        };
+
+        window.pinContact = (id, event) => {
+            if (event) event.stopPropagation();
+            const contact = AppState.contacts.find(c => c.id === id);
+            if (!contact) return;
+            contact.pinned = !contact.pinned;
+            touchContactEdit(contact, 'pin_toggle');
             saveData();
             render();
         };
@@ -2197,20 +3892,7 @@
             if (event) event.stopPropagation();
             const contact = AppState.contacts.find(c => c.id === id);
             if (!contact) return;
-
-            const currentValue = contact[field] || '';
-            const newValue = prompt(`Editar ${field === 'name' ? 'nombre' : 'teléfono'}:`, currentValue);
-            
-            if (newValue !== null && newValue !== currentValue) {
-                const oldValue = contact[field];
-                contact[field] = field === 'phone' ? normalizePhoneNumber(newValue) : newValue;
-                contact.lastUpdated = new Date().toISOString();
-                AppState.lastEditedContact = id;
-                addToHistory(`${field} editado`, `${contact.name}: ${oldValue} → ${contact[field]}`);
-                saveData();
-                render();
-                showNotification('Contacto actualizado', 'success');
-            }
+            openAddSingleModalForEdit(contact, field);
         };
 
         function undoToLastContact() {
@@ -2235,6 +3917,16 @@
                 if (tpl) AppState.whatsappTemplate = tpl;
                 const mode = localStorage.getItem('duplicateMergeMode');
                 if (mode) AppState.duplicateMergeMode = mode;
+                const lastAutoDl = parseInt(localStorage.getItem('lastAutoBackupDownloadAt') || '0', 10);
+                if (!Number.isNaN(lastAutoDl) && lastAutoDl > 0) AppState.lastAutoDownloadAt = lastAutoDl;
+                const sig = localStorage.getItem('lastAutoBackupSignature') || '';
+                if (sig) AppState.lastAutoBackupSignature = sig;
+                const backupMode = localStorage.getItem('autoBackupStorageMode');
+                if (backupMode === 'download' || backupMode === 'file' || backupMode === 'ask') {
+                    AppState.autoBackupStorageMode = backupMode === 'ask' ? 'download' : backupMode;
+                } else {
+                    AppState.autoBackupStorageMode = 'download';
+                }
             } catch (e) {
                 console.error('Error al cargar preferencias:', e);
             }
@@ -2255,29 +3947,6 @@
         function buildWhatsAppMessage(contactName) {
             const base = (AppState.whatsappTemplate || '').trim();
             return base.replaceAll('{usuario}', contactName || '');
-        }
-
-        function createTimelineView() {
-            const timelineContent = $('#timelineContent');
-            if (!timelineContent) return;
-            if (!AppState.history.length) {
-                timelineContent.innerHTML = '<p style="color: var(--text-secondary);">No hay eventos todavía.</p>';
-                return;
-            }
-            const grouped = {};
-            AppState.history.forEach(item => {
-                const d = new Date(item.timestamp);
-                const key = d.toLocaleDateString('es-ES');
-                if (!grouped[key]) grouped[key] = [];
-                grouped[key].push(item);
-            });
-            const html = Object.entries(grouped).map(([day, items]) => `
-                <div class="timeline-day">
-                    <div class="timeline-day-title">${day}</div>
-                    ${items.map(ev => `<div class="timeline-event"><strong>${ev.action}</strong> · ${ev.details}<div style="font-size:0.75rem;margin-top:4px;">${new Date(ev.timestamp).toLocaleTimeString('es-ES')}</div></div>`).join('')}
-                </div>
-            `).join('');
-            timelineContent.innerHTML = html;
         }
 
         function getDuplicateReason(group) {
@@ -2306,9 +3975,9 @@
             const url = `https://wa.me/${cleanPhone}${message ? `?text=${encodeURIComponent(message)}` : ''}`;
             if (contact) {
                 contact.lastMessageSentAt = new Date().toISOString();
-                contact.lastUpdated = new Date().toISOString();
+                touchContactEdit(contact, 'whatsapp_open');
                 saveData();
-                renderContacts();
+                render();
             }
             addToHistory('WhatsApp abierto', `${contact?.name || cleanPhone}`);
             saveHistory();
@@ -2346,8 +4015,9 @@
                     if (next !== contact.status) {
                         const old = contact.status;
                         contact.status = next;
+                        updateCompetitionCredit(contact, next, 'common');
                         setReviewMetadata(contact, next);
-                        contact.lastUpdated = new Date().toISOString();
+                        touchContactEdit(contact, 'inline_status');
                         AppState.lastEditedContact = id;
                         addToHistory('Estado cambiado', `${contact.name}: ${old} → ${next}`);
                         saveData();
@@ -2378,11 +4048,36 @@
         }
 
         function render() {
+            const isShiftsView = AppState.currentView === 'shifts';
+            elements.mainApp.classList.toggle('shifts-mode', isShiftsView);
+
+            if (isShiftsView) {
+                updateStats();
+                elements.pagination.style.display = 'none';
+                elements.cardsView.style.display = 'none';
+                elements.listView.style.display = 'none';
+                renderShiftsView();
+                updateBulkActionsBar();
+                updateOpsUploadReminder();
+                return;
+            }
+
+            elements.quickReview.style.display = 'none';
+            AppState.activeShift = null;
             applyFilters();
+            AppState.filteredContacts.sort((a, b) => {
+                if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1;
+                if (AppState.opsFilter === 'top50' || AppState.opsFilter === 'top100') return (b.ops?.score || 0) - (a.ops?.score || 0);
+                buildContactDerivedFields(a);
+                buildContactDerivedFields(b);
+                return (a._nameKey || '').localeCompare(b._nameKey || '');
+            });
             updateStats();
             elements.pagination.style.display = 'flex';
+            elements.shiftsView.style.display = 'none';
             renderPaginatedView(AppState.currentView === 'cards' ? createCard : createListItem);
             updateBulkActionsBar();
+            updateOpsUploadReminder();
         }
 
         function showDuplicatesModal() {
@@ -2510,32 +4205,127 @@
             showNotification(`✅ ${mergedCount} duplicados fusionados`, 'success');
         }
 
-        function showHistoryModal() {
-            const historyHTML = AppState.history.length > 0 
-                ? AppState.history.map(entry => {
-                    const nameMatch = entry.details.match(/^([^:]+)/);
-                    const userName = nameMatch ? nameMatch[1].trim() : '';
-                    
+        function extractHistoryName(details = '') {
+            const [raw] = details.split(':');
+            return (raw || '').trim();
+        }
+
+        function getHistoryContact(name = '') {
+            if (!name) return null;
+            return AppState.contacts.find(c => normalizeUsername(c.name) === normalizeUsername(name));
+        }
+
+        function goToHistoryContact(name, event) {
+            if (event) event.stopPropagation();
+            const contact = getHistoryContact(name);
+            if (!contact) {
+                showNotification('Contacto no disponible en la base actual', 'info');
+                return;
+            }
+            elements.searchInput.value = contact.name;
+            AppState.searchTerm = contact.name;
+            AppState.lastEditedContact = contact.id;
+            closeAllOverlays();
+            render();
+            showNotification(`🔎 Mostrando: ${contact.name}`, 'success');
+        }
+
+        window.searchFromHistory = (name, event) => {
+            goToHistoryContact(name, event);
+        };
+
+        window.editFromHistory = (name, event) => {
+            if (event) event.stopPropagation();
+            const contact = getHistoryContact(name);
+            if (!contact) {
+                showNotification('No se pudo abrir el editor: contacto no encontrado', 'error');
+                return;
+            }
+            editContactField(contact.id, 'name');
+        };
+
+        function renderHistoryList(filterTerm = '') {
+            const term = normalizeUsername(filterTerm);
+            const filtered = AppState.history.filter(entry => {
+                if (!term) return true;
+                return normalizeUsername(`${entry.action} ${entry.details}`).includes(term);
+            });
+
+            const historyHTML = filtered.length > 0
+                ? filtered.map(entry => {
+                    const userName = extractHistoryName(entry.details);
+                    const contact = getHistoryContact(userName);
+
                     return `
-                    <div class="history-item" onclick="searchFromHistory('${userName.replace(/'/g, "\\'")}', event)" style="cursor: pointer;" title="Click para buscar este contacto">
+                    <div class="history-item ${contact ? '' : 'history-item-muted'}">
                         <div class="history-time">${new Date(entry.timestamp).toLocaleString('es-ES')}</div>
                         <div class="history-action"><strong>${entry.action}:</strong> ${entry.details}</div>
+                        <div class="history-item-actions">
+                            <button class="btn" onclick="searchFromHistory('${userName.replace(/'/g, "\\'")}', event)"><i class="fas fa-search"></i> Ver</button>
+                            <button class="btn" onclick="editFromHistory('${userName.replace(/'/g, "\\'")}', event)" ${contact ? '' : 'disabled'}><i class="fas fa-pen"></i> Editar</button>
+                        </div>
                     </div>
-                `}).join('')
-                : '<p style="text-align: center; color: var(--text-secondary); padding: 30px;">No hay historial disponible</p>';
-            
+                `;
+                }).join('')
+                : '<p style="text-align: center; color: var(--text-secondary); padding: 30px;">No hay historial para ese filtro.</p>';
+
             $('#historyList').innerHTML = historyHTML;
+            const label = $('#historyCountLabel');
+            if (label) label.textContent = `${filtered.length} evento(s)`;
+        }
+
+        function showHistoryModal() {
+            renderHistoryList('');
+            const historySearchInput = $('#historySearchInput');
+            if (historySearchInput) {
+                historySearchInput.value = '';
+                historySearchInput.oninput = (e) => renderHistoryList(e.target.value);
+            }
             $('#historyModal').classList.add('active');
         }
-        
-        window.searchFromHistory = (name, event) => {
-            if (event) event.stopPropagation();
-            elements.searchInput.value = name;
-            AppState.searchTerm = name;
-            $('#historyModal').classList.remove('active');
-            render();
-            showNotification(`🔍 Buscando: ${name}`, 'info');
-        };
+
+        function closeAllOverlays() {
+            const addSingleWasOpen = $('#addSingleModal')?.classList.contains('active');
+            $$('.modal.active').forEach(modal => modal.classList.remove('active'));
+            $$('.card-status-menu').forEach(menu => menu.remove());
+            if (addSingleWasOpen) resetAddSingleModalState();
+        }
+
+        function openAddSingleModalForCreate() {
+            AppState.editingContactId = null;
+            refreshOriginSuggestions();
+            $('#singleName').value = '';
+            $('#singlePhone').value = '';
+            $('#singleOrigin').value = '';
+            $('#singleStatus').value = 'sin revisar';
+            $('#addSingleModal .modal-header').innerHTML = '<i class="fas fa-user-plus"></i> Agregar Contacto';
+            $('#confirmAddSingle').innerHTML = '<i class="fas fa-check"></i> Agregar';
+            $('#addSingleModal').classList.add('active');
+        }
+
+        function openAddSingleModalForEdit(contact, focusField = 'name') {
+            if (!contact) return;
+            refreshOriginSuggestions();
+            AppState.editingContactId = contact.id;
+            $('#singleName').value = contact.name || '';
+            $('#singlePhone').value = contact.phone || '';
+            $('#singleOrigin').value = contact.origin || '';
+            $('#singleStatus').value = contact.status || 'sin revisar';
+            $('#addSingleModal .modal-header').innerHTML = '<i class="fas fa-user-edit"></i> Editar Contacto';
+            $('#confirmAddSingle').innerHTML = '<i class="fas fa-save"></i> Guardar cambios';
+            $('#addSingleModal').classList.add('active');
+            const focusEl = focusField === 'phone' ? $('#singlePhone') : $('#singleName');
+            if (focusEl) {
+                focusEl.focus();
+                focusEl.select();
+            }
+        }
+
+        function resetAddSingleModalState() {
+            AppState.editingContactId = null;
+            $('#addSingleModal .modal-header').innerHTML = '<i class="fas fa-user-plus"></i> Agregar Contacto';
+            $('#confirmAddSingle').innerHTML = '<i class="fas fa-check"></i> Agregar';
+        }
 
         function setupEventListeners() {
             elements.uploadArea.onclick = () => elements.fileInput.click();
@@ -2544,7 +4334,7 @@
             elements.uploadArea.ondrop = (e) => {
                 e.preventDefault();
                 elements.uploadArea.style.borderColor = 'var(--border-color)';
-                const files = Array.from(e.dataTransfer.files).filter(f => f.name.endsWith('.csv') || f.name.endsWith('.vcf'));
+                const files = Array.from(e.dataTransfer.files).filter(f => f.name.toLowerCase().endsWith('.csv') || f.name.toLowerCase().endsWith('.vcf') || f.name.toLowerCase().endsWith('.json'));
                 if (files.length > 0) {
                     selectedFiles.push(...files);
                     updateFileList();
@@ -2557,6 +4347,13 @@
             };
 
             elements.startBtn.onclick = loadFiles;
+            if (elements.storageMeter) {
+                elements.storageMeter.onclick = async () => {
+                    await refreshStorageDiagnostics();
+                    const info = window.getStorageStatus();
+                    showNotification(`📦 ${info}`, 'info');
+                };
+            }
 
             elements.addMoreBtn.onclick = () => {
                 elements.uploadScreen.classList.remove('hidden');
@@ -2566,15 +4363,21 @@
                 elements.startBtn.disabled = true;
             };
             elements.addSingleBtn.onclick = () => {
-                $('#singleName').value = '';
-                $('#singlePhone').value = '';
-                $('#singleOrigin').value = '';
-                $('#singleStatus').value = 'sin revisar';
-                $('#addSingleModal').classList.add('active');
+                openAddSingleModalForCreate();
             };
             elements.settingsBtn.onclick = () => {
                 elements.userOptionsModal.classList.add('active');
             };
+            if (elements.importOpsBtn) {
+                elements.importOpsBtn.onclick = () => elements.opsFileInput && elements.opsFileInput.click();
+            }
+            if (elements.opsFileInput) {
+                elements.opsFileInput.onchange = (e) => {
+                    const file = e.target.files && e.target.files[0];
+                    importOperationsFile(file);
+                    elements.opsFileInput.value = '';
+                };
+            }
             $('#openShortcutsOption').onclick = () => {
                 elements.userOptionsModal.classList.remove('active');
                 elements.shortcutsModal.classList.add('active');
@@ -2625,10 +4428,34 @@
                 }
             });
 
+            window.addEventListener('beforeunload', () => {
+                flushSaveQueue();
+                saveHistory();
+            });
+
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'hidden') {
+                    flushSaveQueue();
+                    saveHistory();
+                }
+            });
+
             document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeAllOverlays();
+                    return;
+                }
                 if (e.ctrlKey && e.key === 'z' && !e.target.matches('input, textarea')) {
                     e.preventDefault();
                     undoToLastContact();
+                    return;
+                }
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a' && !e.target.matches('input, textarea, select')) {
+                    e.preventDefault();
+                    applyFilters();
+                    AppState.filteredContacts.forEach(c => AppState.selectedContacts.add(c.id));
+                    updateBulkActionsBar();
+                    render();
                     return;
                 }
                 if (e.target.matches('input, textarea, select')) return;
@@ -2641,7 +4468,6 @@
                 else if (code === 'Numpad5' && selectedId) changeContactStatus(selectedId, 'no interesado');
                 else if (code === 'Numpad0') undoToLastContact();
                 else if (code === 'NumpadAdd') elements.viewListBtn.click();
-                else if (code === 'NumpadSubtract') elements.timelineBtn.click();
             });
 
             elements.statusFilter.onchange = (e) => {
@@ -2656,27 +4482,117 @@
                 render();
             };
 
+            if (elements.opsSegmentFilter) {
+                elements.opsSegmentFilter.onchange = (e) => {
+                    AppState.opsFilter = e.target.value;
+                    AppState.currentPage = 1;
+                    render();
+                };
+            }
+            if (elements.shiftFilter) {
+                elements.shiftFilter.onchange = (e) => {
+                    AppState.shiftFilter = e.target.value;
+                    AppState.currentPage = 1;
+                    render();
+                };
+            }
+
+            if (elements.phoneFilter) {
+                elements.phoneFilter.onchange = (e) => {
+                    AppState.phoneFilter = e.target.value;
+                    AppState.currentPage = 1;
+                    render();
+                };
+            }
+            if (elements.editActivityFilter) {
+                elements.editActivityFilter.onchange = (e) => {
+                    AppState.editActivityFilter = e.target.value;
+                    AppState.currentPage = 1;
+                    render();
+                };
+            }
+
+            if (elements.clearFiltersBtn) {
+                elements.clearFiltersBtn.onclick = () => {
+                    AppState.searchTerm = '';
+                    AppState.statusFilter = '';
+                    AppState.originFilter = '';
+                    AppState.opsFilter = 'all';
+                    AppState.shiftFilter = '';
+                    AppState.phoneFilter = 'all';
+                    AppState.editActivityFilter = 'all';
+                    AppState.currentPage = 1;
+                    elements.searchInput.value = '';
+                    elements.statusFilter.value = '';
+                    elements.originFilter.value = '';
+                    if (elements.opsSegmentFilter) elements.opsSegmentFilter.value = 'all';
+                    if (elements.shiftFilter) elements.shiftFilter.value = '';
+                    if (elements.phoneFilter) elements.phoneFilter.value = 'all';
+                    if (elements.editActivityFilter) elements.editActivityFilter.value = 'all';
+                    render();
+                };
+            }
+
+            if (elements.selectFilteredBtn) {
+                elements.selectFilteredBtn.onclick = () => {
+                    applyFilters();
+                    AppState.filteredContacts.forEach(c => AppState.selectedContacts.add(c.id));
+                    showNotification(`Seleccionados ${AppState.filteredContacts.length} contactos filtrados`, 'success');
+                    updateBulkActionsBar();
+                    render();
+                };
+            }
+
+            if (elements.clearSelectionBtn) {
+                elements.clearSelectionBtn.onclick = () => {
+                    const removed = AppState.selectedContacts.size;
+                    AppState.selectedContacts.clear();
+                    AppState.lastSelectedContactId = null;
+                    if (removed) showNotification('Selección limpiada', 'info');
+                    updateBulkActionsBar();
+                    render();
+                };
+            }
+
             elements.viewCardsBtn.onclick = () => {
-                AppState.currentView = 'cards';
-                elements.viewCardsBtn.classList.add('active');
-                elements.viewListBtn.classList.remove('active');
-                elements.cardsView.style.display = 'grid';
-                elements.listView.style.display = 'none';
-                render();
+                withSoftTransition(() => {
+                    AppState.currentView = 'cards';
+                    elements.viewCardsBtn.classList.add('active');
+                    elements.viewListBtn.classList.remove('active');
+                    if (elements.viewShiftsBtn) elements.viewShiftsBtn.classList.remove('active');
+                    elements.cardsView.style.display = 'grid';
+                    elements.listView.style.display = 'none';
+                    elements.shiftsView.style.display = 'none';
+                    render();
+                });
             };
 
             elements.viewListBtn.onclick = () => {
-                AppState.currentView = 'list';
-                elements.viewListBtn.classList.add('active');
-                elements.viewCardsBtn.classList.remove('active');
-                elements.listView.style.display = 'block';
-                elements.cardsView.style.display = 'none';
-                render();
+                withSoftTransition(() => {
+                    AppState.currentView = 'list';
+                    elements.viewListBtn.classList.add('active');
+                    elements.viewCardsBtn.classList.remove('active');
+                    if (elements.viewShiftsBtn) elements.viewShiftsBtn.classList.remove('active');
+                    elements.listView.style.display = 'block';
+                    elements.cardsView.style.display = 'none';
+                    elements.shiftsView.style.display = 'none';
+                    render();
+                });
             };
-            elements.timelineBtn.onclick = () => {
-                createTimelineView();
-                $('#timelineModal').classList.add('active');
-            };
+
+            if (elements.viewShiftsBtn) {
+                elements.viewShiftsBtn.onclick = () => {
+                    withSoftTransition(() => {
+                        AppState.currentView = 'shifts';
+                        AppState.selectedContacts.clear();
+                        updateBulkActionsBar();
+                        elements.viewShiftsBtn.classList.add('active');
+                        elements.viewCardsBtn.classList.remove('active');
+                        elements.viewListBtn.classList.remove('active');
+                        render();
+                    });
+                };
+            }
 
             $$('.stat-box').forEach(box => {
                 box.onclick = () => {
@@ -2714,17 +4630,40 @@
                 if (isCheckbox) {
                      if (e.target.checked) AppState.selectedContacts.add(id);
                      else AppState.selectedContacts.delete(id);
-                } else {
-                     if (AppState.selectedContacts.has(id)) {
-                        AppState.selectedContacts.delete(id);
-                    } else {
+                     AppState.lastSelectedContactId = id;
+                     setSaveState('pending', 'Selección local');
+                } else if (e.shiftKey && AppState.lastSelectedContactId !== null) {
+                     const currentIndex = AppState.filteredContacts.findIndex(c => c.id === id);
+                     const lastIndex = AppState.filteredContacts.findIndex(c => c.id === AppState.lastSelectedContactId);
+                     if (currentIndex !== -1 && lastIndex !== -1) {
+                        const [start, end] = currentIndex < lastIndex ? [currentIndex, lastIndex] : [lastIndex, currentIndex];
+                        for (let i = start; i <= end; i++) {
+                            AppState.selectedContacts.add(AppState.filteredContacts[i].id);
+                        }
+                     } else {
                         AppState.selectedContacts.add(id);
-                    }
+                     }
+                } else if (e.ctrlKey || e.metaKey) {
+                     if (AppState.selectedContacts.has(id)) AppState.selectedContacts.delete(id);
+                     else AppState.selectedContacts.add(id);
+                     AppState.lastSelectedContactId = id;
+                } else {
+                     AppState.selectedContacts.clear();
+                     AppState.selectedContacts.add(id);
+                     AppState.lastSelectedContactId = id;
                 }
                 
                 updateBulkActionsBar();
                 elements.pagination.style.display = 'flex';
+                if (AppState.currentView === 'shifts') {
+                elements.cardsView.style.display = 'none';
+                elements.listView.style.display = 'none';
+                elements.pagination.style.display = 'none';
+                renderShiftsView();
+            } else {
+                elements.shiftsView.style.display = 'none';
                 renderPaginatedView(AppState.currentView === 'cards' ? createCard : createListItem);
+            }
             };
 
             const unifiedDblClickHandler = (e) => {
@@ -2757,8 +4696,9 @@
                         hasSaved = true;
                         const oldStatus = contact.status;
                         contact.status = select.value;
+                        updateCompetitionCredit(contact, select.value, 'common');
                         setReviewMetadata(contact, select.value);
-                        contact.lastUpdated = new Date().toISOString();
+                        touchContactEdit(contact, 'inline_status');
                         addToHistory('Estado cambiado', `${contact.name}: ${oldStatus} → ${select.value}`);
                         saveData();
                         render();
@@ -2794,8 +4734,9 @@
                         const contact = AppState.contacts.find(c => c.id === id);
                         if (contact) {
                             contact.status = newStatus;
+                            updateCompetitionCredit(contact, newStatus, 'common');
                             setReviewMetadata(contact, newStatus);
-                            contact.lastUpdated = new Date().toISOString();
+                            touchContactEdit(contact, 'inline_status');
                         }
                    });
                    addToHistory('Cambio de estado masivo', `${selectedCount} contactos → ${newStatus}`);
@@ -2851,7 +4792,6 @@
 
             elements.historyBtn.onclick = showHistoryModal;
             $('#closeHistoryModal').onclick = () => $('#historyModal').classList.remove('active');
-            $('#closeTimelineModal').onclick = () => $('#timelineModal').classList.remove('active');
             $('#clearHistoryBtn').onclick = () => {
                 if (confirm('¿Borrar todo el historial?')) {
                     AppState.history = [];
@@ -2861,7 +4801,10 @@
                 }
             };
 
-            $('#cancelAddSingle').onclick = () => $('#addSingleModal').classList.remove('active');
+            $('#cancelAddSingle').onclick = () => {
+                resetAddSingleModalState();
+                $('#addSingleModal').classList.remove('active');
+            };
 
             $('#confirmAddSingle').onclick = () => {
                 const name = $('#singleName').value.trim();
@@ -2874,6 +4817,36 @@
                     return;
                 }
 
+                if (AppState.editingContactId) {
+                    const contact = AppState.contacts.find(c => c.id === AppState.editingContactId);
+                    if (!contact) {
+                        showNotification('No se encontró el contacto a editar', 'error');
+                        resetAddSingleModalState();
+                        $('#addSingleModal').classList.remove('active');
+                        return;
+                    }
+                    const oldSnapshot = `${contact.name} | ${contact.phone || 'sin teléfono'} | ${contact.origin || 'Manual'} | ${contact.status || 'sin revisar'}`;
+                    contact.name = name;
+                    contact.phone = phone;
+                    contact.origin = origin;
+                    if (contact.status !== status) {
+                        setReviewMetadata(contact, status);
+                    }
+                    contact.status = status;
+                    updateCompetitionCredit(contact, status, 'common');
+                    touchContactEdit(contact, 'modal_edit');
+                    AppState.lastEditedContact = contact.id;
+                    const newSnapshot = `${contact.name} | ${contact.phone || 'sin teléfono'} | ${contact.origin || 'Manual'} | ${contact.status || 'sin revisar'}`;
+                    addToHistory('Contacto editado', `${oldSnapshot} → ${newSnapshot}`);
+                    detectDuplicates();
+                    saveData();
+                    render();
+                    resetAddSingleModalState();
+                    $('#addSingleModal').classList.remove('active');
+                    showNotification('✅ Contacto actualizado', 'success');
+                    return;
+                }
+
                 const newContact = {
                     id: Date.now() + Math.random(),
                     name: name,
@@ -2881,6 +4854,9 @@
                     origin: origin,
                     status: status,
                     lastUpdated: new Date().toISOString(),
+                    lastEditedAt: new Date().toISOString(),
+                    lastEditReason: 'manual_create',
+                    recontactAttempts: 0,
                     isDuplicate: false
                 };
 
@@ -2889,6 +4865,7 @@
                 detectDuplicates();
                 saveData();
                 render();
+                resetAddSingleModalState();
                 $('#addSingleModal').classList.remove('active');
                 showNotification('✅ Contacto agregado', 'success');
             };
@@ -2933,13 +4910,18 @@
         }
         
         function exportToExcel(contacts) {
-            let csvContent = "Nombre,Teléfono,Origen,Estado,Fecha Actualización\n";
+            let csvContent = "Nombre,Alias,Teléfono,Origen,Estado,Cargas,Descargas,Neto,Score,Fecha Actualización\n";
             contacts.forEach(c => {
                 const row = [
                     formatCsvField(c.name),
+                    formatCsvField(c.alias || extractPrimaryAlias(c.name || '')),
                     formatCsvField(c.phone),
                     formatCsvField(c.origin),
                     formatCsvField(c.status),
+                    formatCsvField(c.ops?.cargasCount || 0),
+                    formatCsvField(c.ops?.descargasCount || 0),
+                    formatCsvField(Math.round(c.ops?.netoTotal || 0)),
+                    formatCsvField(c.ops?.score || 0),
                     formatCsvField(new Date(c.lastUpdated).toLocaleDateString('es-ES'))
                 ];
                 csvContent += row.join(',') + '\n';
@@ -3013,7 +4995,7 @@
         }
 
         function exportToSheetFormat(contacts) {
-            const headers = "usuarios,estado de revision,telefono,estado actual,\"VISTO, RESPONDIDO?\",RECUPERADO,TURNO DE LAS CARGAS,interesado en jugar?,ya contactados,recuperados!,actualmente cargando,TURNO MAÑANA,TURNO TARDE,TURNO NOCHE,contactos a borrar\n";
+            const headers = "usuarios,alias,estado de revision,telefono,estado actual,cargas,descargas,neto,score,lealtad,ultima actividad,\"VISTO, RESPONDIDO?\",RECUPERADO,TURNO DE LAS CARGAS,interesado en jugar?,ya contactados,recuperados!,actualmente cargando,TURNO MAÑANA,TURNO TARDE,TURNO NOCHE,contactos a borrar\n";
             
             const statusToSheetStatus = (status) => {
                 const map = { 'contactado': 'promo enviada', 'revisado': 'REVISADO', 'sin wsp': 'NO ESTA EN WSP', 'sin revisar': 'A CONTACTAR', 'jugando': 'EN CONTACTO', 'no interesado': 'ELIMINADO' };
@@ -3036,9 +5018,16 @@
                 const mainContact = contacts[i];
                 const row = [
                     mainContact ? formatCsvField(mainContact.name) : '',
+                    mainContact ? formatCsvField(mainContact.alias || extractPrimaryAlias(mainContact.name || '')) : '',
                     mainContact ? formatCsvField(statusToSheetStatus(mainContact.status)) : '',
                     mainContact && mainContact.phone ? formatCsvField(mainContact.phone) : '',
                     mainContact ? formatCsvField(statusToSheetStatus(mainContact.status)) : '',
+                    mainContact ? formatCsvField(mainContact.ops?.cargasCount || 0) : '',
+                    mainContact ? formatCsvField(mainContact.ops?.descargasCount || 0) : '',
+                    mainContact ? formatCsvField(Math.round(mainContact.ops?.netoTotal || 0)) : '',
+                    mainContact ? formatCsvField(mainContact.ops?.score || 0) : '',
+                    mainContact ? formatCsvField(mainContact.ops?.loyalty || 0) : '',
+                    mainContact && mainContact.ops?.lastCargaAt ? formatCsvField(new Date(mainContact.ops.lastCargaAt).toLocaleString('es-ES')) : '',
                     'NO', 'NO', '', 'NO',
                     formatCsvField(yaContactados[i]),
                     formatCsvField(recuperados[i]),
@@ -3072,9 +5061,16 @@
                 setupEventListeners();
                 loadHistory();
                 loadPreferences();
+                loadOpsData();
                 loadData();
+                refreshStorageDiagnostics();
                 updateExportUrgencyBadge();
                 setInterval(() => { if (AppState.contacts.length) render(); else updateExportUrgencyBadge(); }, 300000);
+                setInterval(() => { refreshStorageDiagnostics(); }, 45000);
+                setInterval(() => {
+                    if (!AppState.contacts.length) return;
+                    maybeDownloadAutomaticBackup('interval');
+                }, 60000);
             } catch (e) {
                 console.error("Error fatal en la inicialización:", e);
                 document.body.innerHTML = "<h1>Error Crítico</h1><p>La aplicación no pudo iniciarse. Por favor, borra la caché y los datos del sitio e inténtalo de nuevo.</p>";
