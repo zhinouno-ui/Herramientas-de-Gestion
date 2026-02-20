@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>ChinBotones v3.2</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <style>
+    :root {
+      --bg-dark: #121212; --bg-light: #1e1e1e; --bg-surface: #2a2a2a;
+      --text-primary: #f0f0f0; --text-secondary: #a0a0a0;
+      --accent-primary: #C93C20; --border-color: #444; --danger-color: #e74c3c;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: var(--bg-dark); color: var(--text-primary); transition: background 0.3s; }
+
+    /* --- VISTA DE EMPLEADO (COMPACTA) --- */
+    body.employee-view { padding: 8px; max-width: 400px; min-height: 100vh; }
+    .employee-header {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 8px 4px; margin-bottom: 10px; background: var(--bg-dark);
+        position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--border-color);
+    }
+    .employee-header h2 { font-size: 1.2rem; color: var(--text-primary); font-weight: bold; }
+
+    .grupo { margin-bottom: 10px; padding: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.4); display: flex; flex-direction: column; gap: 6px; position: relative; }
+    .grupo .header { display: flex; align-items: center; justify-content: space-between; }
+    .grupo .titulo { font-size: 18px; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+    .grupo .controls { display: flex; align-items: center; gap: 4px; }
+    button.control-btn, .grupo .drag-handle { width: 28px; height: 28px; display: flex; justify-content: center; align-items: center; cursor: pointer; background: rgba(0,0,0,0.2); color: #fff; border-radius: 6px; font-size: 16px; border: none; transition: background 0.2s; }
+    .control-btn:hover, .grupo .drag-handle:hover { background: rgba(0,0,0,0.4); }
+    .grupo .drag-handle { cursor: grab; } .grupo .drag-handle:active { cursor: grabbing; }
+
+    /* Flip Card */
+    .wallets-container { perspective: 1200px; width: 100%; margin: 8px 0 6px; }
+    .wallets-card { width: 100%; min-height: 96px; position: relative; transition: transform 0.6s; transform-style: preserve-3d; border-radius: 8px; background: rgba(255,255,255,0.04); }
+    .wallets-face { position: absolute; inset: 0; backface-visibility: hidden; display: flex; flex-direction: column; gap: 10px; justify-content: center; padding: 12px 8px; box-sizing: border-box; }
+    .wallets-face.front { transform: rotateY(0deg); } .wallets-face.back { transform: rotateY(180deg); }
+    .wallets-card.flipped { transform: rotateY(180deg); }
+
+    /* Botones de Copiado */
+    button.copy-btn { width: 100%; padding: 12px; border-radius: 6px; border: none; background: rgba(0,0,0,0.25); color: #fff; font-weight: 700; cursor: pointer; font-size: 15px; margin: 0; box-shadow: 0 1px 4px #0001; transition: background 0.18s, transform 0.1s; }
+    button.copy-btn:hover { background: rgba(0,0,0,0.35); } button.copy-btn:active { transform: scale(0.96); }
+
+    /* Mensaje Revin */
+    .modo-slider { display: flex; gap: 6px; background: #2a2a2a; padding: 4px; border-radius: 20px; flex-wrap: wrap; }
+    .slider-btn { background: #3a3a3a; color: #ccc; border: none; padding: 6px 16px; border-radius: 16px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; box-shadow: inset 0 0 4px #0004; }
+    .slider-btn.selected { background: #111; color: var(--accent-primary); font-weight: bold; box-shadow: 0 0 12px #c93c2080, inset 0 0 4px #c93c204d; transform: scale(1.05); }
+    .input-usuario { width: 100%; padding: 8px; border-radius: 4px; border: none; font-size: 13px; margin: 10px 0; }
+    .revin-actions { display: flex; gap: 6px; } .revin-actions button { flex: 1; }
+
+    /* Historial y Toast */
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: #fff; padding: 12px 18px; border-radius: 8px; font-size: 14px; opacity: 0; pointer-events: none; transition: all 0.5s; z-index: 10001; }
+    .toast.show { opacity: 1; bottom: 40px; }
+    .toast.success { background: #2ecc71; } .toast.error { background: #e74c3c; }
+
+    /* --- PANTALLA DE INICIO / MODALES --- */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 10000; }
+    .modal-box { background: var(--bg-light); padding: 30px; border-radius: 12px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 5px 20px #000; }
+    .modal-box h3 { margin-bottom: 20px; }
+    .modal-box input, .modal-box select { width: 100%; padding: 12px; margin-bottom: 20px; font-size: 1rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary); }
+    .modal-actions { display: flex; gap: 10px; }
+    .modal-actions button { flex: 1; padding: 12px; }
+
+    #splash-screen { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; background: var(--bg-dark); text-align: center; padding: 20px; }
+    #splash-screen h1 { font-size: 2.5rem; color: var(--accent-primary); margin-bottom: 10px; }
+    .splash-actions { display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 350px; }
+    .splash-btn { padding: 15px; font-size: 1.1rem; }
+    #import-config-input, #employee-file-input { display: none; }
+
+    /* --- VISTA MASTER --- */
+    body.master-view { padding: 0; }
+    #master-container { display: flex; height: 100vh; }
+    #master-sidebar { width: 350px; background: var(--bg-light); padding: 15px; overflow-y: auto; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; }
+    #master-main { flex: 1; padding: 25px; overflow-y: auto; }
+    .master-actions { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+    .master-btn { padding: 10px 15px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; transition: opacity 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .master-btn.primary { background: var(--accent-primary); color: white; }
+    .master-btn.secondary { background: var(--bg-surface); color: var(--text-primary); }
+    .master-btn.danger { background: var(--danger-color); color: white; }
+    .master-btn:hover { opacity: 0.9; }
+
+    #group-list-editor { flex: 1; overflow-y: auto; padding-right: 5px; }
+    .group-editor-item { background: var(--bg-surface); padding: 12px; margin-bottom: 10px; border-radius: 8px; cursor: pointer; transition: background 0.2s; }
+    .group-editor-item.active { background: #333; box-shadow: 0 0 0 2px var(--accent-primary); }
+    .group-editor-header { display: flex; align-items: center; }
+    .group-editor-header strong { flex: 1; pointer-events: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .color-preview { width: 16px; height: 16px; border-radius: 4px; margin-right: 12px; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.1); }
+    .editor-delete-btn { background: transparent; color: var(--text-secondary); border: none; font-size: 1rem; cursor: pointer; width: 30px; height: 30px; border-radius: 50%; display: flex; justify-content: center; align-items: center; transition: all 0.2s; margin-left: auto; }
+    .editor-delete-btn:hover { background: var(--danger-color); color: white; }
+    .master-drag-handle { cursor: grab; padding-right: 12px; color: var(--text-secondary); }
+    .master-drag-handle:active { cursor: grabbing; }
+
+    .sidebar-footer { margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px; }
+    
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; color: var(--text-secondary); }
+    .form-group input:not([type="color"]), .form-group select, .form-group textarea { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-light); color: var(--text-primary); font-size: 1rem; }
+    .form-group input[type="color"] {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 40px;
+        padding: 0;
+        border: none;
+        background-color: transparent;
+        cursor: pointer;
+    }
+    .form-group input[type="color"]::-webkit-color-swatch {
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+    }
+    .form-group input[type="color"]::-moz-color-swatch {
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+    }
+
+    /* Toggle Switch */
+    .toggle-switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; inset: 0; background-color: #555; transition: .4s; border-radius: 28px; }
+    .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background-color: var(--accent-primary); }
+    input:checked + .slider:before { transform: translateX(22px); }
+
+    /* Editor Flip (sin 3D para evitar espejado/solapado) */
+    #button-editor-flipper { position: relative; }
+    .button-editor-face.front { display: block; }
+    .button-editor-face.back { display: none; }
+    #button-editor-flipper.flipped .button-editor-face.front { display: none; }
+    #button-editor-flipper.flipped .button-editor-face.back { display: block; }
+
+    /* Editor Saludos Dinámicos */
+    .saludo-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .saludo-item input { flex: 1; }
+
+    #preview-modal .modal-box { max-width: 420px; height: 90vh; }
+    #preview-container { height: calc(100% - 70px); overflow-y: auto; padding: 10px; background: var(--bg-dark); border-radius: 8px; }
+    
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <div id="splash-screen" class="view">
+    <h1>ChinBotones v3.2</h1>
+    <div id="splash-actions-container" class="splash-actions">
+        <button type="button" data-action="load-employee-file" class="master-btn primary splash-btn">Cargar Oficina (Empleado)</button>
+        <button type="button" data-action="open-master-login" class="master-btn secondary splash-btn">Modo Master</button>
+        <input type="file" id="employee-file-input" accept=".json" class="hidden">
+        <input type="file" id="import-config-input" accept=".json" class="hidden">
+    </div>
+  </div>
+  
+  <div id="master-login-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div id="master-login-content"></div>
+    </div>
+  </div>
+  
+  <div id="add-group-type-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <h3>Seleccionar Tipo de Grupo</h3>
+      <div class="splash-actions">
+        <button type="button" class="master-btn secondary" data-action="add-group" data-type="buttons" style="width: 100%;"><i class="fas fa-list"></i> Grupo de Botones</button>
+        <button type="button" class="master-btn secondary" data-action="add-group" data-type="revin" style="width: 100%;"><i class="fas fa-sync-alt"></i> Grupo de Revinculación</button>
+      </div>
+      <button type="button" class="master-btn danger" data-action="cancel-add-group" style="margin-top: 20px; width: 100%;">Cancelar</button>
+    </div>
+  </div>
+
+  <div id="preview-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+        <h3>Previsualización (Modo Empleado)</h3>
+        <div id="preview-container"></div>
+        <div class="modal-actions" style="margin-top: 20px;">
+            <button type="button" class="master-btn secondary" data-action="close-preview" style="width: 100%;">Cerrar</button>
+        </div>
+    </div>
+  </div>
+
+  <div id="employee-container" class="view hidden"></div>
+  <div id="toast" class="toast"></div>
+
+  <div id="master-container" class="view hidden">
+    <div id="master-sidebar">
+      <div class="form-group"><label>Oficina Activa: <strong><span id="active-profile-name-display"></span></strong></label></div>
+      <div class="master-actions">
+        <button type="button" data-action="create-new-office" class="master-btn secondary"><i class="fas fa-plus-circle"></i> Nueva Oficina</button>
+        <button type="button" data-action="open-add-group-modal" class="master-btn primary"><i class="fas fa-plus"></i> Grupo</button>
+        <button type="button" data-action="export-config" class="master-btn secondary"><i class="fas fa-download"></i> Exportar</button>
+        <button type="button" data-action="preview" class="master-btn secondary"><i class="fas fa-eye"></i> Previsualizar</button>
+      </div>
+      <div id="group-list-editor"></div>
+      <div class="sidebar-footer">
+        <div class="form-group">
+            <label style="font-size: 0.9em;">Nueva Contraseña Master</label>
+            <input type="password" id="new-password-input" placeholder="Dejar en blanco para no cambiar">
+        </div>
+        <button type="button" data-action="save-config" class="master-btn secondary" style="width: 100%; margin-bottom: 10px;"><i class="fas fa-save"></i> Guardar Cambios</button>
+        <button type="button" data-action="exit-master-mode" class="master-btn danger" style="width: 100%;"><i class="fas fa-sign-out-alt"></i> Salir a Inicio</button>
+      </div>
+    </div>
+    <div id="master-main">
+      <div id="editor-panel-placeholder">
+        <h3 style="color: var(--text-secondary); text-align: center; margin-top: 50px;">
+          Selecciona un grupo para editar o crea uno nuevo.
+        </h3>
+      </div>
+      <div id="editor-panel" class="hidden"></div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const App = {
+        appData: null, config: null, activeEditorGroupId: null, sortableGroups: null,
+        
+        $: { /* Selectores DOM cacheados */
+          splash: document.getElementById('splash-screen'),
+          splashActions: document.getElementById('splash-actions-container'),
+          editorPanel: document.getElementById('editor-panel'),
+          editorPlaceholder: document.getElementById('editor-panel-placeholder'),
+          groupListEditor: document.getElementById('group-list-editor'),
+          masterContainer: document.getElementById('master-container'),
+          employeeContainer: document.getElementById('employee-container'),
+          masterMain: document.getElementById('master-main'),
+        },
+
+        init() {
+            this.loadAppData();
+            this.renderSplashScreen();
+            this.setupGlobalListeners();
+            document.getElementById('employee-file-input').onchange = (e) => this.handleEmployeeFileLoad(e);
+            document.getElementById('import-config-input').onchange = (e) => this.handleMasterImport(e);
+        },
+        
+        loadAppData() {
+            try {
+                const data = localStorage.getItem('chinBotonesApp');
+                this.appData = data ? JSON.parse(data) : { profiles: {} };
+                if (!this.appData.profiles) this.appData.profiles = {};
+            } catch (e) {
+                console.error("Fallo al cargar datos, reseteando la aplicación.", e);
+                this.appData = { profiles: {} };
+                localStorage.removeItem('chinBotonesApp');
+            }
+        },
+        saveAppData() {
+            localStorage.setItem('chinBotonesApp', JSON.stringify(this.appData));
+        },
+        
+        renderSplashScreen() {
+            this.showView('splash-screen');
+        },
+        
+        handleEmployeeFileLoad(event) {
+            const file = event.target.files[0];
+            const fileInput = event.target;
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const importedConfig = JSON.parse(e.target.result);
+                    if (!importedConfig.settings || !Array.isArray(importedConfig.groups)) {
+                        throw new Error("Formato de archivo inválido.");
+                    }
+                    this.config = importedConfig;
+                    this.renderEmployeeView('employee-container', this.config);
+                    this.showView('employee-container');
+                } catch (err) {
+                    this.showToast(`Error al leer el archivo: ${err.message}`, 'error');
+                } finally {
+                    fileInput.value = '';
+                }
+            };
+            reader.readAsText(file);
+        },
+        
+        handleMasterImport(event) {
+            const file = event.target.files[0];
+            const fileInput = event.target;
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const importedConfig = JSON.parse(e.target.result);
+                    if (!importedConfig.settings || !Array.isArray(importedConfig.groups)) throw new Error("Formato de archivo inválido.");
+
+                    const defaultProfileName = file.name.replace('.json', '').replace('_config', '');
+                    let profileNameInput = prompt("Introduce un nombre para esta oficina:", defaultProfileName);
+                    const profileName = (!profileNameInput || profileNameInput.trim() === '') ? defaultProfileName : profileNameInput.trim();
+
+                    if (this.appData.profiles[profileName] && !confirm(`Ya existe una oficina llamada "${profileName}". ¿Deseas sobreescribirla?`)) return;
+
+                    this.appData.profiles[profileName] = importedConfig;
+                    this.saveAppData();
+                    this.showToast(`Oficina "${profileName}" importada correctamente.`, 'success');
+                    this.renderMasterLogin();
+                } catch (err) {
+                    this.showToast(`Error al importar: ${err.message}`, 'error');
+                } finally {
+                    fileInput.value = '';
+                }
+            };
+            reader.readAsText(file);
+        },
+
+        setupGlobalListeners() {
+            document.body.addEventListener('click', (e) => {
+                const actionEl = e.target.closest('[data-action]');
+                if (!actionEl) return;
+        
+                const action = actionEl.dataset.action;
+
+                switch (action) {
+                    case 'load-employee-file': document.getElementById('employee-file-input').click(); break;
+                    case 'open-master-login': this.renderMasterLogin(); break;
+                    case 'cancel-login': this.renderSplashScreen(); break;
+                    case 'login': this.handleLogin(); break;
+                    case 'render-create-profile-form': this.renderCreateProfileForm(); break;
+                    case 'back-to-login-options': this.renderMasterLoginWelcome(); break;
+                    case 'submit-new-profile': this.handleSubmitNewProfile(); break;
+                    case 'import-profile': document.getElementById('import-config-input').click(); break;
+        
+                    case 'exit-employee-view': this.exitEmployeeView(); break;
+                    case 'exit-master-mode': this.exitMasterMode(); break;
+        
+                    case 'open-add-group-modal': this.showView('add-group-type-modal'); break;
+                    case 'cancel-add-group': this.showView('master-container'); break;
+                    case 'add-group': this.addGroup(actionEl.dataset.type); break;
+                    case 'export-config': this.exportConfig(); break;
+                    case 'preview': this.renderPreview(); break;
+                    case 'save-config': this.saveCurrentConfig(); break;
+                    case 'close-preview': this.showView('master-container'); break;
+                    case 'create-new-office':
+                        if (!confirm('¿Crear una nueva oficina? Se cerrará la actual sin guardar.')) return;
+                        this.config = null;
+                        this.activeEditorGroupId = null;
+                        this.renderCreateProfileForm();
+                        break;
+                    case 'select-group': 
+                        this.activeEditorGroupId = actionEl.dataset.groupId;
+                        this.renderMasterView();
+                        break;
+                    case 'delete-group': {
+                        const id = actionEl.dataset.groupId;
+                        if (!id) return;
+                        if (!confirm('¿Eliminar grupo completo?')) return;
+                        this.config.groups = this.config.groups.filter(g => g.id !== id);
+                        if (this.activeEditorGroupId === id) this.activeEditorGroupId = null;
+                        this.renderMasterView();
+                        break;
+                    }
+                    
+                    case 'flip-editor': actionEl.closest('#button-editor-flipper').classList.toggle('flipped'); break;
+                    case 'add-saludo': this.addSaludoField(actionEl.dataset.pcId); break;
+                    case 'delete-saludo':
+                        actionEl.closest('.saludo-item').remove();
+                        this.updateConfigFromDynamicFields(actionEl.closest('.pc-editor').dataset.id);
+                        break;
+                    case 'add-button':
+                    case 'delete-button':
+                    case 'add-pc':
+                    case 'delete-pc':
+                        this.handleEditorAction(action, actionEl);
+                        break;
+                }
+            });
+
+            this.$.masterMain.oninput = (e) => {
+                const target = e.target;
+                if (target.matches('input.saludo-input')) this.updateConfigFromDynamicFields();
+                else if (target.dataset.key) this.updateConfig(target);
+            };
+        },
+        
+        renderMasterLogin() {
+            const profileCount = Object.keys(this.appData.profiles).length;
+            if (profileCount > 0) {
+                const profileNames = Object.keys(this.appData.profiles);
+                const options = profileNames.map(name => `<option value="${this.escapeHTML(name)}">${this.escapeHTML(name)}</option>`).join('');
+                document.getElementById('master-login-content').innerHTML = `
+                    <h3>Acceso Master</h3>
+                    <div class="form-group">
+                        <label for="master-profile-selector" style="text-align: left;">Selecciona Oficina</label>
+                        <select id="master-profile-selector">${options}</select>
+                    </div>
+                    <input type="password" id="password-input" placeholder="Contraseña...">
+                    <div class="modal-actions">
+                        <button type="button" class="master-btn secondary" data-action="cancel-login">Cancelar</button>
+                        <button type="button" class="master-btn primary" data-action="login">Ingresar</button>
+                    </div>
+                    <hr style="border-color: var(--border-color); margin: 20px 0;">
+                    <div class="modal-actions">
+                        <button type="button" class="master-btn secondary" data-action="render-create-profile-form">Crear Nueva Oficina</button>
+                        <button type="button" class="master-btn secondary" data-action="import-profile">Importar Otra</button>
+                    </div>`;
+            } else {
+                this.renderMasterLoginWelcome();
+            }
+            this.showView('master-login-modal');
+        },
+
+        renderMasterLoginWelcome() {
+             document.getElementById('master-login-content').innerHTML = `
+                <h3>Bienvenido al Modo Master</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">No hay oficinas locales. Crea o importa una para empezar.</p>
+                <div class="splash-actions">
+                    <button type="button" class="master-btn primary splash-btn" data-action="render-create-profile-form">Crear Nueva Oficina</button>
+                    <button type="button" class="master-btn secondary splash-btn" data-action="import-profile">Importar Oficina</button>
+                </div>
+                <button type="button" class="master-btn danger" data-action="cancel-login" style="margin-top: 20px; width:100%;">Cancelar</button>
+            `;
+            this.showView('master-login-modal');
+        },
+
+        renderCreateProfileForm() {
+            document.getElementById('master-login-content').innerHTML = `
+                <h3>Crear Nueva Oficina</h3>
+                <div class="form-group" style="text-align: left;">
+                    <label for="new-profile-name-input">Nombre de la Oficina</label>
+                    <input type="text" id="new-profile-name-input" placeholder="Ej: Oficina Central">
+                </div>
+                <div class="form-group" style="text-align: left;">
+                    <label for="new-profile-password-input">Contraseña Master</label>
+                    <input type="password" id="new-profile-password-input" placeholder="Crea tu contraseña">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="master-btn secondary" data-action="back-to-login-options">Atrás</button>
+                    <button type="button" class="master-btn primary" data-action="submit-new-profile">Crear y Entrar</button>
+                </div>
+            `;
+            this.showView('master-login-modal');
+        },
+        
+        handleLogin() {
+            const passInput = document.getElementById('password-input');
+            const selector = document.getElementById('master-profile-selector');
+            if (!passInput || !selector) return;
+
+            const profileName = selector.value;
+            const profile = this.appData.profiles[profileName];
+
+            if (!profile || !profile.settings || typeof profile.settings.masterPassword === 'undefined') {
+                this.showToast('Error: Perfil de oficina corrupto o sin contraseña.', 'error');
+                return;
+            }
+
+            if (passInput.value === profile.settings.masterPassword) {
+                this.config = JSON.parse(JSON.stringify(profile));
+                this.appData.activeProfileName = profileName;
+                this.showView('master-container');
+                this.renderMasterView();
+                passInput.value = '';
+            } else {
+                this.showToast('Contraseña incorrecta.', 'error');
+                passInput.value = '';
+                passInput.focus();
+            }
+        },
+
+        handleSubmitNewProfile() {
+            const profileNameInput = document.getElementById('new-profile-name-input');
+            const passwordInput = document.getElementById('new-profile-password-input');
+            
+            const profileName = profileNameInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            if (!profileName) { this.showToast('El nombre de la oficina no puede estar vacío.', 'error'); profileNameInput.focus(); return; }
+            if (this.appData.profiles[profileName]) { this.showToast(`La oficina "${profileName}" ya existe.`, 'error'); profileNameInput.focus(); return; }
+            if (!password) { this.showToast('La contraseña no puede estar vacía.', 'error'); passwordInput.focus(); return; }
+
+            const newConfig = { settings: { masterPassword: password }, groups: [] };
+
+            this.appData.profiles[profileName] = newConfig;
+            this.appData.activeProfileName = profileName;
+            this.config = newConfig;
+            this.saveAppData();
+
+            this.showView('master-container');
+            this.renderMasterView();
+            this.showToast(`Oficina "${profileName}" creada. ¡Bienvenido!`, 'success');
+        },
+        
+        saveCurrentConfig() {
+            this.updateConfigFromDynamicFields();
+            const newPass = document.getElementById('new-password-input').value;
+            if (this.config.settings && newPass.trim() !== '') {
+                this.config.settings.masterPassword = newPass;
+                document.getElementById('new-password-input').value = '';
+                this.showToast('¡Contraseña actualizada!', 'success');
+            }
+            this.appData.profiles[this.appData.activeProfileName] = this.config;
+            this.saveAppData();
+            this.showToast('Configuración guardada', 'success');
+        },
+
+        exitEmployeeView() {
+            this.config = null;
+            this.activeEditorGroupId = null;
+            this.$.employeeContainer.innerHTML = '';
+            this.showView('splash-screen');
+        },
+        
+        exitMasterMode() {
+            if (confirm("¿Estás seguro de que quieres salir? Los cambios no guardados se perderán.")) {
+                this.config = null;
+                this.activeEditorGroupId = null;
+                this.showView('splash-screen');
+            }
+        },
+        
+        showView(viewId) {
+            document.querySelectorAll('.view, .modal-overlay').forEach(el => el.classList.add('hidden'));
+            const viewElement = document.getElementById(viewId);
+            if(viewElement) viewElement.classList.remove('hidden');
+            document.body.className = '';
+            if (viewId === 'employee-container') document.body.classList.add('employee-view');
+            else if (viewId === 'master-container') document.body.classList.add('master-view');
+        },
+        
+        renderEmployeeView(containerId, configObject) {
+            const container = document.getElementById(containerId);
+            if(!container) return;
+            
+            let headerHTML = '';
+            if (containerId === 'employee-container') {
+                headerHTML = `<div class="employee-header">
+                    <h2>ChinBotones</h2>
+                    <button type="button" data-action="exit-employee-view" class="master-btn danger" style="padding: 8px 12px;"><i class="fas fa-sign-out-alt"></i> Salir</button>
+                </div>`;
+            }
+            
+            container.innerHTML = headerHTML;
+
+            const groupContainer = document.createElement('div');
+            groupContainer.id = `group-container-${containerId}`;
+            if (configObject && Array.isArray(configObject.groups)) {
+                configObject.groups.forEach(group => {
+                    const groupEl = document.createElement('div');
+                    groupEl.className = 'grupo';
+                    groupEl.style.backgroundColor = group.colorHex || '#333';
+                    groupEl.dataset.id = group.id;
+                    let content = `<div class="header"><div class="titulo">${this.escapeHTML(group.title)}</div><div class="controls">${group.isFlip ? '<button type="button" class="control-btn flip-btn">🔄</button>' : ''}<div class="drag-handle"><i class="fas fa-grip-lines"></i></div></div></div>`;
+                    if (group.isRevin) content += this.createRevinHTML(group);
+                    else if (group.isFlip) content += this.createFlipHTML(group);
+                    else content += this.createSimpleButtonsHTML(group.buttons);
+                    groupEl.innerHTML = content;
+                    groupContainer.appendChild(groupEl);
+                });
+            }
+            container.appendChild(groupContainer);
+            this.attachEmployeeViewListeners(groupContainer, configObject);
+        },
+
+        attachEmployeeViewListeners(container, config) {
+            new Sortable(container, { handle: '.drag-handle', animation: 150, disabled: (container.id !== 'group-container-employee-container') }); 
+            container.addEventListener('click', (e) => { 
+                const actionBtn = e.target.closest('.copy-btn, .flip-btn, .slider-btn');
+                if (!actionBtn) return;
+                
+                if (actionBtn.matches('.copy-btn') && !actionBtn.matches('.revin-action')) this.copyText(actionBtn.dataset.copyText, actionBtn); 
+                else if (actionBtn.matches('.flip-btn')) actionBtn.closest('.grupo').querySelector('.wallets-card').classList.toggle('flipped'); 
+                else if (actionBtn.matches('.slider-btn')) { actionBtn.parentElement.querySelectorAll('.slider-btn').forEach(btn => btn.classList.remove('selected')); actionBtn.classList.add('selected'); } 
+                else if (actionBtn.matches('.revin-action')) this.handleRevinAction(actionBtn, config); 
+            }); 
+            container.querySelectorAll('.modo-slider').forEach(slider => { 
+                const firstBtn = slider.querySelector('.slider-btn'); 
+                if (firstBtn) firstBtn.classList.add('selected'); 
+            });
+        },
+        
+        renderPreview() {
+            this.updateConfigFromDynamicFields();
+            this.showView('preview-modal');
+            this.renderEmployeeView('preview-container', this.config);
+        },
+
+        renderMasterView() {
+            document.getElementById('active-profile-name-display').textContent = this.appData.activeProfileName;
+            this.$.groupListEditor.innerHTML = '';
+            if (this.config && Array.isArray(this.config.groups)) {
+                this.config.groups.forEach(group => {
+                    const item = document.createElement('div');
+                    item.className = 'group-editor-item';
+                    item.dataset.action = "select-group";
+                    if (group.id === this.activeEditorGroupId) item.classList.add('active');
+                    item.dataset.groupId = group.id;
+                    item.innerHTML = `
+                        <div class="group-editor-header">
+                            <i class="fas fa-grip-vertical master-drag-handle"></i>
+                            <span class="color-preview" style="background-color: ${group.colorHex || '#444'};"></span>
+                            <strong>${this.escapeHTML(group.title)}</strong>
+                            <button type="button" data-action="delete-group" data-group-id="${group.id}" title="Eliminar Grupo" class="editor-delete-btn"><i class="fas fa-trash-alt"></i></button>
+                        </div>`;
+                    this.$.groupListEditor.appendChild(item);
+                });
+            }
+
+            if (this.sortableGroups) this.sortableGroups.destroy();
+            this.sortableGroups = new Sortable(this.$.groupListEditor, { handle: '.master-drag-handle', animation: 150, onEnd: (evt) => { if(!this.config.groups) return; const [movedItem] = this.config.groups.splice(evt.oldIndex, 1); this.config.groups.splice(evt.newIndex, 0, movedItem); } });
+
+            if (this.activeEditorGroupId && this.config?.groups?.some(g => g.id === this.activeEditorGroupId)) {
+                this.renderEditorPanel(this.activeEditorGroupId);
+            } else {
+                this.activeEditorGroupId = null;
+                this.$.editorPlaceholder.classList.remove('hidden');
+                this.$.editorPanel.classList.add('hidden');
+            }
+        },
+        
+        renderEditorPanel(groupId) {
+          const group = this.config.groups.find(g => g.id === groupId);
+          if (!group) { this.activeEditorGroupId = null; this.renderMasterView(); return; }
+          this.$.editorPlaceholder.classList.add('hidden');
+          this.$.editorPanel.classList.remove('hidden');
+          
+          const flipToggleHTML = !group.isRevin ? `
+                <div class="form-group" style="display: flex; align-items: center; justify-content: space-between;">
+                    <label for="gf_${group.id}" style="margin: 0;">Usar tarjeta Flip</label>
+                    <label class="toggle-switch"><input type="checkbox" id="gf_${group.id}" data-key="isFlip" ${group.isFlip ? 'checked' : ''}><span class="slider"></span></label>
+                </div>` : '';
+
+          this.$.editorPanel.innerHTML = `
+            <h3>Editando: ${this.escapeHTML(group.title)}</h3>
+            <div class="form-group"><label>Título del Grupo</label><input type="text" data-key="title" value="${this.escapeHTML(group.title)}"></div>
+            <div class="form-group"><label>Color de Fondo</label><input type="color" data-key="colorHex" value="${group.colorHex || '#2a2a2a'}"></div>
+            ${flipToggleHTML}
+            <hr style="border-color: var(--border-color); margin: 20px 0;">
+            ${group.isRevin ? this.createPcEditorHTML(group) : this.createButtonEditorHTML(group)}`;
+        },
+        
+        addGroup(type) {
+            this.showView('master-container');
+            if (!this.config.groups) this.config.groups = [];
+            const now = Date.now();
+            let newGroup;
+
+            if (type === 'revin') newGroup = { id: `g_${now}`, title: "Revinculación", colorHex: "#27ae60", isRevin: true, pcs: [{ id: `pc_${now}`, name: "PC 1", whatsapp: "", friendCode: "", saludos: ["Hola {usuario}! ..."] }] };
+            else newGroup = { id: `g_${now}`, title: "Grupo de Botones", colorHex: "#34495e", isFlip: false, buttons: [{id: `b_${now}_1`, label: 'Nuevo Botón', text: ''}], frontButtons: [], backButtons: [] };
+            
+            this.config.groups.push(newGroup);
+            this.activeEditorGroupId = newGroup.id;
+            this.renderMasterView();
+        },
+        
+        updateConfig(el) { 
+            const group = this.config.groups.find(g => g.id === this.activeEditorGroupId); if (!group) return; 
+            const key = el.dataset.key; if (!key) return; 
+            const btnEditor = el.closest('.button-editor');
+            const pcEditor = el.closest('.pc-editor'); 
+
+            if (btnEditor) { 
+                const btnId = btnEditor.dataset.id;
+                const face = btnEditor.closest('.button-editor-list')?.dataset.face;
+                let arr = face === 'front' ? group.frontButtons : (face === 'back' ? group.backButtons : group.buttons);
+                let btn = (arr || []).find(b => b.id === btnId);
+                if (btn) btn[key] = el.value;
+            } else if (pcEditor) { 
+                const pcId = pcEditor.dataset.id;
+                const pc = (group.pcs || []).find(p => p.id === pcId);
+                if (pc) pc[key] = el.value;
+            } else { 
+                group[key] = el.type === 'checkbox' ? el.checked : el.value; 
+                if (key === 'isFlip') this.renderEditorPanel(this.activeEditorGroupId);
+                else if (key === 'title') document.querySelector(`.group-editor-item[data-group-id="${this.activeEditorGroupId}"] strong`).textContent = el.value;
+                else if (key === 'colorHex') document.querySelector(`.group-editor-item[data-group-id="${this.activeEditorGroupId}"] .color-preview`).style.backgroundColor = el.value;
+            }
+        },
+
+        updateConfigFromDynamicFields(specificPcId = null) {
+            const group = this.config.groups.find(g => g.id === this.activeEditorGroupId); if (!group || !group.isRevin) return;
+            const pcsToUpdate = specificPcId ? (group.pcs || []).filter(p => p.id === specificPcId) : (group.pcs || []);
+            pcsToUpdate.forEach(pc => {
+                const saludosContainer = document.querySelector(`.pc-editor[data-id="${pc.id}"] #saludos-container`);
+                if(saludosContainer) pc.saludos = Array.from(saludosContainer.querySelectorAll('input.saludo-input')).map(input => input.value);
+            });
+        },
+        
+        handleEditorAction(action, actionEl) {
+            const group = this.config.groups.find(g => g.id === this.activeEditorGroupId); if (!group) return;
+            const isFlipped = this.$.editorPanel.querySelector('#button-editor-flipper')?.classList.contains('flipped');
+
+            if (action === 'add-button') {
+                const face = actionEl.dataset.face;
+                const newBtn = { id: `b_${Date.now()}`, label: 'Nuevo', text: '' };
+                if (face === 'front') { if(!group.frontButtons) group.frontButtons = []; group.frontButtons.push(newBtn); }
+                else if (face === 'back') { if(!group.backButtons) group.backButtons = []; group.backButtons.push(newBtn); }
+                else { if(!group.buttons) group.buttons = []; group.buttons.push(newBtn); }
+            } else if (action === 'delete-button') {
+                const btnId = actionEl.closest('.button-editor').dataset.id;
+                ['buttons', 'frontButtons', 'backButtons'].forEach(key => { if (group[key]) group[key] = group[key].filter(b => b.id !== btnId); });
+            } else if (action === 'add-pc') {
+                if(!group.pcs) group.pcs = [];
+                group.pcs.push({ id: `pc_${Date.now()}`, name: "Nueva PC", whatsapp: "", friendCode: "", saludos: [] });
+            } else if (action === 'delete-pc') {
+                const pcId = actionEl.closest('.pc-editor').dataset.id;
+                group.pcs = (group.pcs || []).filter(p => p.id !== pcId);
+            }
+
+            this.renderEditorPanel(this.activeEditorGroupId);
+            if (isFlipped) this.$.editorPanel.querySelector('#button-editor-flipper')?.classList.add('flipped');
+        },
+
+        createSimpleButtonsHTML(buttons) { return (buttons || []).map(btn => `<button type="button" class="copy-btn" data-copy-text="${this.escapeAttribute(btn.text)}">${this.escapeHTML(btn.label)}</button>`).join(''); },
+        createFlipHTML(group) { return `<div class="wallets-container"><div class="wallets-card"><div class="wallets-face front">${this.createSimpleButtonsHTML(group.frontButtons)}</div><div class="wallets-face back">${this.createSimpleButtonsHTML(group.backButtons)}</div></div></div>`; },
+        createRevinHTML(group) { const slider = (group.pcs || []).map(pc => `<button type="button" class="slider-btn" data-pc-id="${pc.id}">${this.escapeHTML(pc.name)}</button>`).join(''); return `<h3 style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap; gap: 10px;">Mensaje Revin<div class="modo-slider">${slider}</div></h3><input type="text" class="input-usuario" placeholder="Escribí el usuario..."><div class="revin-actions"><button type="button" class="copy-btn revin-action" data-type="saludo">Copiar saludo</button><button type="button" class="copy-btn revin-action" data-type="wsp" style="background:#27ae60;">Copiar WhatsApp</button><button type="button" class="copy-btn revin-action" data-type="amigo" style="background:#e67e22;">Código Amigo</button></div>`; },
+        
+        createButtonEditorHTML(group) { 
+            if (group.isFlip) { 
+                return `<div id="button-editor-flipper">
+                    <div class="button-editor-face front">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"><h4>Botones Cara Frontal</h4><button type="button" class="master-btn secondary" data-action="flip-editor">Editar Atrás <i class="fas fa-redo"></i></button></div>
+                        <div class="button-editor-list" data-face="front">${(group.frontButtons || []).map(b => this.createSingleButtonEditor(b)).join('')}</div>
+                        <button type="button" class="master-btn secondary" data-action="add-button" data-face="front">+ Añadir Botón Frontal</button>
+                    </div>
+                    <div class="button-editor-face back">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"><h4>Botones Cara Trasera</h4><button type="button" class="master-btn secondary" data-action="flip-editor">Editar Frente <i class="fas fa-redo"></i></button></div>
+                        <div class="button-editor-list" data-face="back">${(group.backButtons || []).map(b => this.createSingleButtonEditor(b)).join('')}</div>
+                        <button type="button" class="master-btn secondary" data-action="add-button" data-face="back">+ Añadir Botón Trasero</button>
+                    </div>
+                </div>`; 
+            }
+            return `<h4>Botones</h4><div class="button-editor-list">${(group.buttons || []).map(b => this.createSingleButtonEditor(b)).join('')}</div><button type="button" class="master-btn secondary" data-action="add-button">+ Añadir Botón</button>`; 
+        },
+        createSingleButtonEditor(btn) { return `<div class="button-editor" data-id="${btn.id}" style="border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; margin-bottom: 10px;"><div class="group-editor-header" style="margin-bottom: 10px;"><h5>Botón</h5><button type="button" data-action="delete-button" class="editor-delete-btn" title="Eliminar Botón"><i class="fas fa-trash-alt"></i></button></div><div class="form-group"><label>Etiqueta</label><input type="text" data-key="label" value="${this.escapeHTML(btn.label)}"></div><div class="form-group"><label>Texto a Copiar</label><textarea data-key="text">${this.escapeHTML(btn.text)}</textarea></div></div>`; },
+        
+        createPcEditorHTML(group) { return `<h4>Configuración de PCs</h4><div class="pc-editor-list">${(group.pcs || []).map(pc => this.createSinglePcEditor(pc)).join('')}</div><button type="button" class="master-btn secondary" data-action="add-pc">+ Añadir PC</button>`; },
+        createSinglePcEditor(pc) {
+            const saludosHTML = (pc.saludos || []).map(saludo => `<div class="saludo-item"><input type="text" value="${this.escapeHTML(saludo)}" class="saludo-input"><button type="button" class="master-btn danger" data-action="delete-saludo" style="padding: 5px 10px;"><i class="fas fa-trash-alt"></i></button></div>`).join('');
+            return `<div class="pc-editor" data-id="${pc.id}" style="border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; margin-bottom: 10px;">
+                <div class="group-editor-header" style="margin-bottom: 10px;"><h5>PC</h5><button type="button" data-action="delete-pc" class="editor-delete-btn" title="Eliminar PC"><i class="fas fa-trash-alt"></i></button></div>
+                <div class="form-group"><label>Nombre</label><input type="text" data-key="name" value="${this.escapeHTML(pc.name)}"></div>
+                <div class="form-group"><label>Nº WhatsApp</label><input type="text" data-key="whatsapp" value="${this.escapeHTML(pc.whatsapp)}"></div>
+                <div class="form-group"><label>Código Amigo</label><input type="text" data-key="friendCode" value="${this.escapeHTML(pc.friendCode)}"></div>
+                <div class="form-group"><label>Saludos</label><div id="saludos-container">${saludosHTML}</div><button type="button" class="master-btn secondary" data-action="add-saludo" data-pc-id="${pc.id}" style="margin-top: 10px;">+ Añadir Saludo</button></div>
+            </div>`; 
+        },
+
+        addSaludoField(pcId) {
+            if (!pcId) return;
+            const container = this.$.editorPanel.querySelector(`.pc-editor[data-id="${pcId}"] #saludos-container`);
+            if(container) {
+                const newItem = document.createElement('div');
+                newItem.className = 'saludo-item';
+                newItem.innerHTML = `<input type="text" value="" class="saludo-input"><button type="button" class="master-btn danger" data-action="delete-saludo" style="padding: 5px 10px;"><i class="fas fa-trash-alt"></i></button>`;
+                container.appendChild(newItem);
+            }
+        },
+
+        exportConfig() { if(!this.config) { this.showToast('No hay oficina activa para exportar.', 'error'); return; } this.updateConfigFromDynamicFields(); const dataStr = JSON.stringify(this.config, null, 2); const blob = new Blob([dataStr], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `${this.appData.activeProfileName}_config.json`; a.click(); URL.revokeObjectURL(url); this.showToast('Configuración exportada.', 'success'); },
+        
+        handleRevinAction: function(button, config) { 
+            const groupEl = button.closest('.grupo'); 
+            const usuario = groupEl.querySelector('.input-usuario').value.trim(); 
+            if (!usuario) { this.showToast('Escribe un nombre de usuario primero.', 'error'); return; } 
+            const selectedPcBtn = groupEl.querySelector('.slider-btn.selected'); 
+            if (!selectedPcBtn) { this.showToast('Selecciona una PC.', 'error'); return; } 
+            const pcId = selectedPcBtn.dataset.pcId; 
+            const groupData = config.groups.find(g => g.id === groupEl.dataset.id);
+            const pcData = groupData?.pcs?.find(p => p.id === pcId); 
+            if(!pcData) { this.showToast('Error: no se encontraron datos de PC.', 'error'); return; } 
+            let textToCopy = ''; 
+            const actionType = button.dataset.type; 
+            if (actionType === 'saludo') { const saludos = pcData.saludos || []; if (saludos.length === 0) { this.showToast('No hay saludos configurados.', 'error'); return; } const saludoTemplate = saludos[Math.floor(Math.random() * saludos.length)]; textToCopy = saludoTemplate.replace(/{usuario}/g, usuario).replace(/{usuarioENC}/g, encodeURIComponent(usuario)); } 
+            else if (actionType === 'wsp') { textToCopy = `https://wa.me/${pcData.whatsapp}?text=Hola%20soy%20${encodeURIComponent(usuario)}%20quiero%20mi%20clave%20y%20cronograma`; } 
+            else if (actionType === 'amigo') { textToCopy = `TU CODIGO AMIGO\n${pcData.friendCode}${usuario}\n\nRecordá que el recomendado lo tiene que enviar al final de la carga\nCon solo enviarle el enlace ya pueden cargar desde el boton de wsp!\nhttp://bet-300.pw/`; } 
+            this.copyText(textToCopy, button); 
+        },
+        
+        copyText: function(text, button = null) { if(typeof text !== 'string') text = ''; navigator.clipboard.writeText(text).then(() => { this.showToast('¡Copiado!'); if (button) { button.style.transform = 'scale(0.96)'; setTimeout(() => button.style.transform = '', 150); } }).catch(() => this.showToast('Error al copiar', 'error')); },
+        showToast: function(message, type = 'info') { const t = document.getElementById('toast'); t.textContent = message; t.className = `toast show ${type}`; setTimeout(() => t.classList.remove('show'), 2000); },
+        escapeHTML: function(str) { if(typeof str !== 'string') return ''; return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;'); },
+        escapeAttribute: function(str) { if(typeof str !== 'string') return ''; return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;'); }
+      };
+      App.init();
+    });
+  </script>
+</body>
+</html>
