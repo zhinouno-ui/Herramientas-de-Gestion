@@ -1251,22 +1251,28 @@
         .quick-profile-head { display:flex; gap:12px; align-items:center; }
         .quick-avatar { width:52px; height:52px; border-radius:50%; background:linear-gradient(135deg, rgba(59,130,246,.25), rgba(16,185,129,.2)); border:1px solid rgba(96,165,250,.4); display:flex; align-items:center; justify-content:center; font-weight:800; color:#bfdbfe; font-size:1rem; }
         .quick-name { font-size:1.25rem; font-weight:800; line-height:1.1; }
+        .quick-name.copyable { cursor: pointer; display:inline-flex; align-items:center; gap:6px; }
+        .quick-name.copyable:hover { color:#93c5fd; text-decoration: underline; }
         .quick-meta { color:var(--text-secondary); font-size:.9rem; margin-top:3px; }
         .quick-chips { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
         .quick-chip { font-size:.74rem; padding:4px 9px; border-radius:999px; border:1px solid rgba(148,163,184,.35); color:#cbd5e1; background:rgba(30,41,59,.5); }
         .quick-progress { margin-top:10px; color:var(--text-secondary); font-size:.82rem; }
         .quick-panel { background:rgba(15,23,42,.24); border:1px solid rgba(148,163,184,.2); border-radius:12px; padding:12px; }
         .quick-topbar { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px; }
-        .review-actions { display:grid; grid-template-columns: repeat(2,minmax(150px,1fr)); gap:9px; }
-        .review-actions .btn { justify-content:flex-start; padding:10px 12px; }
+        .review-actions { display:grid; grid-template-columns: repeat(3,minmax(170px,1fr)); gap:10px; }
+        .review-actions .btn { justify-content:flex-start; padding:12px 14px; font-weight:700; }
+        .review-actions .quick-status-btn { border:1px solid rgba(148,163,184,.28); }
+        .review-actions .quick-status-btn.sin-revisar { border-color: rgba(148,163,184,.45); }
+        .review-actions .quick-status-btn.contactado { border-color: rgba(16,185,129,.45); }
+        .review-actions .quick-status-btn.revisado { border-color: rgba(52,211,153,.45); }
+        .review-actions .quick-status-btn.jugando { border-color: rgba(139,92,246,.45); }
+        .review-actions .quick-status-btn.sin-wsp { border-color: rgba(245,158,11,.45); }
+        .review-actions .quick-status-btn.no-interesado { border-color: rgba(239,68,68,.45); }
+        .review-actions .btn.applied { box-shadow: 0 0 0 2px rgba(52,211,153,.45) inset; transform: scale(0.98); }
+        .quick-panel.updating { opacity: .82; transition: opacity .1s linear; }
         .quick-tools { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:12px; border-top:1px solid rgba(148,163,184,.22); padding-top:10px; }
-        .quick-tools .btn { padding: 8px 10px; font-size: .84rem; }
+        .quick-tools .btn { padding: 10px 12px; font-size: .9rem; }
         .shift-tag { font-size:.72rem; padding:2px 8px; border-radius:999px; border:1px solid rgba(148,163,184,.35); color:#cbd5e1; }
-        .strict-mode-card { grid-column: 1 / -1; border-style: dashed; }
-        .strict-mode-title { font-weight:700; margin-bottom:4px; }
-        .strict-mode-desc { color: var(--text-secondary); font-size: .85rem; line-height: 1.35; margin-bottom: 10px; }
-        .strict-toggle { display:flex; align-items:center; gap:10px; background:rgba(15,23,42,.35); border:1px solid rgba(148,163,184,.3); border-radius:10px; padding:10px; }
-        .strict-toggle input { width:18px; height:18px; accent-color:#34d399; }
 
     </style>
 </head>
@@ -1656,7 +1662,7 @@
                 tt: { name: 'TT', queue: [], cursor: 0, stack: [] },
                 tn: { name: 'TN', queue: [], cursor: 0, stack: [] }
             },
-            turnosStrictProgress: true,
+            turnosStrictProgress: false,
             activeShift: null,
             editingContactId: null,
             lastSelectedContactId: null,
@@ -3402,6 +3408,117 @@
         }
 
         function getShiftStats(shift) {
+            const pendingPool = AppState.contacts.filter(c => c.assignedShift === shift && !c.shiftReviewed);
+            const total = pendingPool.length;
+
+            // Conteo competitivo por franja local (turno real de trabajo), sin toggle estricto.
+            const revisados = AppState.contacts.filter(c => c.shiftReviewed && c.shiftReviewedByShift === shift).length;
+
+            const pendientes = total;
+            const denom = revisados + pendientes;
+            const pct = denom ? Math.min(100, Math.round((revisados / denom) * 100)) : 0;
+            return { total, revisados, pendientes, pct };
+        }
+
+        function renderShiftsView() {
+            assignShifts();
+            const shifts = ['tm', 'tt', 'tn'];
+            const shiftStats = shifts.map(shift => ({ shift, st: getShiftStats(shift), data: AppState.shiftMode[shift] }));
+            const totals = shiftStats.reduce((acc, row) => {
+                acc.total += row.st.total;
+                acc.revisados += row.st.revisados;
+                acc.pendientes += row.st.pendientes;
+                return acc;
+            }, { total: 0, revisados: 0, pendientes: 0 });
+            const pct = totals.total ? Math.round((totals.revisados / totals.total) * 100) : 0;
+
+            const overviewCard = `
+                <div class="shifts-overview-card">
+                    <div>
+                        <div style="font-weight:800; font-size:1rem;">Vista de competencia por turnos</div>
+                        <div style="color:var(--text-secondary); font-size:.86rem; margin-top:2px;">En este modo ocultamos búsqueda/filtros generales para enfocarte en productividad por turno.</div>
+                        <div class="shifts-overview-stats" style="margin-top:8px;">
+                            <span>Total asignados: <strong>${totals.total}</strong></span>
+                            <span>Revisados: <strong>${totals.revisados}</strong></span>
+                            <span>Pendientes: <strong>${totals.pendientes}</strong></span>
+                            <span>Avance global: <strong>${pct}%</strong></span>
+                        </div>
+                    </div>
+                    <div class="shifts-overview-actions">
+                        <button class="btn" onclick="rebalanceShift('all')"><i class="fas fa-random"></i> Rebalancear todo</button>
+                        <button class="btn" onclick="closeQuickReview()"><i class="fas fa-times-circle"></i> Cerrar revisión rápida</button>
+                    </div>
+                </div>`;
+
+            const cards = shiftStats.map(({ shift, st, data }) => {
+                return `
+                <div class="shift-card">
+                    <h3>
+                        <span>${shift.toUpperCase()}</span>
+                        <input class="filter-select" style="max-width:130px;" value="${data.name}" onchange="renameShift('${shift}', this.value)">
+                    </h3>
+                    <div class="shift-card-sub">Operador y cola de revisión para este turno.</div>
+                    <div class="shift-stats">
+                        <span>Asignados: <strong>${st.total}</strong></span>
+                        <span>Revisados: <strong>${st.revisados}</strong></span>
+                        <span>Pendientes: <strong>${st.pendientes}</strong></span>
+                    </div>
+                    <div class="shift-progress"><span style="width:${st.pct}%"></span></div>
+                    <div class="shift-controls">
+                        <button class="btn" onclick="startShiftReview('${shift}')"><i class="fas fa-play"></i> Empezar revisión</button>
+                        <button class="btn" onclick="rebalanceShift('${shift}')"><i class="fas fa-random"></i> Rebalancear</button>
+                    </div>
+                </div>`;
+            }).join('');
+
+            elements.shiftsView.innerHTML = overviewCard + cards;
+            elements.shiftsView.style.display = 'grid';
+        }
+        function inferShiftForContact(contact, rrState) {
+            const o = normalizeUsername(contact.origin || '');
+            if (o.includes('mañana') || o.includes('manana')) return 'tm';
+            if (o.includes('tarde')) return 'tt';
+            if (o.includes('noche')) return 'tn';
+            const seq = ['tm', 'tt', 'tn'];
+            const shift = seq[rrState.i % seq.length];
+            rrState.i += 1;
+            return shift;
+        }
+
+        function getLocalCompetitionShift(date = new Date()) {
+            const hour = date.getHours();
+            if (hour >= 6 && hour < 14) return 'tm';
+            if (hour >= 14 && hour < 22) return 'tt';
+            return 'tn';
+        }
+
+        function updateCompetitionCredit(contact, newStatus, source = 'common', { forceTransfer = false } = {}) {
+            if (!contact) return false;
+
+            if (newStatus === 'sin revisar') {
+                const changed = !!(contact.shiftReviewed || contact.shiftReviewedByShift || contact.shiftReviewedAt);
+                contact.shiftReviewed = false;
+                contact.shiftReviewedByShift = null;
+                contact.shiftReviewedAt = null;
+                return changed;
+            }
+
+            const localShift = getLocalCompetitionShift(new Date());
+            const changed = forceTransfer || !contact.shiftReviewed || contact.shiftReviewedByShift !== localShift;
+            contact.shiftReviewed = true;
+            contact.shiftReviewedByShift = localShift;
+            if (changed) contact.shiftReviewedAt = new Date().toISOString();
+            return changed;
+        }
+
+        function assignShifts() {
+            const rr = { i: 0 };
+            AppState.contacts.forEach(c => {
+                if (!c.assignedShift) c.assignedShift = inferShiftForContact(c, rr);
+            });
+        }
+
+        function getShiftStats(shift) {
             const assigned = AppState.contacts.filter(c => c.assignedShift === shift);
             const total = assigned.length;
 
@@ -3595,6 +3712,146 @@
             mode.queue = buildShiftQueue(shift);
             renderQuickReview();
             renderShiftsView();
+        };
+
+        window.reviewPrev = () => {
+            const shift = AppState.activeShift;
+            if (!shift) return;
+            const mode = AppState.shiftMode[shift];
+            const prevId = mode.stack.pop();
+            if (!prevId) return;
+            const idx = mode.queue.findIndex(c => c.id === prevId);
+            mode.cursor = idx >= 0 ? idx : 0;
+            renderQuickReview();
+        };
+
+        window.reviewSkip = () => {
+            const shift = AppState.activeShift;
+            if (!shift) return;
+            const mode = AppState.shiftMode[shift];
+            if (mode.cursor < mode.queue.length - 1) mode.cursor += 1;
+            else mode.cursor = mode.queue.length;
+            renderQuickReview();
+        };
+
+        window.closeQuickReview = () => {
+            AppState.activeShift = null;
+            elements.quickReview.style.display = 'none';
+        };
+
+        window.renameShift = (shift, value) => {
+            AppState.shiftMode[shift].name = (value || shift.toUpperCase()).trim();
+            saveData();
+        };
+
+        window.rebalanceShift = (shift) => {
+            const seq = ['tm', 'tt', 'tn'];
+            if (shift === 'all') {
+                const unreviewed = AppState.contacts.filter(c => c.status === 'sin revisar');
+                let i = 0;
+                unreviewed.forEach(c => { c.assignedShift = seq[i % 3]; i++; });
+                renderShiftsView();
+                saveData();
+                showNotification('Turnos rebalanceados (global)', 'success');
+                return;
+            }
+
+            const shiftContacts = AppState.contacts.filter(c => c.assignedShift === shift && c.status === 'sin revisar');
+            shiftContacts.forEach(c => { c.shiftReviewed = false; });
+            renderShiftsView();
+            saveData();
+            showNotification(`Turno ${String(shift).toUpperCase()} rebalanceado`, 'success');
+        };
+
+        function buildShiftQueue(shift) {
+            return AppState.contacts
+                .filter(c => c.assignedShift === shift && !c.shiftReviewed)
+                .sort((a, b) => (new Date(a.lastUpdated || 0).getTime()) - (new Date(b.lastUpdated || 0).getTime()));
+        }
+
+        window.startShiftReview = (shift) => {
+            AppState.activeShift = shift;
+            AppState.shiftMode[shift].queue = buildShiftQueue(shift);
+            AppState.shiftMode[shift].cursor = 0;
+            AppState.shiftMode[shift].stack = [];
+            renderQuickReview();
+        };
+
+        function renderQuickReview() {
+            const shift = AppState.activeShift;
+            if (!shift) { elements.quickReview.style.display = 'none'; return; }
+            const mode = AppState.shiftMode[shift];
+            const contact = mode.queue[mode.cursor];
+            if (!contact) {
+                elements.quickReview.style.display = 'block';
+                elements.quickReview.innerHTML = `<h3>Revisión ${shift.toUpperCase()}</h3><p style="color:var(--text-secondary)">Sin más contactos en este turno.</p><button class="btn" onclick="closeQuickReview()">Cerrar</button>`;
+                return;
+            }
+            const phoneTxt = contact.phone || 'Sin teléfono';
+            const st = getStatusOption(contact.status);
+            elements.quickReview.style.display = 'block';
+            const initials = (contact.name || '?').trim().slice(0, 2).toUpperCase();
+            const escapedName = (contact.name || '').replace(/'/g, "\\'");
+            const escapedPhone = (contact.phone || '').replace(/'/g, "\\'");
+            const totalInQueue = mode.queue.length;
+            const currentPos = Math.min(mode.cursor + 1, Math.max(1, totalInQueue));
+            elements.quickReview.innerHTML = `
+                <div class="quick-layout">
+                    <div class="quick-profile">
+                        <div class="quick-profile-head">
+                            <div class="quick-avatar">${initials}</div>
+                            <div>
+                                <div class="quick-name copyable" onclick="copyToClipboard('${escapedName}', event)" title="Click para copiar usuario"><i class="fas fa-copy" style="font-size:.78rem;opacity:.8"></i>${contact.name}</div>
+                                <div class="quick-meta">${phoneTxt} · ${contact.origin || '-'}</div>
+                            </div>
+                        </div>
+                        <div class="quick-chips">
+                            <span class="quick-chip">Turno ${shift.toUpperCase()}</span>
+                            <span class="quick-chip">Operador: ${AppState.shiftMode[shift].name}</span>
+                            <span class="quick-chip">Competencia: Pendiente</span>
+                            <span class="quick-chip">Cuenta para: ${getLocalCompetitionShift(new Date()).toUpperCase()}</span>
+                            ${contact.status !== 'sin revisar' ? `<span class="quick-chip" style="border-color:rgba(251,191,36,.45);color:#fde68a;">Preestado: ${st.label}</span>` : ''}
+                        </div>
+                        <div class="quick-progress">Usuario ${currentPos} de ${totalInQueue} en cola</div>
+                    </div>
+                    <div class="quick-panel">
+                        <div class="quick-topbar">
+                            <h3 style="margin:0;">Revisión rápida ${shift.toUpperCase()}</h3>
+                            <button class="btn" onclick="closeQuickReview()"><i class="fas fa-times"></i> Cerrar</button>
+                        </div>
+                        <div class="review-actions">
+                            ${STATUS_OPTIONS.map(opt => `<button class="btn quick-status-btn ${opt.id.replace(/ /g,'-')}" onclick="reviewSetStatus(${contact.id}, '${opt.id}', event)"><i class="fas ${opt.icon}"></i> ${opt.label}</button>`).join('')}
+                        </div>
+                        <div class="quick-tools">
+                            <button class="btn" onclick="reviewPrev()"><i class="fas fa-arrow-left"></i> Anterior</button>
+                            <button class="btn" onclick="reviewSkip()"><i class="fas fa-forward"></i> Saltar</button>
+                            <button class="btn" onclick="copyToClipboard('${escapedName}')"><i class="fas fa-copy"></i> Copiar usuario</button>
+                            ${contact.phone ? `<button class="btn" onclick="copyToClipboard('${escapedPhone}')"><i class="fas fa-copy"></i> Copiar teléfono</button>` : ''}
+                            <button class="btn" onclick="editContactField(${contact.id}, 'name')"><i class="fas fa-pen"></i> Editar</button>
+                            ${contact.phone ? `<button class="btn btn-success" onclick="openWhatsApp('${escapedPhone}', event)"><i class="fab fa-whatsapp"></i> WhatsApp</button>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        window.reviewSetStatus = (id, status, event) => {
+            const shift = AppState.activeShift;
+            if (!shift) return;
+            const mode = AppState.shiftMode[shift];
+            const current = mode.queue[mode.cursor];
+            if (!current) return;
+            if (event && event.currentTarget) event.currentTarget.classList.add('applied');
+            const quickPanel = elements.quickReview.querySelector('.quick-panel');
+            if (quickPanel) quickPanel.classList.add('updating');
+            mode.stack.push(current.id);
+            changeContactStatus(id, status, null, 'shift');
+            setTimeout(() => {
+                mode.cursor += 1;
+                mode.queue = buildShiftQueue(shift);
+                renderQuickReview();
+                renderShiftsView();
+            }, 130);
         };
 
         window.reviewPrev = () => {
@@ -4682,6 +4939,8 @@
                 elements.viewShiftsBtn.onclick = () => {
                     withSoftTransition(() => {
                         AppState.currentView = 'shifts';
+                        AppState.selectedContacts.clear();
+                        updateBulkActionsBar();
                         elements.viewShiftsBtn.classList.add('active');
                         elements.viewCardsBtn.classList.remove('active');
                         elements.viewListBtn.classList.remove('active');
