@@ -3,101 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsApp Status Analytics | Dashboard</title>
-    
-    <!-- Librerías desde la nube: TailwindCSS (estilos) y ChartJS (gráficas) -->
+    <title>MetriWapp | Dashboard Oscuro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <!-- Pequeños retoques gráficos de fondo -->
     <style>
-        body { background-color: #f0fdf4; /* Un tono re mil tenue tipo verde WhatsApp */ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        /* Fondo oscuro base */
+        body { background-color: #111827; color: #f3f4f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        /* Scrollbar oscura para que quede pro */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
     </style>
 </head>
-<body class="p-6">
+<body class="p-4 md:p-6">
 
     <div class="max-w-7xl mx-auto space-y-6">
         
         <!-- Header -->
-        <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-green-100">
+        <div class="flex flex-col md:flex-row justify-between items-center bg-gray-800 p-5 rounded-xl shadow-lg border border-gray-700">
             <div>
-                <h1 class="text-3xl font-bold text-gray-800"><span class="text-green-500">WA Status</span> Tracker</h1>
-                <p class="text-sm text-gray-500">Optimizá y evaluá campañas comparando impacto vs. tiempo real.</p>
+                <h1 class="text-3xl font-bold text-white"><span class="text-emerald-500">Metri</span>Wapp 🚀</h1>
+                <p class="text-sm text-gray-400">Análisis de rendimiento de estados (Modo Oscuro)</p>
             </div>
-            <div id="topCard" class="hidden text-right">
-                <span class="text-xs uppercase font-bold text-green-600 bg-green-100 px-3 py-1 rounded-full">Dispositivo #1 🔥</span>
-                <p id="topPhoneLabel" class="text-xl font-bold text-gray-800 mt-1">Celular - ????</p>
-                <p id="topPhonePace" class="text-sm text-gray-500 text-emerald-500 font-semibold mt-1">??? Vistas por Hora</p>
+            <div id="topCard" class="hidden text-right mt-4 md:mt-0">
+                <span class="text-xs uppercase font-bold text-emerald-900 bg-emerald-400 px-3 py-1 rounded-full">Top #1 Actual 🔥</span>
+                <p id="topPhoneLabel" class="text-xl font-bold text-white mt-2">-</p>
+                <p id="topPhonePace" class="text-sm text-emerald-400 font-semibold">-</p>
             </div>
         </div>
 
-        <!-- Layout 2 columnas principales -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            <!-- Izquierda: Formulario e Historial -->
+            <!-- COLUMNA IZQUIERDA: Formulario y Lista -->
             <div class="lg:col-span-1 space-y-6">
-                <!-- FORMULARIO Carga Rápida -->
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h2 class="text-lg font-bold text-gray-800 mb-4">Ingresar Celular</h2>
+                
+                <!-- FORMULARIO DE CARGA -->
+                <div class="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 id="formTitle" class="text-lg font-bold text-white">Añadir Métrica</h2>
+                        <button id="cancelEditBtn" onclick="cancelarEdicion()" class="hidden text-xs text-red-400 hover:text-red-300 underline">Cancelar Edición</button>
+                    </div>
+
                     <form id="addForm" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-600 uppercase">Últimos 4 dígitos de la línea</label>
-                            <input type="text" id="phoneDigits" placeholder="Ej: 5831" maxlength="4" required class="w-full mt-1 p-2 border border-gray-300 rounded focus:ring-green-500 focus:border-green-500 outline-none transition">
+                        <!-- Identificación -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="col-span-2 md:col-span-1">
+                                <label class="block text-xs font-semibold text-gray-400 uppercase">Nombre</label>
+                                <input type="text" id="phoneName" placeholder="Ej: Promo Zapas" required class="w-full mt-1 p-2 bg-gray-700 border border-gray-600 rounded text-white focus:ring-emerald-500 focus:border-emerald-500 outline-none">
+                            </div>
+                            <div class="col-span-2 md:col-span-1">
+                                <label class="block text-xs font-semibold text-gray-400 uppercase">4 Dígitos (Opc)</label>
+                                <input type="text" id="phoneDigits" placeholder="Ej: 5831" maxlength="4" class="w-full mt-1 p-2 bg-gray-700 border border-gray-600 rounded text-white focus:ring-emerald-500 focus:border-emerald-500 outline-none">
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-600 uppercase">Cantidad de Vistas actuales</label>
-                            <input type="number" id="phoneViews" placeholder="Ej: 1400" required class="w-full mt-1 p-2 border border-gray-300 rounded focus:ring-green-500 focus:border-green-500 outline-none transition">
+
+                        <!-- Tiempo -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-400 uppercase">Día de subida</label>
+                                <select id="uploadDay" class="w-full mt-1 p-2 bg-gray-700 border border-gray-600 rounded text-white focus:ring-emerald-500 focus:border-emerald-500 outline-none">
+                                    <option value="hoy">Hoy</option>
+                                    <option value="ayer">Ayer</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-400 uppercase">Hora de subida</label>
+                                <input type="time" id="uploadTime" required class="w-full mt-1 p-2 bg-gray-700 border border-gray-600 rounded text-white focus:ring-emerald-500 focus:border-emerald-500 outline-none [color-scheme:dark]">
+                            </div>
                         </div>
+
+                        <!-- Vistas -->
                         <div>
-                            <label class="block text-xs font-semibold text-gray-600 uppercase">Horas transcurridas</label>
-                            <input type="number" id="phoneHours" step="0.1" placeholder="Ej: 3 o 3.5 (Si son media hs)" required class="w-full mt-1 p-2 border border-gray-300 rounded focus:ring-green-500 focus:border-green-500 outline-none transition">
+                            <label class="block text-xs font-semibold text-gray-400 uppercase">Vistas Actuales</label>
+                            <input type="number" id="phoneViews" placeholder="Ej: 1400" required class="w-full mt-1 p-2 bg-gray-700 border border-gray-600 rounded text-white focus:ring-emerald-500 focus:border-emerald-500 outline-none">
                         </div>
-                        <button type="submit" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 rounded-lg transition">
-                            Cargar Métricas +
+
+                        <button type="submit" id="submitBtn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-lg transition shadow-lg">
+                            + Cargar Métrica
                         </button>
                     </form>
                 </div>
 
-                <!-- LISTA Y BORRADO RÁPIDO -->
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-72 overflow-y-auto">
-                    <h2 class="text-lg font-bold text-gray-800 mb-4">Lista Ranking Completo</h2>
-                    <ul id="deviceList" class="space-y-2">
-                        <!-- Dispositivos cargados irán acá por JS -->
+                <!-- LISTA DE DISPOSITIVOS -->
+                <div class="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700 flex flex-col h-[400px]">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-bold text-white">Ranking Actual</h2>
+                        <button onclick="borrarTodos()" class="text-xs bg-red-900/50 text-red-400 hover:bg-red-800 hover:text-white px-2 py-1 rounded transition">Borrar Todos</button>
+                    </div>
+                    
+                    <ul id="deviceList" class="space-y-3 overflow-y-auto flex-1 pr-2">
+                        <!-- Dispositivos cargados -->
                     </ul>
+                    <div id="emptyState" class="hidden text-center text-gray-500 mt-10">
+                        <p>No hay datos cargados.</p>
+                        <p class="text-sm">Agregá tu primer métrica arriba.</p>
+                    </div>
                 </div>
             </div>
 
-            <!-- Derecha: Las Métricas Analíticas y Gráficos -->
+            <!-- COLUMNA DERECHA: KPIs y Gráficos -->
             <div class="lg:col-span-2 space-y-6">
                 
                 <!-- KPIs Universales -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-green-500 flex flex-col justify-center">
-                        <span class="text-gray-500 text-xs font-bold uppercase">Impacto Total Campaña</span>
-                        <h3 id="totalViewsCard" class="text-3xl font-extrabold text-gray-800">0 <span class="text-sm font-medium">Vistas</span></h3>
+                    <div class="bg-gray-800 p-4 rounded-xl shadow-lg border-l-4 border-emerald-500">
+                        <span class="text-gray-400 text-xs font-bold uppercase">Impacto Total</span>
+                        <h3 id="totalViewsCard" class="text-3xl font-extrabold text-white mt-1">0 <span class="text-sm font-medium text-gray-500">Vistas</span></h3>
                     </div>
-                    <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500 flex flex-col justify-center">
-                        <span class="text-gray-500 text-xs font-bold uppercase">Promedio general alcance</span>
-                        <h3 id="avgVelocityCard" class="text-3xl font-extrabold text-gray-800">0 <span class="text-sm font-medium">Vistas / Hr</span></h3>
+                    <div class="bg-gray-800 p-4 rounded-xl shadow-lg border-l-4 border-blue-500">
+                        <span class="text-gray-400 text-xs font-bold uppercase">Promedio General</span>
+                        <h3 id="avgVelocityCard" class="text-3xl font-extrabold text-white mt-1">0 <span class="text-sm font-medium text-gray-500">V / Hr</span></h3>
                     </div>
-                    <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-indigo-500 flex flex-col justify-center">
-                        <span class="text-gray-500 text-xs font-bold uppercase">Celulares Testeados</span>
-                        <h3 id="totalPhonesCard" class="text-3xl font-extrabold text-gray-800">0</h3>
+                    <div class="bg-gray-800 p-4 rounded-xl shadow-lg border-l-4 border-purple-500">
+                        <span class="text-gray-400 text-xs font-bold uppercase">Celulares Testeados</span>
+                        <h3 id="totalPhonesCard" class="text-3xl font-extrabold text-white mt-1">0</h3>
                     </div>
                 </div>
 
-                <!-- Los Gráficos Requeridos -->
+                <!-- Gráficos -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Chart 1: Barra de Performance Efectiva (La posta para ver tu campaña) -->
-                    <div class="bg-white p-6 rounded-xl shadow-sm">
-                        <h2 class="text-center font-bold text-gray-700 mb-2">Poder / Rendimiento (Vistas x Hr)</h2>
+                    <!-- Chart 1: Velocidad -->
+                    <div class="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
+                        <h2 class="text-center font-bold text-gray-200 mb-2">Rendimiento (Vistas x Hora)</h2>
                         <canvas id="velocityBarChart"></canvas>
-                        <p class="text-center text-xs text-gray-400 mt-2">Muestra la efectividad que elijas sin importar cuándo se subió</p>
                     </div>
 
-                    <!-- Chart 2: El clásico Gráfico de Torta por volumen -->
-                    <div class="bg-white p-6 rounded-xl shadow-sm flex flex-col items-center">
-                        <h2 class="text-center font-bold text-gray-700 mb-2">Cuota de Vistas (La Torta)</h2>
+                    <!-- Chart 2: Torta -->
+                    <div class="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700 flex flex-col items-center">
+                        <h2 class="text-center font-bold text-gray-200 mb-2">Cuota de Vistas Totales</h2>
                         <div class="w-full max-w-xs aspect-square flex items-center">
                             <canvas id="viewsPieChart"></canvas>
                         </div>
@@ -105,181 +139,268 @@
                 </div>
 
             </div>
-
         </div>
     </div>
 
-    <!-- EL SISTEMA / LA LÓGICA -->
     <script>
-        // Array de inicio (le clavé de ejemplo justo el caso que diste para probar la lógica de las V/Hora)
-        let metricsData =[
-            { id: 1, name: "Celular - 2002", views: 1400, hours: 3 },  // Va rápido
-            { id: 2, name: "Celular - 7771", views: 600,  hours: 24 }  // Va muy lento
-        ];
+        // Configuración global para que Chart.js se vea bien en Modo Oscuro
+        Chart.defaults.color = '#9ca3af';
+        Chart.defaults.borderColor = '#374151';
 
-        // Instancias para los gráficos
+        // Base de datos local (arranca vacía o carga lo que ya tenías guardado)
+        let metricsData = JSON.parse(localStorage.getItem('metriwapp_data')) ||[];
+        let editModeId = null;
+
         let barChartInst = null;
         let pieChartInst = null;
 
-        // ---- Core Function que analiza la info ---- //
-        function calcularRankingsYUI() {
-            // 1. Calcula las vistas por hora y ordenar desde mayor velocidad a menor
+        // --- LÓGICA DE TIEMPO AUTOMÁTICO --- //
+        function calcularHorasTranscurridas(diaUpload, horaUpload) {
+            let ahora = new Date();
+            let fechaUpload = new Date();
+            
+            let [horas, minutos] = horaUpload.split(':');
+            fechaUpload.setHours(horas, minutos, 0, 0);
+
+            if (diaUpload === 'ayer') {
+                fechaUpload.setDate(fechaUpload.getDate() - 1);
+            }
+
+            // Diferencia en milisegundos a horas
+            let diffMs = ahora - fechaUpload;
+            let diffHoras = diffMs / (1000 * 60 * 60);
+
+            // Si por error ponen una hora en el futuro, le ponemos 0.1 para que no de error matemático
+            return diffHoras > 0 ? diffHoras : 0.1; 
+        }
+
+        // ---- CORE: CALCULAR Y RENDERIZAR ---- //
+        function actualizarSistema() {
+            // Guardar en LocalStorage
+            localStorage.setItem('metriwapp_data', JSON.stringify(metricsData));
+
+            // Calcular VPH (Vistas por hora)
             metricsData.forEach(item => {
-                let divisorH = (item.hours <= 0) ? 0.1 : item.hours; // Para que no haya error si pones "0" hrs.
-                item.vph = Math.round(item.views / divisorH);
+                let horas = calcularHorasTranscurridas(item.uploadDay, item.uploadTime);
+                item.vph = Math.round(item.views / horas);
+                item.horasTranscurridas = horas.toFixed(1); // Para mostrar en la UI
             });
+
+            // Ordenar de mejor a peor
             metricsData.sort((a, b) => b.vph - a.vph);
 
-            // 2. Ejecutar visualizaciones
-            actualizarTarjetasSuperiores();
-            generarListaHTML();
+            renderCards();
+            renderLista();
             renderCharts();
         }
 
-        // --- Sumatorias Generales (Cards) ---
-        function actualizarTarjetasSuperiores() {
+        function renderCards() {
             if(metricsData.length === 0){
                 document.getElementById('topCard').classList.add('hidden');
-                document.getElementById('totalViewsCard').innerHTML = `0`;
-                document.getElementById('avgVelocityCard').innerHTML = `0`;
+                document.getElementById('totalViewsCard').innerHTML = `0 <span class="text-sm font-medium text-gray-500">Vistas</span>`;
+                document.getElementById('avgVelocityCard').innerHTML = `0 <span class="text-sm font-medium text-gray-500">V / Hr</span>`;
                 document.getElementById('totalPhonesCard').innerText = `0`;
                 return;
             }
 
-            // Datos
-            let sumaViews = 0;
-            let sumaVph = 0;
+            let sumaViews = 0, sumaVph = 0;
             metricsData.forEach(d => { sumaViews += parseInt(d.views); sumaVph += d.vph });
-
             let generalVelocity = Math.round(sumaVph / metricsData.length);
 
-            document.getElementById('totalViewsCard').innerHTML = `${sumaViews} <span class="text-sm text-gray-500 font-medium">Vistas Tot.</span>`;
-            document.getElementById('avgVelocityCard').innerHTML = `${generalVelocity} <span class="text-sm text-gray-500 font-medium">V/Hora</span>`;
+            document.getElementById('totalViewsCard').innerHTML = `${sumaViews} <span class="text-sm font-medium text-gray-500">Vistas</span>`;
+            document.getElementById('avgVelocityCard').innerHTML = `${generalVelocity} <span class="text-sm font-medium text-gray-500">V / Hr</span>`;
             document.getElementById('totalPhonesCard').innerText = `${metricsData.length}`;
 
-            // Poner el rey (#1 de la clase)
             document.getElementById('topCard').classList.remove('hidden');
-            document.getElementById('topPhoneLabel').innerText = metricsData[0].name;
-            document.getElementById('topPhonePace').innerText = `Récord 🔥: ${metricsData[0].vph} v/hr`;
+            document.getElementById('topPhoneLabel').innerText = metricsData[0].fullName;
+            document.getElementById('topPhonePace').innerText = `${metricsData[0].vph} Vistas/Hr`;
         }
 
-        // --- Lista Rankeada Izquierda ---
-        function generarListaHTML() {
+        function renderLista() {
             const ul = document.getElementById('deviceList');
+            const emptyState = document.getElementById('emptyState');
             ul.innerHTML = '';
+            
+            if(metricsData.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+            }
             
             metricsData.forEach((device, index) => {
                 let medalla = (index === 0) ? "🏆" : (index === 1 ? "🥈" : "🥉");
-                if (index > 2) medalla = `<span>${index + 1}.</span>`;
+                if (index > 2) medalla = `<span class="text-gray-500">${index + 1}.</span>`;
 
                 const li = document.createElement('li');
-                li.className = "flex justify-between items-center bg-gray-50 border border-gray-100 p-3 rounded hover:bg-white hover:shadow-sm transition";
+                li.className = "flex justify-between items-center bg-gray-700 p-3 rounded-lg border border-gray-600 hover:border-gray-500 transition";
                 li.innerHTML = `
-                    <div class="flex items-center space-x-3">
+                    <div class="flex items-center space-x-3 w-2/3">
                         <div class="w-6 text-center text-lg">${medalla}</div>
-                        <div>
-                            <p class="font-bold text-gray-700 text-sm">${device.name}</p>
-                            <p class="text-xs text-gray-500">${device.views} vis | ${device.hours} hs antg.</p>
+                        <div class="truncate">
+                            <p class="font-bold text-gray-200 text-sm truncate">${device.fullName}</p>
+                            <p class="text-xs text-gray-400">${device.views} vis | Hace ${device.horasTranscurridas} hs</p>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <span class="block font-bold text-green-600">${device.vph} v/hr</span>
-                        <button onclick="deleteDevice(${device.id})" class="text-[10px] text-red-500 uppercase hover:underline">Borrar</button>
+                    <div class="flex flex-col items-end w-1/3">
+                        <span class="block font-bold text-emerald-400 text-sm">${device.vph} v/h</span>
+                        <div class="flex space-x-2 mt-1">
+                            <button onclick="editarMétrica(${device.id})" class="text-[11px] text-blue-400 hover:text-blue-300">✏️ Editar</button>
+                            <button onclick="borrarMétrica(${device.id})" class="text-[11px] text-red-400 hover:text-red-300">🗑️ Borrar</button>
+                        </div>
                     </div>
                 `;
                 ul.appendChild(li);
             });
         }
 
-        // --- Carga del Formulario (Submit) ---
+        // --- MANEJO DEL FORMULARIO --- //
         document.getElementById('addForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            // Recibe últimos 4 números
-            const digitInput = document.getElementById('phoneDigits').value;
+            const nameInput = document.getElementById('phoneName').value.trim();
+            const digitsInput = document.getElementById('phoneDigits').value.trim();
+            const dayInput = document.getElementById('uploadDay').value;
+            const timeInput = document.getElementById('uploadTime').value;
             const viewsInput = document.getElementById('phoneViews').value;
-            const hoursInput = document.getElementById('phoneHours').value;
 
-            // Transforma ej '1482' en Profesional => "Celular - 1482"
-            const finalName = `Celular - ${digitInput.padStart(4, '0')}`;
+            // Armar nombre final (Si puso dígitos se los agrega, sino solo el nombre)
+            let finalName = nameInput;
+            if(digitsInput.length > 0) {
+                finalName += ` - ${digitsInput}`;
+            }
 
-            metricsData.push({
-                id: Date.now(),
-                name: finalName,
-                views: Number(viewsInput),
-                hours: Number(hoursInput)
-            });
+            if(editModeId) {
+                // Actualizar existente
+                let index = metricsData.findIndex(d => d.id === editModeId);
+                if(index !== -1) {
+                    metricsData[index].name = nameInput;
+                    metricsData[index].digits = digitsInput;
+                    metricsData[index].fullName = finalName;
+                    metricsData[index].uploadDay = dayInput;
+                    metricsData[index].uploadTime = timeInput;
+                    metricsData[index].views = Number(viewsInput);
+                }
+                cancelarEdicion();
+            } else {
+                // Crear nuevo
+                metricsData.push({
+                    id: Date.now(),
+                    name: nameInput,
+                    digits: digitsInput,
+                    fullName: finalName,
+                    uploadDay: dayInput,
+                    uploadTime: timeInput,
+                    views: Number(viewsInput)
+                });
+            }
 
-            // Borrar form después del click y volver a generar tablero
             document.getElementById('addForm').reset();
-            calcularRankingsYUI();
+            actualizarSistema();
         });
 
-        // Borrar celular por error u otros
-        function deleteDevice(idValue) {
-            metricsData = metricsData.filter(d => d.id !== idValue);
-            calcularRankingsYUI();
+        // --- ACCIONES RÁPIDAS (Borrar y Editar) --- //
+        function borrarMétrica(idValue) {
+            if(confirm('¿Seguro que querés borrar este celular?')){
+                metricsData = metricsData.filter(d => d.id !== idValue);
+                if(editModeId === idValue) cancelarEdicion();
+                actualizarSistema();
+            }
         }
 
-        // --- Gráficos CHART JS --- //
+        function borrarTodos() {
+            if(metricsData.length === 0) return;
+            if(confirm('⚠️ ¿Estás seguro que querés limpiar TODO el tablero? Esto no se puede deshacer.')){
+                metricsData =[];
+                cancelarEdicion();
+                actualizarSistema();
+            }
+        }
+
+        function editarMétrica(idValue) {
+            let item = metricsData.find(d => d.id === idValue);
+            if(!item) return;
+
+            editModeId = item.id;
+            
+            // Llenar form
+            document.getElementById('phoneName').value = item.name;
+            document.getElementById('phoneDigits').value = item.digits;
+            document.getElementById('uploadDay').value = item.uploadDay;
+            document.getElementById('uploadTime').value = item.uploadTime;
+            document.getElementById('phoneViews').value = item.views;
+
+            // Cambiar UI del form
+            document.getElementById('formTitle').innerText = "Editando Métrica...";
+            document.getElementById('submitBtn').innerText = "✓ Actualizar Métrica";
+            document.getElementById('submitBtn').classList.replace('bg-emerald-600', 'bg-blue-600');
+            document.getElementById('submitBtn').classList.replace('hover:bg-emerald-500', 'hover:bg-blue-500');
+            document.getElementById('cancelEditBtn').classList.remove('hidden');
+        }
+
+        function cancelarEdicion() {
+            editModeId = null;
+            document.getElementById('addForm').reset();
+            document.getElementById('formTitle').innerText = "Añadir Métrica";
+            document.getElementById('submitBtn').innerText = "+ Cargar Métrica";
+            document.getElementById('submitBtn').classList.replace('bg-blue-600', 'bg-emerald-600');
+            document.getElementById('submitBtn').classList.replace('hover:bg-blue-500', 'hover:bg-emerald-500');
+            document.getElementById('cancelEditBtn').classList.add('hidden');
+        }
+
+        // --- GRÁFICOS --- //
         function renderCharts() {
-            // Arrays planos sacados del core de la data ordenados para las gráficas
-            let nombresArr = metricsData.map(d => d.name);
+            let nombresArr = metricsData.map(d => d.fullName);
             let vistasTotalesArr = metricsData.map(d => d.views);
             let velocidadArr = metricsData.map(d => d.vph);
 
-            // Generador de colores automáticos y piolas en modo "Whatsapp / techie"
-            let coloresGamer = metricsData.map((d, index) => {
-                if(index === 0) return '#22c55e'; // verde manzana (top ranker)
-                if(index === 1) return '#3b82f6'; // azul (secundario)
-                if(index === 2) return '#a855f7'; // purple
-                return '#cbd5e1'; // restos (grises oscuros lindos)
+            let coloresDark = metricsData.map((d, i) => {
+                if(i === 0) return '#10b981'; // Emerald 500
+                if(i === 1) return '#3b82f6'; // Blue 500
+                if(i === 2) return '#a855f7'; // Purple 500
+                return '#4b5563'; // Gray 600
             });
 
-            // GRAFICO VELOCIDAD - CHART DE BARRA
+            // CHART BARRAS
             if (barChartInst) barChartInst.destroy();
-            let ctxBar = document.getElementById('velocityBarChart').getContext('2d');
-            barChartInst = new Chart(ctxBar, {
-                type: 'bar',
-                data: {
-                    labels: nombresArr,
-                    datasets:[{
-                        label: 'Eficiencia / Puntuación (Vistas X Hora)',
-                        data: velocidadArr,
-                        backgroundColor: coloresGamer,
-                        borderRadius: 6, // Esquinas modernistas en la barrita
-                    }]
-                },
-                options: {
-                    plugins: { legend: { display: false } }, // Para limpiar un poco el ui
-                    scales: { y: { beginAtZero: true } }
-                }
-            });
+            if(metricsData.length > 0) {
+                let ctxBar = document.getElementById('velocityBarChart').getContext('2d');
+                barChartInst = new Chart(ctxBar, {
+                    type: 'bar',
+                    data: {
+                        labels: nombresArr,
+                        datasets:[{
+                            label: 'Vistas por Hora',
+                            data: velocidadArr,
+                            backgroundColor: coloresDark,
+                            borderRadius: 4,
+                        }]
+                    },
+                    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+                });
+            }
 
-            // GRÁFICO TORTA - VOLUMEN GENERAL
+            // CHART TORTA
             if (pieChartInst) pieChartInst.destroy();
-            let ctxPie = document.getElementById('viewsPieChart').getContext('2d');
-            pieChartInst = new Chart(ctxPie, {
-                type: 'doughnut',
-                data: {
-                    labels: nombresArr,
-                    datasets:[{
-                        data: vistasTotalesArr,
-                        backgroundColor: coloresGamer,
-                        borderWidth: 3, // Borde blanco inter-torta (Estética limpia)
-                        borderColor: '#ffffff', 
-                    }]
-                },
-                options: {
-                    plugins: {
-                        legend: { position: 'bottom', labels: { boxWidth: 10 } }
-                    }
-                }
-            });
+            if(metricsData.length > 0) {
+                let ctxPie = document.getElementById('viewsPieChart').getContext('2d');
+                pieChartInst = new Chart(ctxPie, {
+                    type: 'doughnut',
+                    data: {
+                        labels: nombresArr,
+                        datasets:[{
+                            data: vistasTotalesArr,
+                            backgroundColor: coloresDark,
+                            borderWidth: 2,
+                            borderColor: '#1f2937', // Color de fondo para separar
+                        }]
+                    },
+                    options: { plugins: { legend: { position: 'bottom' } }, cutout: '60%' }
+                });
+            }
         }
 
-        // --- Arrancar el sistema visual nada más inicial la web
-        window.onload = () => { calcularRankingsYUI(); };
+        // --- INICIALIZAR --- //
+        window.onload = () => { actualizarSistema(); };
 
     </script>
 </body>
