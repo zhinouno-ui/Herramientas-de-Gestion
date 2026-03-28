@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MetriWapp - Dashboard de Monitoreo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0f1419;
+            color: #e8eaed;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            padding: 25px 30px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .controls {
+            background: #1a1f2e;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border: 1px solid #2d3748;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #9ca3af;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input, select {
+            background: #0f1419;
+            border: 2px solid #374151;
+            color: #e8eaed;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: all 0.2s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .phone-card {
+            background: #1a1f2e;
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid #2d3748;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .phone-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--status-color);
+        }
+
+        .phone-card.active {
+            --status-color: #10b981;
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .phone-card.moderate {
+            --status-color: #f59e0b;
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+
+        .phone-card.inactive {
+            --status-color: #ef4444;
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .phone-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .phone-name {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-badge.active {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .status-badge.moderate {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+
+        .status-badge.inactive {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .metric {
+            background: #0f1419;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #374151;
+        }
+
+        .metric-label {
+            font-size: 11px;
+            color: #9ca3af;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: #e8eaed;
+        }
+
+        .metric-unit {
+            font-size: 13px;
+            color: #6b7280;
+            margin-left: 4px;
+        }
+
+        .flow-indicator {
+            background: #0f1419;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #374151;
+            margin-bottom: 15px;
+        }
+
+        .flow-bar {
+            height: 8px;
+            background: #374151;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .flow-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--status-color), var(--status-color));
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .timeline {
+            background: #0f1419;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #374151;
+        }
+
+        .timeline-title {
+            font-size: 11px;
+            color: #9ca3af;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .timeline-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid #374151;
+            font-size: 13px;
+        }
+
+        .timeline-item:last-child {
+            border-bottom: none;
+        }
+
+        .timeline-time {
+            color: #6b7280;
+        }
+
+        .comparison {
+            background: #1a1f2e;
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid #2d3748;
+        }
+
+        .comparison-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .ranking-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .ranking-item {
+            background: #0f1419;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #374151;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .rank-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #6b7280;
+            min-width: 40px;
+        }
+
+        .rank-number.top {
+            color: #10b981;
+        }
+
+        .rank-info {
+            flex: 1;
+        }
+
+        .rank-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .rank-stat {
+            font-size: 13px;
+            color: #9ca3af;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-down {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-up {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-small:hover {
+            transform: translateY(-1px);
+            opacity: 0.9;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7280;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📱 MetriWapp Dashboard</h1>
+            <div class="subtitle">Monitoreo en tiempo real de celulares - Casino Online</div>
+        </header>
+
+        <div class="controls">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Nombre del Celular</label>
+                    <input type="text" id="phoneName" placeholder="Ej: Princi 1">
+                </div>
+                <div class="form-group">
+                    <label>Últimos 4 Dígitos</label>
+                    <input type="text" id="phoneDigits" placeholder="Ej: 5831" maxlength="4">
+                </div>
+                <div class="form-group">
+                    <label>Vistas del Estado</label>
+                    <input type="number" id="views" placeholder="Ej: 1400">
+                </div>
+                <div class="form-group">
+                    <label>Hora de Subida del Estado</label>
+                    <input type="time" id="uploadTime">
+                </div>
+            </div>
+            <button class="btn" onclick="addMetric()">+ Cargar Métrica</button>
+            <button class="btn btn-secondary" onclick="exportData()" style="margin-left: 10px;">📊 Exportar Datos</button>
+        </div>
+
+        <div class="dashboard" id="dashboard">
+            <div class="empty-state">
+                <div class="empty-state-icon">📱</div>
+                <h3>No hay celulares registrados</h3>
+                <p>Comienza agregando métricas de los celulares</p>
+            </div>
+        </div>
+
+        <div class="comparison" id="comparison" style="display: none;">
+            <div class="comparison-title">📊 Ranking por Flujo (Vistas/Hora)</div>
+            <div class="ranking-list" id="rankingList"></div>
+        </div>
+    </div>
+
+    <script>
+        let phones = {};
+
+        // Cargar datos del localStorage
+        function loadData() {
+            const saved = localStorage.getItem('metriwapp_data');
+            if (saved) {
+                phones = JSON.parse(saved);
+                renderDashboard();
+            }
+        }
+
+        // Guardar datos en localStorage
+        function saveData() {
+            localStorage.setItem('metriwapp_data', JSON.stringify(phones));
+        }
+
+        function addMetric() {
+            const name = document.getElementById('phoneName').value.trim();
+            const digits = document.getElementById('phoneDigits').value.trim();
+            const views = parseInt(document.getElementById('views').value);
+            const uploadTime = document.getElementById('uploadTime').value;
+
+            if (!name || !digits || !views || !uploadTime) {
+                alert('Por favor completa todos los campos');
+                return;
+            }
+
+            const phoneKey = `${name}_${digits}`;
+            const now = new Date();
+            const uploadDate = new Date();
+            const [hours, minutes] = uploadTime.split(':');
+            uploadDate.setHours(hours, minutes, 0, 0);
+
+            if (!phones[phoneKey]) {
+                phones[phoneKey] = {
+                    name: name,
+                    digits: digits,
+                    metrics: [],
+                    status: 'active',
+                    downSince: null,
+                    upSince: null
+                };
+            }
+
+            phones[phoneKey].metrics.push({
+                views: views,
+                uploadTime: uploadDate.toISOString(),
+                recordedAt: now.toISOString(),
+                viewsPerHour: calculateViewsPerHour(views, uploadDate, now)
+            });
+
+            // Mantener solo las últimas 10 métricas
+            if (phones[phoneKey].metrics.length > 10) {
+                phones[phoneKey].metrics = phones[phoneKey].metrics.slice(-10);
+            }
+
+            saveData();
+            renderDashboard();
+
+            // Limpiar formulario
+            document.getElementById('views').value = '';
+        }
+
+        function calculateViewsPerHour(views, uploadTime, recordedTime) {
+            const hoursDiff = (recordedTime - new Date(uploadTime)) / (1000 * 60 * 60);
+            if (hoursDiff < 0.1) return views * 10; // Si es menos de 6 minutos, proyectar
+            return Math.round(views / hoursDiff);
+        }
+
+        function getPhoneStatus(metrics) {
+            if (!metrics || metrics.length === 0) return 'inactive';
+            
+            const latest = metrics[metrics.length - 1];
+            const viewsPerHour = latest.viewsPerHour;
+
+            if (viewsPerHour >= 80) return 'active';
+            if (viewsPerHour >= 30) return 'moderate';
+            return 'inactive';
+        }
+
+        function markPhoneDown(phoneKey) {
+            phones[phoneKey].status = 'down';
+            phones[phoneKey].downSince = new Date().toISOString();
+            saveData();
+            renderDashboard();
+        }
+
+        function markPhoneUp(phoneKey) {
+            phones[phoneKey].status = 'active';
+            phones[phoneKey].upSince = new Date().toISOString();
+            phones[phoneKey].downSince = null;
+            saveData();
+            renderDashboard();
+        }
+
+        function renderDashboard() {
+            const dashboard = document.getElementById('dashboard');
+            const comparison = document.getElementById('comparison');
+            const rankingList = document.getElementById('rankingList');
+
+            if (Object.keys(phones).length === 0) {
+                dashboard.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📱</div>
+                        <h3>No hay celulares registrados</h3>
+                        <p>Comienza agregando métricas de los celulares</p>
+                    </div>
+                `;
+                comparison.style.display = 'none';
+                return;
+            }
+
+            comparison.style.display = 'block';
+
+            // Renderizar tarjetas
+            dashboard.innerHTML = Object.entries(phones).map(([key, phone]) => {
+                const latest = phone.metrics[phone.metrics.length - 1] || {};
+                const status = phone.status === 'down' ? 'inactive' : getPhoneStatus(phone.metrics);
+                const viewsPerHour = latest.viewsPerHour || 0;
+                const maxViewsPerHour = 200;
+                const flowPercent = Math.min((viewsPerHour / maxViewsPerHour) * 100, 100);
+
+                const lastThreeMetrics = phone.metrics.slice(-3).reverse();
+
+                return `
+                    <div class="phone-card ${status}">
+                        <div class="phone-header">
+                            <div class="phone-name">${phone.name}</div>
+                            <div class="status-badge ${status}">
+                                ${status === 'active' ? '🟢 Activo' : status === 'moderate' ? '🟡 Leve' : '🔴 Inactivo'}
+                            </div>
+                        </div>
+
+                        <div class="metrics-grid">
+                            <div class="metric">
+                                <div class="metric-label">Últimos 4 dígitos</div>
+                                <div class="metric-value">${phone.digits}</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">Vistas/Hora</div>
+                                <div class="metric-value">${viewsPerHour}<span class="metric-unit">v/h</span></div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">Últimas Vistas</div>
+                                <div class="metric-value">${latest.views || 0}</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">Total Registros</div>
+                                <div class="metric-value">${phone.metrics.length}</div>
+                            </div>
+                        </div>
+
+                        <div class="flow-indicator">
+                            <div class="metric-label">Flujo de Interacción</div>
+                            <div class="flow-bar">
+                                <div class="flow-fill" style="width: ${flowPercent}%"></div>
+                            </div>
+                        </div>
+
+                        ${lastThreeMetrics.length > 0 ? `
+                            <div class="timeline">
+                                <div class="timeline-title">Últimas 3 Métricas</div>
+                                ${lastThreeMetrics.map(m => {
+                                    const recordedTime = new Date(m.recordedAt);
+                                    return `
+                                        <div class="timeline-item">
+                                            <span>${m.views} vistas</span>
+                                            <span class="timeline-time">${recordedTime.toLocaleTimeString('es-AR', {hour: '2-digit', minute: '2-digit'})}</span>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        ` : ''}
+
+                        <div class="actions">
+                            ${phone.status !== 'down' ? 
+                                `<button class="btn-small btn-down" onclick="markPhoneDown('${key}')">🔻 Marcar Caído</button>` :
+                                `<button class="btn-small btn-up" onclick="markPhoneUp('${key}')">🔺 Marcar Levantado</button>`
+                            }
+                        </div>
+
+                        ${phone.downSince ? `
+                            <div style="margin-top: 10px; font-size: 12px; color: #ef4444;">
+                                ⚠️ Caído desde: ${new Date(phone.downSince).toLocaleString('es-AR')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+
+            // Renderizar ranking
+            const ranking = Object.entries(phones)
+                .map(([key, phone]) => ({
+                    key,
+                    name: phone.name,
+                    digits: phone.digits,
+                    viewsPerHour: phone.metrics.length > 0 ? phone.metrics[phone.metrics.length - 1].viewsPerHour : 0
+                }))
+                .sort((a, b) => b.viewsPerHour - a.viewsPerHour);
+
+            rankingList.innerHTML = ranking.map((phone, index) => `
+                <div class="ranking-item">
+                    <div class="rank-number ${index === 0 ? 'top' : ''}">#${index + 1}</div>
+                    <div class="rank-info">
+                        <div class="rank-name">${phone.name} (${phone.digits})</div>
+                        <div class="rank-stat">${phone.viewsPerHour} vistas por hora</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function exportData() {
+            const dataStr = JSON.stringify(phones, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `metriwapp_backup_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+        }
+
+        // Cargar datos al iniciar
+        loadData();
+    </script>
+</body>
+</html>
