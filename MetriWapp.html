@@ -5,27 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MetriWapp Pro — Control de Casino</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <style>
         :root {
-            --bg-main: #f8fafc;
-            --sidebar-bg: #0f172a;
-            --card-bg: #ffffff;
-            --border: #e2e8f0;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            
-            --accent: #2563eb;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --watiket: #8b5cf6;
+            --bg-main: #f8fafc; --sidebar-bg: #0f172a; --card-bg: #ffffff;
+            --border: #e2e8f0; --text-main: #1e293b; --text-muted: #64748b;
+            --accent: #2563eb; --success: #10b981; --warning: #f59e0b;
+            --danger: #ef4444; --watiket: #8b5cf6;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: var(--bg-main); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
 
-        /* --- SIDEBAR --- */
         .sidebar { width: 320px; background: var(--sidebar-bg); color: white; display: flex; flex-direction: column; padding: 20px; overflow-y: auto; flex-shrink: 0; }
         .logo { font-size: 20px; font-weight: 800; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; color: #fff; letter-spacing: -0.5px; }
         .logo span { color: var(--accent); }
@@ -33,45 +23,37 @@
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; font-weight: 700; letter-spacing: 0.5px; }
         .form-group input, .form-group select { width: 100%; background: #1e293b; border: 1px solid #334155; border-radius: 6px; padding: 10px; color: white; font-family: inherit; font-size: 13px; }
-        .form-group input:focus { outline: 2px solid var(--accent); border-color: transparent; }
 
         .btn-main { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; width: 100%; transition: all 0.2s; margin-top: 10px; }
         .btn-main:hover { opacity: 0.9; transform: translateY(-1px); }
-        .btn-edit-mode { background: var(--warning); color: #000; }
         .btn-cancel { background: transparent; color: var(--text-muted); border: 1px solid #334155; margin-top: 5px; font-size: 12px; padding: 8px; border-radius: 6px; cursor: pointer; width: 100%; }
 
-        /* --- MAIN AREA --- */
         .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        
         .topbar { background: #fff; border-bottom: 1px solid var(--border); padding: 15px 25px; display: flex; align-items: center; justify-content: space-between; }
-        .nav-tabs { display: flex; gap: 5px; }
-        .tab-btn { padding: 8px 16px; border-radius: 6px; border: none; background: transparent; cursor: pointer; font-weight: 600; color: var(--text-muted); font-size: 14px; }
+        
+        .tab-btn { padding: 8px 16px; border-radius: 6px; border: none; background: transparent; cursor: pointer; font-weight: 600; color: var(--text-muted); }
         .tab-btn.active { background: #eff6ff; color: var(--accent); }
 
         .view-container { flex: 1; padding: 25px; overflow-y: auto; }
         
-        /* --- STATS SUMMARY (PARA CAPTURA) --- */
         .stats-header { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
-        .stat-card { background: white; padding: 15px; border-radius: 10px; border: 1px solid var(--border); display: flex; flex-direction: column; }
-        .stat-card .label { font-size: 12px; color: var(--text-muted); font-weight: 600; }
-        .stat-card .val { font-size: 24px; font-weight: 700; margin-top: 5px; color: var(--text-main); }
-        .stat-card.active-st { border-left: 4px solid var(--success); }
-        .stat-card.down-st { border-left: 4px solid var(--danger); }
-        .stat-card.wk-st { border-left: 4px solid var(--watiket); }
+        .stat-card { background: white; padding: 15px; border-radius: 10px; border: 1px solid var(--border); border-left: 4px solid var(--border); }
+        .stat-card.active-st { border-left-color: var(--success); }
+        .stat-card.down-st { border-left-color: var(--danger); }
+        .stat-card.wk-st { border-left-color: var(--watiket); }
 
-        /* --- CARDS GRID --- */
         .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
-        .phone-card { background: white; border-radius: 12px; border: 1px solid var(--border); padding: 15px; position: relative; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .phone-card:hover { border-color: var(--accent); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-
-        .pc-top { display: flex; justify-content: space-between; margin-bottom: 12px; }
-        .pc-info h4 { font-size: 16px; font-weight: 700; }
-        .pc-info p { font-size: 12px; color: var(--text-muted); font-family: 'JetBrains Mono'; }
+        .phone-card { background: white; border-radius: 12px; border: 1px solid var(--border); padding: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
 
         .badge { font-size: 9px; padding: 3px 7px; border-radius: 4px; font-weight: 700; text-transform: uppercase; }
         .badge-wk { background: #ede9fe; color: var(--watiket); border: 1px solid #ddd6fe; }
         .badge-princi { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
-        .badge-sop { background: #f1f5f9; color: #475569; }
+
+        .pc-vph { background: #f8fafc; border-radius: 8px; padding: 10px; margin: 10px 0; display: flex; justify-content: space-between; align-items: center; }
+        .pc-vph-val { font-size: 20px; font-weight: 700; color: var(--accent); }
+
+        .pc-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+        .btn-pc { padding: 6px; font-size: 11px; font-weight: 600; border-radius: 5px; border: 1px solid var(--border); background: white; cursor: pointer; color: var(--text-main); }
 
         .flow-status { width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; display: inline-block; }
         .status-alto { background: var(--success); box-shadow: 0 0 8px var(--success); }
@@ -81,45 +63,26 @@
 
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
 
-        .pc-vph { background: #f8fafc; border-radius: 8px; padding: 10px; margin: 10px 0; display: flex; justify-content: space-between; align-items: center; }
-        .pc-vph-label { font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
-        .pc-vph-val { font-size: 18px; font-weight: 700; color: var(--accent); }
-
-        .pc-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
-        .btn-pc { padding: 6px; font-size: 11px; font-weight: 600; border-radius: 5px; border: 1px solid var(--border); background: white; cursor: pointer; transition: 0.1s; text-align: center; color: var(--text-main); text-decoration: none; }
-        .btn-pc:hover { background: #f1f5f9; }
-        .btn-pc.danger { color: var(--danger); border-color: #fecaca; }
-        .btn-pc.edit { color: var(--accent); border-color: #bfdbfe; }
-
-        /* --- MODAL --- */
         .modal { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-        .modal-content { background: white; padding: 30px; border-radius: 15px; width: 400px; max-width: 90%; }
-        .modal-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
-
-        /* --- ANALYSIS TAB --- */
-        .report-section { background: white; border-radius: 12px; padding: 20px; border: 1px solid var(--border); margin-bottom: 20px; }
-        .log-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .log-table th { text-align: left; padding: 12px; border-bottom: 2px solid var(--border); color: var(--text-muted); font-size: 11px; text-transform: uppercase; }
-        .log-table td { padding: 12px; border-bottom: 1px solid var(--border); }
+        .modal-content { background: white; padding: 30px; border-radius: 15px; width: 400px; }
     </style>
 </head>
 <body>
 
-    <!-- --- LADO IZQUIERDO: CARGA --- -->
     <div class="sidebar">
         <div class="logo">Metri<span>Wapp</span> 3.0</div>
         
-        <div id="editMarker" style="display:none; color: var(--warning); font-size: 11px; margin-bottom: 5px; font-weight: bold;">✏ EDITANDO CELULAR...</div>
+        <div id="editMarker" style="display:none; color: var(--warning); font-size: 11px; margin-bottom: 5px; font-weight: bold;">✏ MODO EDICIÓN</div>
         
         <div class="form-group">
-            <label>Celular</label>
-            <input type="text" id="fName" placeholder="Ej: Princi 1">
+            <label>Nombre Celular</label>
+            <input type="text" id="fName" placeholder="Princi 1">
         </div>
         
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <div class="form-group">
                 <label>4 Dígitos</label>
-                <input type="text" id="fDigits" placeholder="5541" maxlength="4">
+                <input type="text" id="fDigits" placeholder="0000" maxlength="4">
             </div>
             <div class="form-group">
                 <label>Tipo</label>
@@ -131,17 +94,17 @@
         </div>
 
         <div class="form-group">
-            <label>Flujo Actual (Manual)</label>
+            <label>Flujo Actual (Operador)</label>
             <select id="fFlow">
-                <option value="bajo">Bajo (Lento)</option>
-                <option value="medio">Medio (Estable)</option>
-                <option value="alto">Alto (¡Explotado!)</option>
+                <option value="bajo">Bajo</option>
+                <option value="medio">Medio</option>
+                <option value="alto">Alto (Activo)</option>
             </select>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <div class="form-group">
-                <label>Vistas</label>
+                <label>Nuevas Vistas</label>
                 <input type="number" id="fViews">
             </div>
             <div class="form-group">
@@ -150,317 +113,205 @@
             </div>
         </div>
 
-        <div class="form-group" style="display:flex; align-items:center; gap:10px; cursor:pointer; background:#1e293b; padding:10px; border-radius:6px; border:1px solid #334155;">
-            <input type="checkbox" id="fWk" style="width:16px;" checked>
-            <label for="fWk" style="margin:0; cursor:pointer;">¿Está en Watiket?</label>
+        <div class="form-group" style="display:flex; align-items:center; gap:10px; background:#1e293b; padding:10px; border-radius:6px; border:1px solid #334155;">
+            <input type="checkbox" id="fWk" checked>
+            <label for="fWk" style="margin:0; cursor:pointer;">¿Watiket?</label>
         </div>
 
-        <button class="btn-main" id="submitBtn" onclick="submitForm()">Cargar Celular</button>
-        <button class="btn-cancel" id="cancelBtn" onclick="cancelEdit()" style="display:none;">Cancelar Edición</button>
+        <button class="btn-main" id="submitBtn" onclick="submitForm()">Cargar/Actualizar</button>
+        <button class="btn-cancel" id="cancelBtn" onclick="resetForm()" style="display:none;">Cancelar</button>
         
-        <div style="margin-top:auto; padding-top:20px;">
-            <button class="btn-cancel" onclick="exportData()">↓ Exportar Reporte</button>
-            <button class="btn-cancel" onclick="clearAll()" style="color:#f87171; border-color:#ef444433;">✕ Borrar Todo</button>
+        <div style="margin-top:auto; display:flex; gap:10px;">
+            <button class="btn-cancel" onclick="exportData()" style="flex:1;">Exportar</button>
+            <button class="btn-cancel" onclick="clearAll()" style="color:var(--danger); flex:1;">Borrar</button>
         </div>
     </div>
 
-    <!-- --- LADO DERECHO: VISTAS --- -->
     <div class="main-content">
         <div class="topbar">
-            <div class="nav-tabs">
-                <button class="tab-btn active" onclick="switchTab('live')">Monitor en Vivo</button>
-                <button class="tab-btn" onclick="switchTab('analysis')">Historial & Reportes</button>
+            <div class="tab-btns">
+                <button class="tab-btn active" id="tabLive">Monitor en Vivo</button>
             </div>
-            <div id="realClock" style="font-family:'JetBrains Mono'; font-weight:700; font-size:14px; color:var(--text-muted)">00:00:00</div>
+            <div id="realClock" style="font-family:'JetBrains Mono'; font-weight:700;">00:00:00</div>
         </div>
 
         <div class="view-container">
-            
-            <!-- MONITOR DASHBOARD -->
-            <div id="view-live">
-                <div class="stats-header" id="statsBar">
-                    <div class="stat-card active-st"><span class="label">Activos</span><div class="val" id="stAct">0</div></div>
-                    <div class="stat-card down-st"><span class="label">Caídos</span><div class="val" id="stDown">0</div></div>
-                    <div class="stat-card wk-st"><span class="label">En Watiket</span><div class="val" id="stWk">0</div></div>
-                    <div class="stat-card"><span class="label">Promedio V/H</span><div class="val" id="stAvg">0</div></div>
-                </div>
-
-                <div class="cards-grid" id="mainGrid">
-                    <!-- Dinámico -->
-                </div>
+            <div class="stats-header">
+                <div class="stat-card active-st">Activos: <b id="stAct">0</b></div>
+                <div class="stat-card down-st">Caídos: <b id="stDown">0</b></div>
+                <div class="stat-card wk-st">Watiket: <b id="stWk">0</b></div>
+                <div class="stat-card">Prom. VPH: <b id="stAvg">0</b></div>
             </div>
 
-            <!-- ANALISIS / REPORTES -->
-            <div id="view-analysis" style="display:none;">
-                <div class="report-section">
-                    <h3 style="margin-bottom:15px;">Registro de Caídas del Día</h3>
-                    <div style="overflow-x:auto;">
-                        <table class="log-table">
-                            <thead>
-                                <tr>
-                                    <th>Celular</th>
-                                    <th>Bajó a las...</th>
-                                    <th>Subió a las...</th>
-                                    <th>Duración</th>
-                                    <th>Msgs Acum.</th>
-                                </tr>
-                            </thead>
-                            <tbody id="downLogTable">
-                                <!-- Dinámico -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+            <div class="cards-grid" id="mainGrid"></div>
         </div>
     </div>
 
-    <!-- MODAL LEVANTAR -->
     <div class="modal" id="modalLift">
         <div class="modal-content">
-            <h3 style="margin-bottom:15px;">Levantar Celular</h3>
-            <div class="form-group">
-                <label style="color:var(--text-main)">Mensajes recibidos durante la caída:</label>
-                <input type="number" id="mLiftMsgs" style="background:#fff; color:#000; border:1px solid var(--border);" placeholder="Ej: 145">
-            </div>
-            <div class="modal-btns">
-                <button class="btn-pc" onclick="closeModal()">Cancelar</button>
-                <button class="btn-main" onclick="confirmLift()" style="margin:0;">Confirmar</button>
-            </div>
+            <h3>Confirmar Levantada</h3>
+            <div class="form-group"><label style="color:#000">Mensajes Acumulados:</label><input type="number" id="mLiftMsgs" style="background:#fff; color:#000; border:1px solid #ddd"></div>
+            <div style="display:flex; gap:10px;"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-main" onclick="confirmLift()" style="margin:0">Subir</button></div>
         </div>
     </div>
 
     <script>
-        let phones = {};
+        // ESTA LLAVE ES LA QUE ASEGURA QUE NO PIERDAS TUS 9 TELÉFONOS
+        const STORAGE_KEY = 'metriwapp_v3';
+        let phones = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
         let editId = null;
         let liftId = null;
 
-        // Inicializar data
-        if(localStorage.getItem('metriwapp_v3')) {
-            phones = JSON.parse(localStorage.getItem('metriwapp_v3'));
-        }
-
         function save() {
-            localStorage.setItem('metriwapp_v3', JSON.stringify(phones));
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(phones));
             render();
         }
 
-        // Hora Real
         setInterval(() => {
-            const now = new Date();
-            document.getElementById('realClock').textContent = now.toLocaleTimeString('es-AR');
+            document.getElementById('realClock').textContent = new Date().toLocaleTimeString('es-AR');
         }, 1000);
 
-        function switchTab(t) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.view-container > div').forEach(v => v.style.display = 'none');
-            document.getElementById('view-' + t).style.display = 'block';
-            event.target.classList.add('active');
-        }
-
         function calculateVPH(views, uploadTime) {
-            if(!views || !uploadTime) return 0;
             const [h, m] = uploadTime.split(':').map(Number);
             const upload = new Date();
             upload.setHours(h, m, 0, 0);
-            
-            let now = new Date();
+            const now = new Date();
             if (upload > now) upload.setDate(upload.getDate() - 1);
-            
-            const diffHours = (now - upload) / (1000 * 60 * 60);
-            
-            // Si pasaron menos de 30 mins, evitamos disparar el número locamente
-            if(diffHours < 0.5) return Math.min(views, 200); 
-
-            return Math.round(views / diffHours);
+            const diff = (now - upload) / (1000 * 60 * 60);
+            return diff < 0.2 ? views : Math.round(views / diff);
         }
 
         function submitForm() {
-            const id = editId || 'p' + Date.now();
-            const v = parseInt(document.getElementById('fViews').value) || 0;
-            const t = document.getElementById('fTime').value;
+            const name = document.getElementById('fName').value.trim();
+            const digits = document.getElementById('fDigits').value.trim();
+            const views = parseInt(document.getElementById('fViews').value) || 0;
+            const time = document.getElementById('fTime').value;
 
-            phones[id] = {
-                id,
-                name: document.getElementById('fName').value,
-                digits: document.getElementById('fDigits').value,
+            if(!name || !digits || !time) return alert("Faltan datos clave (Nombre, Dígitos u Hora)");
+
+            // LÓGICA DE ACTUALIZACIÓN: Buscamos si ya existe por nombre+dígitos
+            let targetId = editId;
+            if(!targetId) {
+                const existing = Object.values(phones).find(p => p.name === name && p.digits === digits);
+                if(existing) targetId = existing.id;
+                else targetId = 'p' + Date.now();
+            }
+
+            phones[targetId] = {
+                ...phones[targetId], // Mantenemos lo viejo (historial, logs)
+                id: targetId,
+                name, digits,
                 type: document.getElementById('fType').value,
                 flow: document.getElementById('fFlow').value,
-                vph: calculateVPH(v, t),
-                views: v,
-                time: t,
+                views: views,
+                time: time,
+                vph: calculateVPH(views, time),
                 inWatiket: document.getElementById('fWk').checked,
-                isDown: phones[id]?.isDown || false,
-                downAt: phones[id]?.downAt || null,
-                logs: phones[id]?.logs || []
+                isDown: phones[targetId]?.isDown || false,
+                logs: phones[targetId]?.logs || []
             };
 
             resetForm();
             save();
         }
 
-        function resetForm() {
-            editId = null;
-            document.getElementById('fName').value = "";
-            document.getElementById('fDigits').value = "";
-            document.getElementById('fViews').value = "";
-            document.getElementById('fTime').value = "";
-            document.getElementById('submitBtn').textContent = "Cargar Celular";
-            document.getElementById('submitBtn').classList.remove('btn-edit-mode');
-            document.getElementById('cancelBtn').style.display = 'none';
-            document.getElementById('editMarker').style.display = 'none';
+        function render() {
+            const grid = document.getElementById('mainGrid');
+            grid.innerHTML = "";
+            let cAct = 0, cDown = 0, cWk = 0, vphTotal = 0;
+
+            Object.values(phones).forEach(p => {
+                if(p.isDown) cDown++; else { cAct++; vphTotal += p.vph; }
+                if(p.inWatiket) cWk++;
+
+                const statusCls = p.isDown ? 'status-caido' : `status-${p.flow}`;
+                grid.innerHTML += `
+                    <div class="phone-card">
+                        <div style="display:flex; justify-content:space-between">
+                            <div>
+                                <span class="flow-status ${statusCls}"></span>
+                                <b>${p.name}</b><br><small style="color:var(--text-muted);font-family:monospace">${p.digits}</small>
+                            </div>
+                            <div style="text-align:right">
+                                <span class="badge ${p.type === 'principal' ? 'badge-princi' : ''}">${p.type}</span><br>
+                                ${p.inWatiket ? '<span class="badge badge-wk">Watiket</span>' : ''}
+                            </div>
+                        </div>
+                        <div class="pc-vph">
+                            <small>Vistas / Hora</small>
+                            <span class="pc-vph-val">${p.isDown ? 'OFF' : p.vph}</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-size:11px;">
+                            <span>Totales: ${p.views}</span>
+                            <span>Flujo: <b style="text-transform:uppercase">${p.isDown ? 'CAÍDO' : p.flow}</b></span>
+                        </div>
+                        <div class="pc-actions">
+                            <button class="btn-pc" onclick="startEdit('${p.id}')">Editar</button>
+                            <button class="btn-pc" style="color:var(--danger)" onclick="toggleDown('${p.id}')">${p.isDown ? 'Subir' : 'Caído'}</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('stAct').textContent = cAct;
+            document.getElementById('stDown').textContent = cDown;
+            document.getElementById('stWk').textContent = cWk;
+            document.getElementById('stAvg').textContent = cAct ? Math.round(vphTotal / cAct) : 0;
         }
 
         function startEdit(id) {
-            const p = phones[id];
             editId = id;
+            const p = phones[id];
             document.getElementById('fName').value = p.name;
             document.getElementById('fDigits').value = p.digits;
             document.getElementById('fFlow').value = p.flow;
             document.getElementById('fViews').value = p.views;
             document.getElementById('fTime').value = p.time;
             document.getElementById('fWk').checked = p.inWatiket;
-            document.getElementById('submitBtn').textContent = "✓ Guardar Cambios";
-            document.getElementById('submitBtn').classList.add('btn-edit-mode');
             document.getElementById('cancelBtn').style.display = 'block';
             document.getElementById('editMarker').style.display = 'block';
-            window.scrollTo({top:0, behavior:'smooth'});
+            document.getElementById('submitBtn').textContent = "✓ Guardar";
+        }
+
+        function resetForm() {
+            editId = null;
+            ['fName', 'fDigits', 'fViews', 'fTime'].forEach(id => document.getElementById(id).value = "");
+            document.getElementById('cancelBtn').style.display = 'none';
+            document.getElementById('editMarker').style.display = 'none';
+            document.getElementById('submitBtn').textContent = "Cargar/Actualizar";
         }
 
         function toggleDown(id) {
-            const p = phones[id];
-            if(!p.isDown) {
-                p.isDown = true;
-                p.downAt = new Date().toISOString();
+            if(!phones[id].isDown) {
+                phones[id].isDown = true;
+                phones[id].downAt = new Date().toISOString();
+                save();
             } else {
                 liftId = id;
                 document.getElementById('modalLift').style.display = 'flex';
-                return;
             }
-            save();
         }
 
         function confirmLift() {
-            const msgs = document.getElementById('mLiftMsgs').value;
-            if(!msgs) return alert("Cargá la cantidad de mensajes para cerrar el reporte.");
-            
+            const m = document.getElementById('mLiftMsgs').value;
+            if(!m) return alert("Ponele la cantidad de mensajes acumulados.");
             const p = phones[liftId];
-            const upAt = new Date().toISOString();
-            const duration = Math.round((new Date(upAt) - new Date(p.downAt)) / (1000 * 60));
-
-            p.logs.unshift({
-                downAt: p.downAt,
-                upAt: upAt,
-                msgs: msgs,
-                duration: duration
-            });
-
-            p.isDown = false;
-            p.downAt = null;
-            closeModal();
+            p.logs.unshift({ downAt: p.downAt, upAt: new Date().toISOString(), msgs: m });
+            p.isDown = false; liftId = null;
+            document.getElementById('modalLift').style.display = 'none';
+            document.getElementById('mLiftMsgs').value = "";
             save();
         }
 
-        function closeModal() {
-            document.getElementById('modalLift').style.display = 'none';
-            document.getElementById('mLiftMsgs').value = "";
-            liftId = null;
-        }
+        function closeModal() { document.getElementById('modalLift').style.display = 'none'; liftId = null; }
 
-        function deletePhone(id) {
-            if(confirm("¿Eliminar este celular de la lista?")) {
-                delete phones[id];
-                save();
-            }
-        }
-
-        function render() {
-            const grid = document.getElementById('mainGrid');
-            const logTable = document.getElementById('downLogTable');
-            grid.innerHTML = "";
-            logTable.innerHTML = "";
-
-            let cAct = 0, cDown = 0, cWk = 0, sumVPH = 0;
-
-            Object.values(phones).forEach(p => {
-                if(p.isDown) cDown++; else cAct++;
-                if(p.inWatiket) cWk++;
-                sumVPH += p.vph;
-
-                // CARD RENDERING
-                const statusCls = p.isDown ? 'status-caido' : `status-${p.flow}`;
-                const card = document.createElement('div');
-                card.className = 'phone-card';
-                card.innerHTML = `
-                    <div class="pc-top">
-                        <div class="pc-info">
-                            <span class="flow-status ${statusCls}"></span>
-                            <h4>${p.name}</h4>
-                            <p>${p.digits}</p>
-                        </div>
-                        <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-end;">
-                            <span class="badge ${p.type === 'principal' ? 'badge-princi' : 'badge-sop'}">${p.type}</span>
-                            ${p.inWatiket ? '<span class="badge badge-wk">Watiket</span>' : ''}
-                        </div>
-                    </div>
-                    <div class="pc-vph">
-                        <span class="pc-vph-label">Vistas / Hora</span>
-                        <span class="pc-vph-val">${p.isDown ? '0' : p.vph}</span>
-                    </div>
-                    <div style="font-size:11px; color:var(--text-muted); display:flex; justify-content:space-between;">
-                        <span>Vistas Totales: <b>${p.views}</b></span>
-                        <span>Flujo: <b style="text-transform:uppercase; color:var(--text-main)">${p.isDown ? 'CAÍDO' : p.flow}</b></span>
-                    </div>
-                    <div class="pc-actions">
-                        <button class="btn-pc edit" onclick="startEdit('${p.id}')">✏ Editar</button>
-                        <button class="btn-pc ${p.isDown ? '' : 'danger'}" onclick="toggleDown('${p.id}')">
-                            ${p.isDown ? '↑ Levantar' : '↓ Caído'}
-                        </button>
-                        <button class="btn-pc danger" onclick="deletePhone('${p.id}')" style="grid-column: span 2; font-size:9px;">Eliminar</button>
-                    </div>
-                `;
-                grid.appendChild(card);
-
-                // LOG TABLE RENDERING
-                p.logs.forEach(l => {
-                    logTable.innerHTML += `
-                        <tr>
-                            <td><b>${p.name}</b></td>
-                            <td>${new Date(l.downAt).toLocaleTimeString()}</td>
-                            <td>${new Date(l.upAt).toLocaleTimeString()}</td>
-                            <td>${l.duration} min</td>
-                            <td><b style="color:var(--accent)">${l.msgs}</b></td>
-                        </tr>
-                    `;
-                });
-            });
-
-            // Summary bar
-            document.getElementById('stAct').textContent = cAct;
-            document.getElementById('stDown').textContent = cDown;
-            document.getElementById('stWk').textContent = cWk;
-            document.getElementById('stAvg').textContent = cAct > 0 ? Math.round(sumVPH / cAct) : 0;
-        }
+        function clearAll() { if(confirm("¿Seguro querés borrar los datos?")) { phones = {}; save(); } }
 
         function exportData() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(phones));
-            const downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", "reporte_metriwapp_" + new Date().toLocaleDateString() + ".json");
-            document.body.appendChild(downloadAnchorNode);
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(phones, null, 2));
+            const dl = document.createElement('a'); dl.setAttribute("href", dataStr);
+            dl.setAttribute("download", "reporte.json"); dl.click();
         }
-
-        function clearAll() {
-            if(confirm("¿Estás seguro de borrar todo? Se perderá el historial de caídas de hoy.")) {
-                phones = {};
-                localStorage.removeItem('metriwapp_v3');
-                render();
-            }
-        }
-
-        function cancelEdit() { resetForm(); }
 
         render();
     </script>
