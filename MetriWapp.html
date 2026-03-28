@@ -1,1810 +1,468 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MetriWapp — Casino Monitor</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Oswald:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<style>
-/* ═══════════════════════════════════════════
-   ROOT & RESET
-═══════════════════════════════════════════ */
-:root {
-  --bg:       #05070f;
-  --bg2:      #080c18;
-  --panel:    #0b1020;
-  --card:     #0e1428;
-  --card2:    #111830;
-  --line:     #1a2240;
-  --line2:    #1e2848;
-  --text:     #dce8ff;
-  --muted:    #3d5080;
-  --faint:    #1e2d50;
-
-  --neon:     #00ffe0;
-  --neon2:    #00c4ae;
-  --neon-dim: rgba(0,255,224,0.08);
-  --neon-glow:0 0 20px rgba(0,255,224,0.35);
-
-  --amber:    #ffb800;
-  --amber-dim:rgba(255,184,0,0.10);
-
-  --danger:   #ff3355;
-  --danger-dim:rgba(255,51,85,0.10);
-
-  --blue:     #3d9dff;
-  --blue-dim: rgba(61,157,255,0.10);
-
-  --silver:   #7a90b8;
-
-  --f-head: 'Oswald', sans-serif;
-  --f-body: 'Space Grotesk', sans-serif;
-  --f-mono: 'Share Tech Mono', monospace;
-}
-
-*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-
-html, body { height:100%; overflow:hidden; }
-
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--f-body);
-  font-size: 13px;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Subtle scanline overlay */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0,0,0,0.03) 2px,
-    rgba(0,0,0,0.03) 4px
-  );
-  pointer-events: none;
-  z-index: 9999;
-}
-
-/* ═══════════════════════════════════════════
-   TOPBAR
-═══════════════════════════════════════════ */
-.topbar {
-  background: var(--panel);
-  border-bottom: 1px solid var(--line2);
-  padding: 0 20px;
-  height: 50px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  flex-shrink: 0;
-  position: relative;
-}
-
-.topbar::after {
-  content: '';
-  position: absolute;
-  bottom: -1px; left: 0; right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, var(--neon), transparent 60%);
-  opacity: 0.4;
-}
-
-.logo {
-  font-family: var(--f-head);
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  color: #fff;
-  text-transform: uppercase;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.logo-accent {
-  color: var(--neon);
-  text-shadow: var(--neon-glow);
-}
-
-.logo-dot {
-  width: 6px; height: 6px;
-  background: var(--neon);
-  border-radius: 50%;
-  box-shadow: 0 0 8px var(--neon);
-  animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(0.7); }
-}
-
-.topbar-sep { width: 1px; height: 24px; background: var(--line2); }
-
-/* NAV TABS */
-.nav-tabs { display: flex; gap: 0; }
-
-.nav-tab {
-  font-family: var(--f-head);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: var(--muted);
-  background: transparent;
-  border: none;
-  padding: 0 18px;
-  height: 50px;
-  cursor: pointer;
-  position: relative;
-  transition: color 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-
-.nav-tab:hover { color: var(--text); }
-
-.nav-tab.active {
-  color: var(--neon);
-  text-shadow: 0 0 12px rgba(0,255,224,0.5);
-}
-
-.nav-tab.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 2px;
-  background: var(--neon);
-  box-shadow: var(--neon-glow);
-}
-
-/* CLOCK */
-.topbar-clock {
-  font-family: var(--f-mono);
-  font-size: 14px;
-  color: var(--neon);
-  letter-spacing: 1px;
-  text-shadow: 0 0 8px rgba(0,255,224,0.4);
-}
-
-.topbar-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
-
-.t-btn {
-  font-family: var(--f-mono);
-  font-size: 11px;
-  letter-spacing: 0.5px;
-  background: transparent;
-  border: 1px solid var(--line2);
-  color: var(--muted);
-  padding: 5px 14px;
-  border-radius: 3px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.t-btn:hover { border-color: var(--neon2); color: var(--neon); }
-.t-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
-
-/* ═══════════════════════════════════════════
-   VIEWS
-═══════════════════════════════════════════ */
-.view { display: none; flex: 1; overflow: hidden; }
-.view.active { display: flex; }
-
-/* ═══════════════════════════════════════════
-   DASHBOARD VIEW
-═══════════════════════════════════════════ */
-.dv { flex-direction: row; }
-
-/* ── SIDEBAR ── */
-.sb {
-  width: 280px;
-  background: var(--panel);
-  border-right: 1px solid var(--line);
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  flex-shrink: 0;
-}
-
-.sb-sec { padding: 16px 14px; }
-.sb-sec + .sb-sec { border-top: 1px solid var(--line); }
-
-.sb-label {
-  font-family: var(--f-mono);
-  font-size: 9px;
-  color: var(--muted);
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  margin-bottom: 10px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.sb-label::before {
-  content: '//';
-  color: var(--neon);
-  opacity: 0.5;
-}
-
-/* Summary */
-.sum-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-
-.sum-tile {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  padding: 10px 8px;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-}
-
-.sum-tile::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 1px;
-}
-
-.sum-tile.t-green::before { background: var(--neon); box-shadow: var(--neon-glow); }
-.sum-tile.t-red::before   { background: var(--danger); }
-.sum-tile.t-blue::before  { background: var(--blue); }
-.sum-tile.t-silver::before{ background: var(--silver); }
-
-.sum-num {
-  font-family: var(--f-head);
-  font-size: 30px;
-  font-weight: 700;
-  line-height: 1;
-  margin-bottom: 3px;
-}
-
-.t-green .sum-num { color: var(--neon); text-shadow: 0 0 16px rgba(0,255,224,0.5); }
-.t-red   .sum-num { color: var(--danger); text-shadow: 0 0 14px rgba(255,51,85,0.4); }
-.t-blue  .sum-num { color: var(--blue); }
-.t-silver .sum-num { color: var(--silver); }
-
-.sum-lbl {
-  font-family: var(--f-mono);
-  font-size: 8px;
-  color: var(--muted);
-  letter-spacing: 1px;
-  text-transform: uppercase;
-}
-
-/* FORM */
-.form-stack { display: flex; flex-direction: column; gap: 8px; }
-
-.fld { display: flex; flex-direction: column; gap: 3px; }
-
-.fld-label {
-  font-family: var(--f-mono);
-  font-size: 9px;
-  color: var(--muted);
-  letter-spacing: 1px;
-  text-transform: uppercase;
-}
-
-.fld input, .fld select {
-  background: var(--bg2);
-  border: 1px solid var(--line2);
-  color: var(--text);
-  padding: 7px 9px;
-  border-radius: 3px;
-  font-family: var(--f-mono);
-  font-size: 12px;
-  width: 100%;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-
-.fld input:focus, .fld select:focus {
-  outline: none;
-  border-color: var(--neon2);
-  box-shadow: 0 0 0 2px rgba(0,196,174,0.12);
-}
-
-.fld input::placeholder { color: var(--faint); }
-
-.fld-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-
-.check-line {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 9px;
-  background: var(--bg2);
-  border: 1px solid var(--line2);
-  border-radius: 3px;
-  cursor: pointer;
-}
-
-.check-line input[type=checkbox] {
-  width: 13px; height: 13px;
-  cursor: pointer;
-  accent-color: var(--neon);
-  flex-shrink: 0;
-}
-
-.check-line label {
-  font-family: var(--f-mono);
-  font-size: 11px;
-  color: var(--text);
-  cursor: pointer;
-}
-
-.btn-submit {
-  background: var(--neon);
-  color: #000;
-  border: none;
-  padding: 10px;
-  border-radius: 3px;
-  font-family: var(--f-head);
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  cursor: pointer;
-  width: 100%;
-  transition: all 0.15s;
-  box-shadow: 0 0 16px rgba(0,255,224,0.25);
-}
-
-.btn-submit:hover { box-shadow: 0 0 28px rgba(0,255,224,0.5); transform: translateY(-1px); }
-.btn-submit.edit-mode { background: var(--amber); box-shadow: 0 0 16px rgba(255,184,0,0.25); }
-.btn-submit.edit-mode:hover { box-shadow: 0 0 28px rgba(255,184,0,0.5); }
-
-.edit-strip {
-  display: none;
-  background: rgba(255,184,0,0.07);
-  border: 1px solid rgba(255,184,0,0.2);
-  border-radius: 3px;
-  padding: 6px 10px;
-  font-family: var(--f-mono);
-  font-size: 10px;
-  color: var(--amber);
-  letter-spacing: 0.5px;
-}
-
-.edit-strip.on { display: block; }
-
-.btn-cancel-edit {
-  display: none;
-  width: 100%;
-  background: transparent;
-  border: 1px solid var(--line2);
-  color: var(--muted);
-  padding: 7px;
-  border-radius: 3px;
-  font-family: var(--f-mono);
-  font-size: 11px;
-  cursor: pointer;
-  transition: all 0.15s;
-  letter-spacing: 0.5px;
-}
-
-.btn-cancel-edit.on { display: block; }
-.btn-cancel-edit:hover { border-color: var(--danger); color: var(--danger); }
-
-/* Ranking */
-.rank-rows { display: flex; flex-direction: column; gap: 4px; }
-
-.rank-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 10px;
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 3px;
-  transition: border-color 0.15s;
-}
-
-.rank-row:hover { border-color: var(--neon2); }
-
-.rank-pos {
-  font-family: var(--f-head);
-  font-size: 15px;
-  font-weight: 700;
-  min-width: 22px;
-  text-align: center;
-}
-
-.rank-info { flex: 1; overflow: hidden; }
-.rank-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rank-digs { font-family: var(--f-mono); font-size: 9px; color: var(--muted); }
-
-.rank-vph {
-  font-family: var(--f-mono);
-  font-size: 11px;
-  color: var(--neon);
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.rank-wk {
-  font-family: var(--f-mono);
-  font-size: 8px;
-  font-weight: 700;
-  background: var(--neon-dim);
-  color: var(--neon);
-  padding: 1px 5px;
-  border-radius: 2px;
-  border: 1px solid rgba(0,255,224,0.15);
-  letter-spacing: 0.5px;
-}
-
-/* ── MAIN CARDS AREA ── */
-.cards-area {
-  flex: 1;
-  overflow-y: auto;
-  padding: 14px;
-}
-
-.cards-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 10px;
-}
-
-/* ── PHONE CARD ── */
-.pcard {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 5px;
-  overflow: hidden;
-  position: relative;
-  transition: transform 0.15s, border-color 0.2s;
-  animation: fadeUp 0.3s ease both;
-}
-
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.pcard:hover { transform: translateY(-2px); }
-
-/* Left status stripe */
-.pcard::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; bottom: 0;
-  width: 3px;
-}
-
-.pcard.s-active::before  { background: var(--neon); box-shadow: 2px 0 12px rgba(0,255,224,0.4); }
-.pcard.s-moderate::before{ background: var(--amber); }
-.pcard.s-inactive::before{ background: var(--danger); opacity: 0.5; }
-.pcard.s-down::before    { background: var(--danger); box-shadow: 2px 0 12px rgba(255,51,85,0.5); animation: blink 1s step-end infinite; }
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
-
-.pcard.s-active   { border-color: rgba(0,255,224,0.15); }
-.pcard.s-moderate { border-color: rgba(255,184,0,0.15); }
-.pcard.s-down     { border-color: rgba(255,51,85,0.3); }
-
-.pcard-inner { padding: 12px 12px 12px 15px; }
-
-/* Card header */
-.pc-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 10px;
-  gap: 8px;
-}
-
-.pc-name {
-  font-family: var(--f-head);
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  color: #fff;
-  line-height: 1;
-  text-transform: uppercase;
-}
-
-.pc-dig {
-  font-family: var(--f-mono);
-  font-size: 10px;
-  color: var(--muted);
-  letter-spacing: 2px;
-  margin-top: 2px;
-}
-
-.pc-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
-
-.bdg {
-  font-family: var(--f-mono);
-  font-size: 8px;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 2px;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.bdg-princi { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(61,157,255,0.2); }
-.bdg-soporte { background: rgba(74,88,120,0.15); color: var(--silver); border: 1px solid rgba(122,144,184,0.2); }
-.bdg-wk    { background: var(--neon-dim); color: var(--neon); border: 1px solid rgba(0,255,224,0.15); }
-.bdg-nowk  { background: var(--danger-dim); color: var(--danger); border: 1px solid rgba(255,51,85,0.2); }
-.bdg-active { background: var(--neon-dim); color: var(--neon); border: 1px solid rgba(0,255,224,0.2); }
-.bdg-moderate{ background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(255,184,0,0.2); }
-.bdg-inactive{ background: var(--danger-dim); color: var(--danger); border: 1px solid rgba(255,51,85,0.15); opacity: 0.7; }
-.bdg-down  { background: rgba(255,51,85,0.2); color: var(--danger); border: 1px solid rgba(255,51,85,0.4); }
-
-/* Metrics */
-.pc-metrics {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 5px;
-  margin-bottom: 8px;
-}
-
-.pc-mbox {
-  background: var(--bg2);
-  border: 1px solid var(--line);
-  border-radius: 3px;
-  padding: 7px 8px;
-}
-
-.pc-mlbl {
-  font-family: var(--f-mono);
-  font-size: 8px;
-  color: var(--muted);
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  margin-bottom: 2px;
-}
-
-.pc-mval {
-  font-family: var(--f-head);
-  font-size: 20px;
-  font-weight: 700;
-  color: #fff;
-  line-height: 1;
-}
-
-.pc-mval .u {
-  font-family: var(--f-mono);
-  font-size: 9px;
-  font-weight: 400;
-  color: var(--muted);
-  margin-left: 2px;
-}
-
-/* Flow bar */
-.pc-flowbar {
-  height: 3px;
-  background: var(--line);
-  border-radius: 2px;
-  overflow: hidden;
-  margin-bottom: 7px;
-}
-
-.pc-flowfill {
-  height: 100%;
-  border-radius: 2px;
-  transition: width 0.6s ease;
-}
-
-.s-active  .pc-flowfill { background: var(--neon); box-shadow: 0 0 6px var(--neon); }
-.s-moderate .pc-flowfill { background: var(--amber); }
-.s-inactive .pc-flowfill { background: var(--danger); opacity: 0.5; }
-.s-down    .pc-flowfill { background: var(--danger); }
-
-/* History dots */
-.pc-hist {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-bottom: 7px;
-}
-
-.pc-hist-lbl {
-  font-family: var(--f-mono);
-  font-size: 8px;
-  color: var(--faint);
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  margin-right: 2px;
-}
-
-.hd {
-  width: 7px; height: 7px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  transition: transform 0.2s;
-}
-
-.hd:hover { transform: scale(1.4); }
-.hd.ha { background: var(--neon); box-shadow: 0 0 5px var(--neon); }
-.hd.hm { background: var(--amber); }
-.hd.hi { background: var(--danger); opacity: 0.5; }
-
-/* Down alert */
-.pc-down-alert {
-  background: rgba(255,51,85,0.06);
-  border: 1px solid rgba(255,51,85,0.2);
-  border-radius: 3px;
-  padding: 7px 9px;
-  margin-bottom: 7px;
-}
-
-.pc-da-title {
-  font-family: var(--f-mono);
-  font-size: 9px;
-  font-weight: 700;
-  color: var(--danger);
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  margin-bottom: 2px;
-}
-
-.pc-da-info {
-  font-family: var(--f-mono);
-  font-size: 10px;
-  color: var(--silver);
-}
-
-/* Actions */
-.pc-actions {
-  display: flex;
-  gap: 4px;
-  padding: 7px 12px 7px 15px;
-  border-top: 1px solid var(--line);
-  background: var(--bg2);
-}
-
-.pca {
-  flex: 1;
-  padding: 5px 4px;
-  border-radius: 2px;
-  border: 1px solid var(--line2);
-  background: transparent;
-  color: var(--muted);
-  font-family: var(--f-mono);
-  font-size: 9px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.15s;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-
-.pca:hover { background: var(--card2); }
-.pca.dn { color: var(--danger); border-color: rgba(255,51,85,0.25); }
-.pca.dn:hover { background: var(--danger-dim); }
-.pca.up { color: var(--neon); border-color: rgba(0,255,224,0.25); }
-.pca.up:hover { background: var(--neon-dim); }
-.pca.ed { color: var(--blue); border-color: rgba(61,157,255,0.25); }
-.pca.ed:hover { background: var(--blue-dim); }
-.pca.del { flex: 0; padding: 5px 9px; color: var(--faint); }
-.pca.del:hover { color: var(--danger); border-color: rgba(255,51,85,0.25); }
-
-/* Empty state */
-.empty-state {
-  grid-column: 1/-1;
-  text-align: center;
-  padding: 80px 20px;
-  color: var(--muted);
-}
-
-.empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.3; }
-.empty-state h3 { font-family: var(--f-head); font-size: 20px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; color: var(--silver); }
-.empty-state p { font-family: var(--f-mono); font-size: 11px; color: var(--faint); }
-
-
-/* ═══════════════════════════════════════════
-   ANÁLISIS VIEW
-═══════════════════════════════════════════ */
-.av { flex-direction: column; overflow-y: auto; padding: 16px; gap: 14px; }
-
-.an-row { display: grid; gap: 14px; }
-.an-row.cols2 { grid-template-columns: 1fr 1fr; }
-
-.an-panel {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 5px;
-  overflow: hidden;
-}
-
-.an-panel-head {
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--line);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--bg2);
-}
-
-.an-panel-title {
-  font-family: var(--f-head);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: #fff;
-}
-
-.an-panel-sub {
-  font-family: var(--f-mono);
-  font-size: 9px;
-  color: var(--muted);
-  letter-spacing: 0.5px;
-  margin-left: auto;
-}
-
-.an-panel-body { padding: 14px 16px; }
-
-/* Comparison bars */
-.cmp-list { display: flex; flex-direction: column; gap: 7px; }
-
-.cmp-row { display: flex; align-items: center; gap: 10px; }
-
-.cmp-name {
-  font-family: var(--f-head);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  width: 85px;
-  flex-shrink: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.cmp-track {
-  flex: 1;
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-radius: 2px;
-  height: 20px;
-  overflow: hidden;
-  position: relative;
-}
-
-.cmp-fill {
-  height: 100%;
-  border-radius: 1px;
-  display: flex;
-  align-items: center;
-  padding-left: 7px;
-  transition: width 0.7s cubic-bezier(0.4,0,0.2,1);
-}
-
-.cmp-fill-lbl {
-  font-family: var(--f-mono);
-  font-size: 9px;
-  font-weight: 700;
-  color: rgba(0,0,0,0.8);
-  white-space: nowrap;
-}
-
-.cmp-vph {
-  font-family: var(--f-mono);
-  font-size: 11px;
-  font-weight: 700;
-  width: 64px;
-  text-align: right;
-  flex-shrink: 0;
-}
-
-/* Chart */
-.chart-container { position: relative; height: 230px; }
-
-/* Downtime table */
-.dt-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-family: var(--f-mono);
-  font-size: 11px;
-}
-
-.dt-table th {
-  text-align: left;
-  padding: 7px 10px;
-  font-size: 8px;
-  font-weight: 700;
-  color: var(--muted);
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  border-bottom: 1px solid var(--line);
-}
-
-.dt-table td {
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--line);
-  color: var(--text);
-  vertical-align: middle;
-}
-
-.dt-table tr:last-child td { border-bottom: none; }
-.dt-table tr:hover td { background: var(--card2); }
-
-.dt-badge {
-  font-size: 8px;
-  font-weight: 700;
-  padding: 2px 5px;
-  border-radius: 2px;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-
-.dt-badge.p { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(61,157,255,0.2); }
-.dt-badge.s { background: rgba(74,88,120,0.15); color: var(--silver); border: 1px solid rgba(122,144,184,0.2); }
-
-.dt-empty { text-align: center; padding: 28px; color: var(--faint); font-size: 11px; }
-
-/* Per-phone history */
-.ph-sel-wrap { margin-bottom: 12px; }
-.ph-sel-wrap select {
-  background: var(--bg);
-  border: 1px solid var(--line2);
-  color: var(--text);
-  padding: 7px 10px;
-  border-radius: 3px;
-  font-family: var(--f-mono);
-  font-size: 12px;
-  width: 100%;
-}
-
-.ph-hist-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  max-height: 180px;
-  overflow-y: auto;
-}
-
-.ph-entry {
-  display: grid;
-  grid-template-columns: 8px auto 1fr 1fr;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 10px;
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-radius: 3px;
-  transition: border-color 0.15s;
-}
-
-.ph-entry:hover { border-color: var(--line2); }
-
-.ph-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.ph-dot.ha { background: var(--neon); box-shadow: 0 0 5px var(--neon); }
-.ph-dot.hm { background: var(--amber); }
-.ph-dot.hi { background: var(--danger); opacity: 0.5; }
-
-.ph-time { font-family: var(--f-mono); font-size: 9px; color: var(--muted); white-space: nowrap; }
-.ph-views { font-size: 12px; font-weight: 600; color: var(--text); }
-.ph-vph { font-family: var(--f-mono); font-size: 11px; color: var(--neon); font-weight: 700; text-align: right; }
-
-/* ═══════════════════════════════════════════
-   MODAL
-═══════════════════════════════════════════ */
-.modal-ov {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.8);
-  backdrop-filter: blur(6px);
-  z-index: 1000;
-  align-items: center;
-  justify-content: center;
-}
-
-.modal-ov.on { display: flex; }
-
-.modal-box {
-  background: var(--panel);
-  border: 1px solid var(--line2);
-  border-radius: 5px;
-  padding: 24px;
-  max-width: 360px;
-  width: 90%;
-  box-shadow: 0 0 60px rgba(0,0,0,0.8);
-  position: relative;
-}
-
-.modal-box::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: var(--neon);
-  box-shadow: var(--neon-glow);
-  border-radius: 5px 5px 0 0;
-}
-
-.modal-title {
-  font-family: var(--f-head);
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: #fff;
-  margin-bottom: 16px;
-}
-
-.modal-fields { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
-
-.modal-note {
-  font-family: var(--f-mono);
-  font-size: 9px;
-  color: var(--muted);
-  margin-top: 2px;
-  letter-spacing: 0.3px;
-}
-
-.modal-btns { display: flex; gap: 8px; }
-
-.mbtn {
-  flex: 1;
-  padding: 10px;
-  border-radius: 3px;
-  font-family: var(--f-mono);
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.15s;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  border: 1px solid var(--line2);
-}
-
-.mbtn.confirm {
-  background: var(--neon);
-  color: #000;
-  border-color: var(--neon);
-  box-shadow: 0 0 16px rgba(0,255,224,0.25);
-}
-
-.mbtn.confirm:hover { box-shadow: 0 0 28px rgba(0,255,224,0.45); }
-
-.mbtn.cancel {
-  background: transparent;
-  color: var(--muted);
-}
-
-.mbtn.cancel:hover { border-color: var(--danger); color: var(--danger); }
-
-/* ═══════════════════════════════════════════
-   TOAST
-═══════════════════════════════════════════ */
-.toast {
-  position: fixed;
-  bottom: 20px; right: 20px;
-  background: var(--panel);
-  border: 1px solid var(--neon2);
-  color: var(--neon);
-  padding: 10px 18px;
-  border-radius: 3px;
-  font-family: var(--f-mono);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  z-index: 2000;
-  opacity: 0;
-  transform: translateY(10px);
-  transition: all 0.25s;
-  pointer-events: none;
-  box-shadow: 0 0 20px rgba(0,255,224,0.15);
-}
-
-.toast.on { opacity: 1; transform: translateY(0); }
-.toast.err { border-color: var(--danger); color: var(--danger); box-shadow: 0 0 20px rgba(255,51,85,0.15); }
-
-/* Scrollbar */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--line2); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: var(--muted); }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MetriWapp Pro — Control de Casino</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg-main: #f8fafc;
+            --sidebar-bg: #0f172a;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            
+            --accent: #2563eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --watiket: #8b5cf6;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-main); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+
+        /* --- SIDEBAR --- */
+        .sidebar { width: 320px; background: var(--sidebar-bg); color: white; display: flex; flex-direction: column; padding: 20px; overflow-y: auto; flex-shrink: 0; }
+        .logo { font-size: 20px; font-weight: 800; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; color: #fff; letter-spacing: -0.5px; }
+        .logo span { color: var(--accent); }
+
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; font-weight: 700; letter-spacing: 0.5px; }
+        .form-group input, .form-group select { width: 100%; background: #1e293b; border: 1px solid #334155; border-radius: 6px; padding: 10px; color: white; font-family: inherit; font-size: 13px; }
+        .form-group input:focus { outline: 2px solid var(--accent); border-color: transparent; }
+
+        .btn-main { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; width: 100%; transition: all 0.2s; margin-top: 10px; }
+        .btn-main:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-edit-mode { background: var(--warning); color: #000; }
+        .btn-cancel { background: transparent; color: var(--text-muted); border: 1px solid #334155; margin-top: 5px; font-size: 12px; padding: 8px; border-radius: 6px; cursor: pointer; width: 100%; }
+
+        /* --- MAIN AREA --- */
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        
+        .topbar { background: #fff; border-bottom: 1px solid var(--border); padding: 15px 25px; display: flex; align-items: center; justify-content: space-between; }
+        .nav-tabs { display: flex; gap: 5px; }
+        .tab-btn { padding: 8px 16px; border-radius: 6px; border: none; background: transparent; cursor: pointer; font-weight: 600; color: var(--text-muted); font-size: 14px; }
+        .tab-btn.active { background: #eff6ff; color: var(--accent); }
+
+        .view-container { flex: 1; padding: 25px; overflow-y: auto; }
+        
+        /* --- STATS SUMMARY (PARA CAPTURA) --- */
+        .stats-header { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: white; padding: 15px; border-radius: 10px; border: 1px solid var(--border); display: flex; flex-direction: column; }
+        .stat-card .label { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+        .stat-card .val { font-size: 24px; font-weight: 700; margin-top: 5px; color: var(--text-main); }
+        .stat-card.active-st { border-left: 4px solid var(--success); }
+        .stat-card.down-st { border-left: 4px solid var(--danger); }
+        .stat-card.wk-st { border-left: 4px solid var(--watiket); }
+
+        /* --- CARDS GRID --- */
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+        .phone-card { background: white; border-radius: 12px; border: 1px solid var(--border); padding: 15px; position: relative; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .phone-card:hover { border-color: var(--accent); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+
+        .pc-top { display: flex; justify-content: space-between; margin-bottom: 12px; }
+        .pc-info h4 { font-size: 16px; font-weight: 700; }
+        .pc-info p { font-size: 12px; color: var(--text-muted); font-family: 'JetBrains Mono'; }
+
+        .badge { font-size: 9px; padding: 3px 7px; border-radius: 4px; font-weight: 700; text-transform: uppercase; }
+        .badge-wk { background: #ede9fe; color: var(--watiket); border: 1px solid #ddd6fe; }
+        .badge-princi { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+        .badge-sop { background: #f1f5f9; color: #475569; }
+
+        .flow-status { width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; display: inline-block; }
+        .status-alto { background: var(--success); box-shadow: 0 0 8px var(--success); }
+        .status-medio { background: var(--warning); }
+        .status-bajo { background: #cbd5e1; }
+        .status-caido { background: var(--danger); animation: blink 1s infinite; }
+
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+
+        .pc-vph { background: #f8fafc; border-radius: 8px; padding: 10px; margin: 10px 0; display: flex; justify-content: space-between; align-items: center; }
+        .pc-vph-label { font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+        .pc-vph-val { font-size: 18px; font-weight: 700; color: var(--accent); }
+
+        .pc-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+        .btn-pc { padding: 6px; font-size: 11px; font-weight: 600; border-radius: 5px; border: 1px solid var(--border); background: white; cursor: pointer; transition: 0.1s; text-align: center; color: var(--text-main); text-decoration: none; }
+        .btn-pc:hover { background: #f1f5f9; }
+        .btn-pc.danger { color: var(--danger); border-color: #fecaca; }
+        .btn-pc.edit { color: var(--accent); border-color: #bfdbfe; }
+
+        /* --- MODAL --- */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .modal-content { background: white; padding: 30px; border-radius: 15px; width: 400px; max-width: 90%; }
+        .modal-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+
+        /* --- ANALYSIS TAB --- */
+        .report-section { background: white; border-radius: 12px; padding: 20px; border: 1px solid var(--border); margin-bottom: 20px; }
+        .log-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .log-table th { text-align: left; padding: 12px; border-bottom: 2px solid var(--border); color: var(--text-muted); font-size: 11px; text-transform: uppercase; }
+        .log-table td { padding: 12px; border-bottom: 1px solid var(--border); }
+    </style>
 </head>
 <body>
 
-<!-- ════ TOPBAR ════ -->
-<div class="topbar">
-  <div class="logo">
-    <div class="logo-dot"></div>
-    Metri<span class="logo-accent">Wapp</span>
-  </div>
-  <div class="topbar-sep"></div>
-  <nav class="nav-tabs">
-    <button class="nav-tab active" id="tab-dashboard" onclick="switchTab('dashboard',this)">
-      ◈ Dashboard
-    </button>
-    <button class="nav-tab" id="tab-analisis" onclick="switchTab('analisis',this)">
-      ◈ Análisis
-    </button>
-  </nav>
-  <div class="topbar-sep"></div>
-  <div class="topbar-clock" id="clock">--:--:--</div>
-  <div class="topbar-right">
-    <button class="t-btn" onclick="exportData()">↓ EXPORT</button>
-    <button class="t-btn danger" onclick="clearAll()">⚠ LIMPIAR</button>
-  </div>
-</div>
+    <!-- --- LADO IZQUIERDO: CARGA --- -->
+    <div class="sidebar">
+        <div class="logo">Metri<span>Wapp</span> 3.0</div>
+        
+        <div id="editMarker" style="display:none; color: var(--warning); font-size: 11px; margin-bottom: 5px; font-weight: bold;">✏ EDITANDO CELULAR...</div>
+        
+        <div class="form-group">
+            <label>Celular</label>
+            <input type="text" id="fName" placeholder="Ej: Princi 1">
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group">
+                <label>4 Dígitos</label>
+                <input type="text" id="fDigits" placeholder="5541" maxlength="4">
+            </div>
+            <div class="form-group">
+                <label>Tipo</label>
+                <select id="fType">
+                    <option value="principal">Principal</option>
+                    <option value="soporte">Soporte</option>
+                </select>
+            </div>
+        </div>
 
-<!-- ════ VIEW: DASHBOARD ════ -->
-<div class="view dv active" id="view-dashboard">
-
-  <!-- SIDEBAR -->
-  <div class="sb">
-
-    <!-- Summary -->
-    <div class="sb-sec">
-      <div class="sb-label">Estado General</div>
-      <div class="sum-grid">
-        <div class="sum-tile t-green">
-          <div class="sum-num" id="sActive">0</div>
-          <div class="sum-lbl">Activos</div>
-        </div>
-        <div class="sum-tile t-red">
-          <div class="sum-num" id="sDown">0</div>
-          <div class="sum-lbl">Caídos</div>
-        </div>
-        <div class="sum-tile t-blue">
-          <div class="sum-num" id="sWk">0</div>
-          <div class="sum-lbl">Watiket</div>
-        </div>
-        <div class="sum-tile t-silver">
-          <div class="sum-num" id="sSop">0</div>
-          <div class="sum-lbl">Soportes</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Form -->
-    <div class="sb-sec">
-      <div class="sb-label">Cargar Métrica</div>
-      <div class="edit-strip" id="editStrip">✏ MODO EDICIÓN ACTIVO</div>
-      <div class="form-stack">
-        <div class="fld">
-          <div class="fld-label">Nombre del Celular</div>
-          <input type="text" id="fName" placeholder="Ej: Princi 1">
-        </div>
-        <div class="fld-row">
-          <div class="fld">
-            <div class="fld-label">4 Dígitos</div>
-            <input type="text" id="fDigits" placeholder="5831" maxlength="4">
-          </div>
-          <div class="fld">
-            <div class="fld-label">Tipo</div>
-            <select id="fType">
-              <option value="principal">Principal</option>
-              <option value="soporte">Soporte</option>
+        <div class="form-group">
+            <label>Flujo Actual (Manual)</label>
+            <select id="fFlow">
+                <option value="bajo">Bajo (Lento)</option>
+                <option value="medio">Medio (Estable)</option>
+                <option value="alto">Alto (¡Explotado!)</option>
             </select>
-          </div>
         </div>
-        <div class="fld">
-          <div class="fld-label">Vistas del Estado</div>
-          <input type="number" id="fViews" placeholder="Ej: 194" min="0">
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group">
+                <label>Vistas</label>
+                <input type="number" id="fViews">
+            </div>
+            <div class="form-group">
+                <label>Hora Estado</label>
+                <input type="time" id="fTime">
+            </div>
         </div>
-        <div class="fld">
-          <div class="fld-label">Hora Subida del Estado</div>
-          <input type="time" id="fTime">
+
+        <div class="form-group" style="display:flex; align-items:center; gap:10px; cursor:pointer; background:#1e293b; padding:10px; border-radius:6px; border:1px solid #334155;">
+            <input type="checkbox" id="fWk" style="width:16px;" checked>
+            <label for="fWk" style="margin:0; cursor:pointer;">¿Está en Watiket?</label>
         </div>
-        <div class="check-line">
-          <input type="checkbox" id="fWk" checked>
-          <label for="fWk">En Watiket</label>
+
+        <button class="btn-main" id="submitBtn" onclick="submitForm()">Cargar Celular</button>
+        <button class="btn-cancel" id="cancelBtn" onclick="cancelEdit()" style="display:none;">Cancelar Edición</button>
+        
+        <div style="margin-top:auto; padding-top:20px;">
+            <button class="btn-cancel" onclick="exportData()">↓ Exportar Reporte</button>
+            <button class="btn-cancel" onclick="clearAll()" style="color:#f87171; border-color:#ef444433;">✕ Borrar Todo</button>
         </div>
-        <button class="btn-submit" id="submitBtn" onclick="submitForm()">+ Cargar Métrica</button>
-        <button class="btn-cancel-edit" id="cancelBtn" onclick="cancelEdit()">✕ Cancelar edición</button>
-      </div>
     </div>
 
-    <!-- Ranking -->
-    <div class="sb-sec" id="rankSec" style="display:none">
-      <div class="sb-label">Ranking Principales</div>
-      <div class="rank-rows" id="rankRows"></div>
-    </div>
-
-    <!-- Soportes -->
-    <div class="sb-sec">
-      <div class="sb-label">Soportes</div>
-      <div class="rank-rows" id="soporteRows">
-        <div style="font-family:var(--f-mono);font-size:10px;color:var(--faint)">Sin soportes registrados</div>
-      </div>
-    </div>
-
-  </div><!-- /sb -->
-
-  <!-- CARDS -->
-  <div class="cards-area">
-    <div class="cards-grid" id="cardsGrid">
-      <div class="empty-state">
-        <div class="empty-icon">◈</div>
-        <h3>Sin señal</h3>
-        <p>// Cargá una métrica para comenzar</p>
-      </div>
-    </div>
-  </div>
-
-</div><!-- /dashboard view -->
-
-<!-- ════ VIEW: ANÁLISIS ════ -->
-<div class="view av" id="view-analisis">
-
-  <!-- Comparison full width -->
-  <div class="an-panel">
-    <div class="an-panel-head">
-      <div class="an-panel-title">◈ Comparación de Flujo</div>
-      <div class="an-panel-sub">// vistas/hora · todos los celulares</div>
-    </div>
-    <div class="an-panel-body">
-      <div class="cmp-list" id="cmpList">
-        <div style="font-family:var(--f-mono);font-size:11px;color:var(--faint);text-align:center;padding:20px">Sin datos</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="an-row cols2">
-
-    <!-- Chart -->
-    <div class="an-panel">
-      <div class="an-panel-head">
-        <div class="an-panel-title">◈ Evolución Vistas/Hora</div>
-        <div class="an-panel-sub">// historial de métricas</div>
-      </div>
-      <div class="an-panel-body">
-        <div class="chart-container">
-          <canvas id="chartVPH"></canvas>
+    <!-- --- LADO DERECHO: VISTAS --- -->
+    <div class="main-content">
+        <div class="topbar">
+            <div class="nav-tabs">
+                <button class="tab-btn active" onclick="switchTab('live')">Monitor en Vivo</button>
+                <button class="tab-btn" onclick="switchTab('analysis')">Historial & Reportes</button>
+            </div>
+            <div id="realClock" style="font-family:'JetBrains Mono'; font-weight:700; font-size:14px; color:var(--text-muted)">00:00:00</div>
         </div>
-      </div>
-    </div>
 
-    <!-- Per-phone history -->
-    <div class="an-panel">
-      <div class="an-panel-head">
-        <div class="an-panel-title">◈ Detalle por Celular</div>
-        <div class="an-panel-sub">// métricas individuales</div>
-      </div>
-      <div class="an-panel-body">
-        <div class="ph-sel-wrap">
-          <select id="phSel" onchange="renderPhHist()">
-            <option value="">— Seleccionar —</option>
-          </select>
+        <div class="view-container">
+            
+            <!-- MONITOR DASHBOARD -->
+            <div id="view-live">
+                <div class="stats-header" id="statsBar">
+                    <div class="stat-card active-st"><span class="label">Activos</span><div class="val" id="stAct">0</div></div>
+                    <div class="stat-card down-st"><span class="label">Caídos</span><div class="val" id="stDown">0</div></div>
+                    <div class="stat-card wk-st"><span class="label">En Watiket</span><div class="val" id="stWk">0</div></div>
+                    <div class="stat-card"><span class="label">Promedio V/H</span><div class="val" id="stAvg">0</div></div>
+                </div>
+
+                <div class="cards-grid" id="mainGrid">
+                    <!-- Dinámico -->
+                </div>
+            </div>
+
+            <!-- ANALISIS / REPORTES -->
+            <div id="view-analysis" style="display:none;">
+                <div class="report-section">
+                    <h3 style="margin-bottom:15px;">Registro de Caídas del Día</h3>
+                    <div style="overflow-x:auto;">
+                        <table class="log-table">
+                            <thead>
+                                <tr>
+                                    <th>Celular</th>
+                                    <th>Bajó a las...</th>
+                                    <th>Subió a las...</th>
+                                    <th>Duración</th>
+                                    <th>Msgs Acum.</th>
+                                </tr>
+                            </thead>
+                            <tbody id="downLogTable">
+                                <!-- Dinámico -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="ph-hist-list" id="phHistList">
-          <div style="font-family:var(--f-mono);font-size:11px;color:var(--faint);text-align:center;padding:16px">Seleccioná un celular</div>
+    </div>
+
+    <!-- MODAL LEVANTAR -->
+    <div class="modal" id="modalLift">
+        <div class="modal-content">
+            <h3 style="margin-bottom:15px;">Levantar Celular</h3>
+            <div class="form-group">
+                <label style="color:var(--text-main)">Mensajes recibidos durante la caída:</label>
+                <input type="number" id="mLiftMsgs" style="background:#fff; color:#000; border:1px solid var(--border);" placeholder="Ej: 145">
+            </div>
+            <div class="modal-btns">
+                <button class="btn-pc" onclick="closeModal()">Cancelar</button>
+                <button class="btn-main" onclick="confirmLift()" style="margin:0;">Confirmar</button>
+            </div>
         </div>
-      </div>
     </div>
 
-  </div>
+    <script>
+        let phones = {};
+        let editId = null;
+        let liftId = null;
 
-  <!-- Log de caídas -->
-  <div class="an-panel">
-    <div class="an-panel-head">
-      <div class="an-panel-title">◈ Log de Caídas</div>
-      <div class="an-panel-sub">// historial completo · orden cronológico inverso</div>
-    </div>
-    <div class="an-panel-body" style="padding:0">
-      <div style="overflow-x:auto">
-        <table class="dt-table">
-          <thead>
-            <tr>
-              <th>Celular</th>
-              <th>Tipo</th>
-              <th>Caído</th>
-              <th>Levantado</th>
-              <th>Tiempo</th>
-              <th>Msgs Acum.</th>
-              <th>1er Msg</th>
-              <th>Últ. Msg</th>
-            </tr>
-          </thead>
-          <tbody id="dtBody">
-            <tr><td colspan="8" class="dt-empty">// Sin caídas registradas</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-</div><!-- /analisis view -->
-
-<!-- MODAL LEVANTAR -->
-<div class="modal-ov" id="liftModal">
-  <div class="modal-box">
-    <div class="modal-title">↑ Levantar Celular</div>
-    <div class="modal-fields">
-      <div class="fld">
-        <div class="fld-label">Mensajes Acumulados (obligatorio)</div>
-        <input type="number" id="mMsgs" placeholder="Ej: 200" min="0">
-      </div>
-      <div class="fld">
-        <div class="fld-label">Hora Primer Mensaje (opcional)</div>
-        <input type="time" id="mFirst">
-        <div class="modal-note">// primer msg recibido mientras estuvo caído</div>
-      </div>
-      <div class="fld">
-        <div class="fld-label">Hora Último Mensaje (opcional)</div>
-        <input type="time" id="mLast">
-        <div class="modal-note">// último msg antes de levantarlo</div>
-      </div>
-    </div>
-    <div class="modal-btns">
-      <button class="mbtn cancel" onclick="closeLift()">Cancelar</button>
-      <button class="mbtn confirm" onclick="confirmLift()">Confirmar</button>
-    </div>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
-
-<script>
-/* ══════════════════════
-   STATE
-══════════════════════ */
-let phones = {};
-let liftKey = null;
-let editKey = null;
-let chartInst = null;
-
-/* ══════════════════════
-   STORAGE
-══════════════════════ */
-function save(){ localStorage.setItem('mw_v4', JSON.stringify(phones)); }
-function load(){
-  try { const d = localStorage.getItem('mw_v4'); if(d) phones = JSON.parse(d); } catch(e){ phones={}; }
-  renderAll();
-}
-
-/* ══════════════════════
-   CLOCK
-══════════════════════ */
-function tickClock(){
-  const now = new Date();
-  document.getElementById('clock').textContent =
-    now.toLocaleTimeString('es-AR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
-}
-setInterval(tickClock, 1000);
-tickClock();
-
-/* ══════════════════════
-   TOAST
-══════════════════════ */
-function toast(msg, err=false){
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast on' + (err?' err':'');
-  clearTimeout(t._t);
-  t._t = setTimeout(()=>{ t.className='toast'; }, 2800);
-}
-
-/* ══════════════════════
-   TABS
-══════════════════════ */
-function switchTab(name, btn){
-  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-  document.getElementById('view-'+name).classList.add('active');
-  btn.classList.add('active');
-  if(name==='analisis') renderAnalisis();
-}
-
-/* ══════════════════════
-   VPH CALC
-══════════════════════ */
-function calcVPH(views, uploadDate, now){
-  const hDiff = (now - uploadDate) / (1000*60*60);
-  if(hDiff <= 0) return views;
-  if(hDiff < 0.5) return Math.min(Math.round(views/hDiff), views*2);
-  return Math.round(views / hDiff);
-}
-
-/* ══════════════════════
-   STATUS
-══════════════════════ */
-function getStatus(phone){
-  if(phone.currentlyDown) return 'down';
-  if(!phone.metrics || phone.metrics.length===0) return 'inactive';
-  const vph = phone.metrics[phone.metrics.length-1].viewsPerHour;
-  if(vph >= 60) return 'active';
-  if(vph >= 20) return 'moderate';
-  return 'inactive';
-}
-
-function dotCls(vph){
-  if(vph>=60) return 'ha';
-  if(vph>=20) return 'hm';
-  return 'hi';
-}
-
-function statusBadge(st){
-  const map = {
-    active:   ['bdg-active',   '● ACTIVO'],
-    moderate: ['bdg-moderate', '● LEVE'],
-    inactive: ['bdg-inactive', '● INACTIVO'],
-    down:     ['bdg-down',     '⚠ CAÍDO'],
-  };
-  const [cls, lbl] = map[st] || ['bdg-inactive','● INACTIVO'];
-  return `<span class="bdg ${cls}">${lbl}</span>`;
-}
-
-/* ══════════════════════
-   FORM
-══════════════════════ */
-function submitForm(){
-  const name      = document.getElementById('fName').value.trim();
-  const digits    = document.getElementById('fDigits').value.trim();
-  const type      = document.getElementById('fType').value;
-  const views     = parseInt(document.getElementById('fViews').value);
-  const uploadT   = document.getElementById('fTime').value;
-  const inWatiket = document.getElementById('fWk').checked;
-
-  if(!name||!digits||isNaN(views)||!uploadT){ toast('Completá: Nombre, Dígitos, Vistas y Hora', true); return; }
-  if(digits.length!==4||isNaN(Number(digits))){ toast('Los dígitos deben ser 4 números', true); return; }
-
-  const newKey = `${name.toLowerCase().replace(/\s+/g,'_')}_${digits}`;
-  const now = new Date();
-  const uploadDate = new Date();
-  const [h,m] = uploadT.split(':').map(Number);
-  uploadDate.setHours(h,m,0,0);
-  if(uploadDate > now) uploadDate.setDate(uploadDate.getDate()-1);
-
-  const vph = calcVPH(views, uploadDate, now);
-
-  if(editKey && editKey!==newKey && phones[editKey]){
-    phones[newKey] = phones[editKey];
-    delete phones[editKey];
-  }
-
-  if(!phones[newKey]){
-    phones[newKey] = { name, digits, type, inWatiket, metrics:[], downtime:[], currentlyDown:false, downSince:null };
-  }
-
-  phones[newKey].name      = name;
-  phones[newKey].digits    = digits;
-  phones[newKey].type      = type;
-  phones[newKey].inWatiket = inWatiket;
-
-  phones[newKey].metrics.push({
-    views,
-    uploadTime:  uploadDate.toISOString(),
-    recordedAt:  now.toISOString(),
-    viewsPerHour: vph
-  });
-
-  if(phones[newKey].metrics.length > 30)
-    phones[newKey].metrics = phones[newKey].metrics.slice(-30);
-
-  save(); renderAll();
-  toast(editKey ? `${name} actualizado ✓` : `${name} cargado ✓`);
-  resetForm();
-}
-
-function resetForm(){
-  ['fName','fDigits','fViews','fTime'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('fType').value = 'principal';
-  document.getElementById('fWk').checked = true;
-  document.getElementById('submitBtn').textContent = '+ Cargar Métrica';
-  document.getElementById('submitBtn').classList.remove('edit-mode');
-  document.getElementById('cancelBtn').classList.remove('on');
-  document.getElementById('editStrip').classList.remove('on');
-  editKey = null;
-  document.getElementById('fName').focus();
-}
-
-function startEdit(key){
-  const p = phones[key]; if(!p) return;
-  editKey = key;
-  document.getElementById('fName').value  = p.name;
-  document.getElementById('fDigits').value = p.digits;
-  document.getElementById('fType').value  = p.type;
-  document.getElementById('fWk').checked  = p.inWatiket;
-  if(p.metrics.length>0){
-    const last = p.metrics[p.metrics.length-1];
-    document.getElementById('fViews').value = last.views;
-    const ut = new Date(last.uploadTime);
-    document.getElementById('fTime').value = ut.toTimeString().slice(0,5);
-  }
-  document.getElementById('submitBtn').textContent = '✓ Guardar Cambios';
-  document.getElementById('submitBtn').classList.add('edit-mode');
-  document.getElementById('cancelBtn').classList.add('on');
-  document.getElementById('editStrip').classList.add('on');
-  document.getElementById('fName').focus();
-}
-
-function cancelEdit(){ resetForm(); }
-
-/* ══════════════════════
-   DOWN / LIFT
-══════════════════════ */
-function markDown(key){
-  phones[key].currentlyDown = true;
-  phones[key].downSince = new Date().toISOString();
-  save(); renderAll();
-  toast(`${phones[key].name} marcado como caído`);
-}
-
-function openLift(key){
-  liftKey = key;
-  ['mMsgs','mFirst','mLast'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('liftModal').classList.add('on');
-  setTimeout(()=>document.getElementById('mMsgs').focus(), 80);
-}
-
-function closeLift(){
-  liftKey = null;
-  document.getElementById('liftModal').classList.remove('on');
-}
-
-function confirmLift(){
-  const msgs = parseInt(document.getElementById('mMsgs').value);
-  if(isNaN(msgs)||msgs<0){ toast('Ingresá los mensajes acumulados', true); return; }
-  const firstMsg = document.getElementById('mFirst').value || null;
-  const lastMsg  = document.getElementById('mLast').value  || null;
-  const p = phones[liftKey];
-  const now = new Date();
-  const downSince = new Date(p.downSince);
-  const hDown = ((now-downSince)/(1000*60*60)).toFixed(1);
-  p.downtime.push({
-    downSince: p.downSince,
-    liftedAt:  now.toISOString(),
-    hoursDown: parseFloat(hDown),
-    accumulatedMessages: msgs,
-    firstMessageTime: firstMsg,
-    lastMessageTime:  lastMsg
-  });
-  p.currentlyDown = false;
-  p.downSince = null;
-  save(); renderAll(); closeLift();
-  toast(`${p.name} levantado — ${msgs} msgs en ${hDown}h ✓`);
-}
-
-/* ══════════════════════
-   DELETE
-══════════════════════ */
-function deletePhone(key){
-  if(!confirm(`¿Eliminar ${phones[key].name}?`)) return;
-  if(editKey===key) resetForm();
-  delete phones[key];
-  save(); renderAll();
-  toast('Celular eliminado');
-}
-
-/* ══════════════════════
-   RENDER ALL
-══════════════════════ */
-function renderAll(){
-  renderSummary();
-  renderCards();
-  renderRanking();
-  renderSoportes();
-  updatePhSel();
-  if(document.getElementById('view-analisis').classList.contains('active'))
-    renderAnalisis();
-}
-
-/* SUMMARY */
-function renderSummary(){
-  let active=0,down=0,wk=0,sop=0;
-  Object.values(phones).forEach(p=>{
-    if(p.type==='soporte') sop++;
-    else { const st=getStatus(p); if(st==='down')down++; else active++; }
-    if(p.inWatiket) wk++;
-  });
-  document.getElementById('sActive').textContent=active;
-  document.getElementById('sDown').textContent=down;
-  document.getElementById('sWk').textContent=wk;
-  document.getElementById('sSop').textContent=sop;
-}
-
-/* CARDS */
-function renderCards(){
-  const el = document.getElementById('cardsGrid');
-  const keys = Object.keys(phones);
-  if(keys.length===0){
-    el.innerHTML=`<div class="empty-state"><div class="empty-icon">◈</div><h3>Sin señal</h3><p>// Cargá una métrica para comenzar</p></div>`;
-    return;
-  }
-  const sorted = keys.sort((a,b)=>{
-    const pa=phones[a], pb=phones[b];
-    if(pa.type!==pb.type) return pa.type==='principal'?-1:1;
-    const av = pa.metrics.length?pa.metrics[pa.metrics.length-1].viewsPerHour:0;
-    const bv = pb.metrics.length?pb.metrics[pb.metrics.length-1].viewsPerHour:0;
-    return bv-av;
-  });
-  el.innerHTML = sorted.map(buildCard).join('');
-}
-
-function buildCard(key){
-  const p=phones[key];
-  const last=p.metrics[p.metrics.length-1]||{};
-  const st=getStatus(p);
-  const vph=last.viewsPerHour||0;
-  const views=last.views||0;
-  const pct=Math.min((vph/300)*100,100);
-  const td=p.downtime.length;
-  const avgM=td>0?Math.round(p.downtime.reduce((s,d)=>s+d.accumulatedMessages,0)/td):0;
-  const last5=p.metrics.slice(-5);
-  const dots=last5.map(m=>`<div class="hd ${dotCls(m.viewsPerHour)}" title="${m.viewsPerHour} v/h"></div>`).join('');
-
-  let downHtml='';
-  if(p.currentlyDown&&p.downSince){
-    const hs=((new Date()-new Date(p.downSince))/(1000*60*60)).toFixed(1);
-    const since=new Date(p.downSince).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
-    downHtml=`<div class="pc-down-alert">
-      <div class="pc-da-title">⚠ CAÍDO</div>
-      <div class="pc-da-info">hace ${hs}h · desde ${since}${avgM>0?' · prom '+avgM+' msgs':''}</div>
-    </div>`;
-  }
-
-  const typeBdg=p.type==='principal'
-    ?`<span class="bdg bdg-princi">🎯 PRINCI</span>`
-    :`<span class="bdg bdg-soporte">🛟 SOPORTE</span>`;
-  const wkBdg=p.inWatiket
-    ?`<span class="bdg bdg-wk">✓ WK</span>`
-    :`<span class="bdg bdg-nowk">✗ NO WK</span>`;
-
-  const actionBtn=p.currentlyDown
-    ?`<button class="pca up" onclick="openLift('${key}')">↑ Levantar</button>`
-    :`<button class="pca dn" onclick="markDown('${key}')">↓ Caído</button>`;
-
-  const stCls = {active:'s-active',moderate:'s-moderate',inactive:'s-inactive',down:'s-down'}[st]||'s-inactive';
-
-  return `<div class="pcard ${stCls}">
-    <div class="pcard-inner">
-      <div class="pc-head">
-        <div>
-          <div class="pc-name">${p.name}</div>
-          <div class="pc-dig">${p.digits}</div>
-        </div>
-        <div class="pc-badges">${typeBdg}${wkBdg}${statusBadge(st)}</div>
-      </div>
-      <div class="pc-metrics">
-        <div class="pc-mbox"><div class="pc-mlbl">Vistas/Hora</div><div class="pc-mval">${vph}<span class="u">v/h</span></div></div>
-        <div class="pc-mbox"><div class="pc-mlbl">Vistas Actual</div><div class="pc-mval">${views}</div></div>
-        <div class="pc-mbox"><div class="pc-mlbl">Total Caídas</div><div class="pc-mval">${td}</div></div>
-        <div class="pc-mbox"><div class="pc-mlbl">Prom. Mensajes</div><div class="pc-mval">${avgM}<span class="u">msgs</span></div></div>
-      </div>
-      <div class="pc-flowbar"><div class="pc-flowfill" style="width:${pct}%"></div></div>
-      ${last5.length>1?`<div class="pc-hist"><span class="pc-hist-lbl">Hist</span>${dots}</div>`:''}
-      ${downHtml}
-    </div>
-    <div class="pc-actions">
-      ${actionBtn}
-      <button class="pca ed" onclick="startEdit('${key}')">✏ Editar</button>
-      <button class="pca del" onclick="deletePhone('${key}')">🗑</button>
-    </div>
-  </div>`;
-}
-
-/* RANKING */
-function renderRanking(){
-  const sec=document.getElementById('rankSec');
-  const rows=document.getElementById('rankRows');
-  const list=Object.entries(phones)
-    .filter(([_,p])=>p.type==='principal'&&p.metrics.length>0)
-    .map(([k,p])=>({k,name:p.name,digits:p.digits,wk:p.inWatiket,
-      vph:p.metrics[p.metrics.length-1].viewsPerHour,down:p.currentlyDown}))
-    .sort((a,b)=>b.vph-a.vph);
-  if(list.length===0){sec.style.display='none';return;}
-  sec.style.display='block';
-  const medals=['🥇','🥈','🥉'];
-  rows.innerHTML=list.map((p,i)=>`
-    <div class="rank-row">
-      <div class="rank-pos">${medals[i]||`#${i+1}`}</div>
-      <div class="rank-info">
-        <div class="rank-name">${p.name}</div>
-        <div class="rank-digs">${p.digits}</div>
-      </div>
-      ${p.wk?`<span class="rank-wk">WK</span>`:''}
-      ${p.down?`<span style="font-family:var(--f-mono);font-size:9px;color:var(--danger)">⚠</span>`:''}
-      <div class="rank-vph">${p.vph} v/h</div>
-    </div>`).join('');
-}
-
-/* SOPORTES */
-function renderSoportes(){
-  const rows=document.getElementById('soporteRows');
-  const list=Object.entries(phones).filter(([_,p])=>p.type==='soporte');
-  if(list.length===0){rows.innerHTML=`<div style="font-family:var(--f-mono);font-size:10px;color:var(--faint)">Sin soportes registrados</div>`;return;}
-  rows.innerHTML=list.map(([k,p])=>{
-    const st=getStatus(p);
-    const vph=p.metrics.length?p.metrics[p.metrics.length-1].viewsPerHour:0;
-    const dotC=st==='active'?'ha':st==='moderate'?'hm':'hi';
-    return `<div class="rank-row">
-      <div class="hd ${dotC}" style="width:9px;height:9px;border-radius:50%;flex-shrink:0"></div>
-      <div class="rank-info">
-        <div class="rank-name">${p.name}</div>
-        <div class="rank-digs">${p.digits}</div>
-      </div>
-      ${p.inWatiket?`<span class="rank-wk">WK</span>`:''}
-      ${p.currentlyDown?`<span style="font-family:var(--f-mono);font-size:9px;color:var(--danger)">⚠</span>`:''}
-      <div class="rank-vph" style="color:var(--silver)">${vph} v/h</div>
-    </div>`;
-  }).join('');
-}
-
-/* ══════════════════════
-   ANÁLISIS
-══════════════════════ */
-function renderAnalisis(){
-  renderComparison();
-  renderChart();
-  renderLog();
-  renderPhHist();
-}
-
-/* Comparison */
-function renderComparison(){
-  const el=document.getElementById('cmpList');
-  const all=Object.entries(phones).filter(([_,p])=>p.metrics.length>0);
-  if(all.length===0){el.innerHTML=`<div style="font-family:var(--f-mono);font-size:11px;color:var(--faint);text-align:center;padding:16px">Sin datos</div>`;return;}
-  const maxVph=Math.max(...all.map(([_,p])=>p.metrics[p.metrics.length-1].viewsPerHour),1);
-  const sorted=all.sort((a,b)=>b[1].metrics[b[1].metrics.length-1].viewsPerHour-a[1].metrics[a[1].metrics.length-1].viewsPerHour);
-  el.innerHTML=sorted.map(([k,p])=>{
-    const vph=p.metrics[p.metrics.length-1].viewsPerHour;
-    const pct=(vph/maxVph)*100;
-    const st=getStatus(p);
-    const color=st==='active'?'var(--neon)':st==='moderate'?'var(--amber)':st==='down'?'var(--danger)':'var(--silver)';
-    return `<div class="cmp-row">
-      <div class="cmp-name">${p.name}</div>
-      <div class="cmp-track">
-        <div class="cmp-fill" style="width:${pct}%;background:${color}">
-          ${pct>12?`<span class="cmp-fill-lbl">${p.digits}</span>`:''}
-        </div>
-      </div>
-      <div class="cmp-vph" style="color:${color}">${vph} v/h</div>
-    </div>`;
-  }).join('');
-}
-
-/* Chart */
-function renderChart(){
-  const canvas=document.getElementById('chartVPH');
-  if(!canvas) return;
-  const all=Object.entries(phones).filter(([_,p])=>p.metrics.length>0);
-  if(all.length===0){if(chartInst){chartInst.destroy();chartInst=null;}return;}
-
-  const palette=['#00ffe0','#3d9dff','#ffb800','#ff3355','#a78bfa','#fb923c','#34d399','#f472b6','#60a5fa','#fbbf24'];
-  const datasets=all.map(([k,p],i)=>{
-    const c=palette[i%palette.length];
-    return {
-      label: p.name,
-      data: p.metrics.map(m=>({
-        x: new Date(m.recordedAt).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}),
-        y: m.viewsPerHour
-      })),
-      borderColor: c,
-      backgroundColor: c+'18',
-      tension: 0.35,
-      pointRadius: 4,
-      pointHoverRadius: 7,
-      fill: false,
-      borderWidth: 2,
-      pointBackgroundColor: c,
-    };
-  });
-
-  if(chartInst) chartInst.destroy();
-  chartInst=new Chart(canvas,{
-    type:'line',
-    data:{datasets},
-    options:{
-      responsive:true,
-      maintainAspectRatio:false,
-      plugins:{
-        legend:{
-          labels:{
-            color:'#3d5080',
-            font:{family:'Share Tech Mono',size:10},
-            boxWidth:10, padding:12
-          }
-        },
-        tooltip:{
-          backgroundColor:'#0b1020',
-          borderColor:'#1e2848',
-          borderWidth:1,
-          titleColor:'#dce8ff',
-          bodyColor:'#3d5080',
-          titleFont:{family:'Oswald',size:13},
-          bodyFont:{family:'Share Tech Mono',size:11}
+        // Inicializar data
+        if(localStorage.getItem('metriwapp_v3')) {
+            phones = JSON.parse(localStorage.getItem('metriwapp_v3'));
         }
-      },
-      scales:{
-        x:{
-          ticks:{color:'#1e2d50',font:{family:'Share Tech Mono',size:9}},
-          grid:{color:'#0e1428'}
-        },
-        y:{
-          ticks:{color:'#1e2d50',font:{family:'Share Tech Mono',size:9}},
-          grid:{color:'#0e1428'},
-          title:{display:true,text:'v/h',color:'#1e2d50',font:{size:9}}
+
+        function save() {
+            localStorage.setItem('metriwapp_v3', JSON.stringify(phones));
+            render();
         }
-      }
-    }
-  });
-}
 
-/* Log */
-function renderLog(){
-  const body=document.getElementById('dtBody');
-  const rows=[];
-  Object.values(phones).forEach(p=>{
-    p.downtime.forEach(d=>rows.push({name:p.name,type:p.type,...d}));
-  });
-  if(rows.length===0){body.innerHTML=`<tr><td colspan="8" class="dt-empty">// Sin caídas registradas</td></tr>`;return;}
-  rows.sort((a,b)=>new Date(b.downSince)-new Date(a.downSince));
-  const fmt=d=>new Date(d).toLocaleString('es-AR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-  body.innerHTML=rows.map(r=>`<tr>
-    <td style="font-weight:600">${r.name}</td>
-    <td><span class="dt-badge ${r.type==='principal'?'p':'s'}">${r.type==='principal'?'PRINCI':'SOPORTE'}</span></td>
-    <td style="font-family:var(--f-mono);font-size:10px">${fmt(r.downSince)}</td>
-    <td style="font-family:var(--f-mono);font-size:10px">${fmt(r.liftedAt)}</td>
-    <td style="color:var(--amber);font-family:var(--f-mono);font-weight:700">${r.hoursDown}h</td>
-    <td style="color:var(--neon);font-family:var(--f-mono);font-weight:700">${r.accumulatedMessages}</td>
-    <td style="font-family:var(--f-mono);font-size:10px;color:var(--silver)">${r.firstMessageTime||'—'}</td>
-    <td style="font-family:var(--f-mono);font-size:10px;color:var(--silver)">${r.lastMessageTime||'—'}</td>
-  </tr>`).join('');
-}
+        // Hora Real
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('realClock').textContent = now.toLocaleTimeString('es-AR');
+        }, 1000);
 
-/* Ph select */
-function updatePhSel(){
-  const sel=document.getElementById('phSel');
-  const cur=sel.value;
-  sel.innerHTML=`<option value="">— Seleccionar —</option>`+
-    Object.entries(phones).map(([k,p])=>`<option value="${k}" ${k===cur?'selected':''}>${p.name} (${p.digits})</option>`).join('');
-}
+        function switchTab(t) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.view-container > div').forEach(v => v.style.display = 'none');
+            document.getElementById('view-' + t).style.display = 'block';
+            event.target.classList.add('active');
+        }
 
-/* Ph history */
-function renderPhHist(){
-  const key=document.getElementById('phSel').value;
-  const el=document.getElementById('phHistList');
-  if(!key){el.innerHTML=`<div style="font-family:var(--f-mono);font-size:11px;color:var(--faint);text-align:center;padding:16px">Seleccioná un celular</div>`;return;}
-  const p=phones[key];
-  if(!p||p.metrics.length===0){el.innerHTML=`<div style="font-family:var(--f-mono);font-size:11px;color:var(--faint);text-align:center;padding:16px">Sin métricas</div>`;return;}
-  el.innerHTML=[...p.metrics].reverse().map(m=>{
-    const ut=new Date(m.uploadTime);
-    const rec=new Date(m.recordedAt);
-    const dc=dotCls(m.viewsPerHour);
-    return `<div class="ph-entry">
-      <div class="ph-dot ${dc}"></div>
-      <div class="ph-time">
-        ↑${ut.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})}
-        · reg ${rec.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})}
-      </div>
-      <div class="ph-views">${m.views} vistas</div>
-      <div class="ph-vph">${m.viewsPerHour} v/h</div>
-    </div>`;
-  }).join('');
-}
+        function calculateVPH(views, uploadTime) {
+            if(!views || !uploadTime) return 0;
+            const [h, m] = uploadTime.split(':').map(Number);
+            const upload = new Date();
+            upload.setHours(h, m, 0, 0);
+            
+            let now = new Date();
+            if (upload > now) upload.setDate(upload.getDate() - 1);
+            
+            const diffHours = (now - upload) / (1000 * 60 * 60);
+            
+            // Si pasaron menos de 30 mins, evitamos disparar el número locamente
+            if(diffHours < 0.5) return Math.min(views, 200); 
 
-/* EXPORT / CLEAR */
-function exportData(){
-  const blob=new Blob([JSON.stringify(phones,null,2)],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url; a.download=`metriwapp_${new Date().toISOString().slice(0,10)}.json`;
-  a.click(); toast('Datos exportados');
-}
+            return Math.round(views / diffHours);
+        }
 
-function clearAll(){
-  if(!confirm('¿Borrar TODOS los datos? No se puede deshacer.')) return;
-  phones={}; save(); renderAll(); resetForm(); toast('Datos borrados');
-}
+        function submitForm() {
+            const id = editId || 'p' + Date.now();
+            const v = parseInt(document.getElementById('fViews').value) || 0;
+            const t = document.getElementById('fTime').value;
 
-/* INIT */
-load();
-setInterval(save, 30000);
-</script>
+            phones[id] = {
+                id,
+                name: document.getElementById('fName').value,
+                digits: document.getElementById('fDigits').value,
+                type: document.getElementById('fType').value,
+                flow: document.getElementById('fFlow').value,
+                vph: calculateVPH(v, t),
+                views: v,
+                time: t,
+                inWatiket: document.getElementById('fWk').checked,
+                isDown: phones[id]?.isDown || false,
+                downAt: phones[id]?.downAt || null,
+                logs: phones[id]?.logs || []
+            };
+
+            resetForm();
+            save();
+        }
+
+        function resetForm() {
+            editId = null;
+            document.getElementById('fName').value = "";
+            document.getElementById('fDigits').value = "";
+            document.getElementById('fViews').value = "";
+            document.getElementById('fTime').value = "";
+            document.getElementById('submitBtn').textContent = "Cargar Celular";
+            document.getElementById('submitBtn').classList.remove('btn-edit-mode');
+            document.getElementById('cancelBtn').style.display = 'none';
+            document.getElementById('editMarker').style.display = 'none';
+        }
+
+        function startEdit(id) {
+            const p = phones[id];
+            editId = id;
+            document.getElementById('fName').value = p.name;
+            document.getElementById('fDigits').value = p.digits;
+            document.getElementById('fFlow').value = p.flow;
+            document.getElementById('fViews').value = p.views;
+            document.getElementById('fTime').value = p.time;
+            document.getElementById('fWk').checked = p.inWatiket;
+            document.getElementById('submitBtn').textContent = "✓ Guardar Cambios";
+            document.getElementById('submitBtn').classList.add('btn-edit-mode');
+            document.getElementById('cancelBtn').style.display = 'block';
+            document.getElementById('editMarker').style.display = 'block';
+            window.scrollTo({top:0, behavior:'smooth'});
+        }
+
+        function toggleDown(id) {
+            const p = phones[id];
+            if(!p.isDown) {
+                p.isDown = true;
+                p.downAt = new Date().toISOString();
+            } else {
+                liftId = id;
+                document.getElementById('modalLift').style.display = 'flex';
+                return;
+            }
+            save();
+        }
+
+        function confirmLift() {
+            const msgs = document.getElementById('mLiftMsgs').value;
+            if(!msgs) return alert("Cargá la cantidad de mensajes para cerrar el reporte.");
+            
+            const p = phones[liftId];
+            const upAt = new Date().toISOString();
+            const duration = Math.round((new Date(upAt) - new Date(p.downAt)) / (1000 * 60));
+
+            p.logs.unshift({
+                downAt: p.downAt,
+                upAt: upAt,
+                msgs: msgs,
+                duration: duration
+            });
+
+            p.isDown = false;
+            p.downAt = null;
+            closeModal();
+            save();
+        }
+
+        function closeModal() {
+            document.getElementById('modalLift').style.display = 'none';
+            document.getElementById('mLiftMsgs').value = "";
+            liftId = null;
+        }
+
+        function deletePhone(id) {
+            if(confirm("¿Eliminar este celular de la lista?")) {
+                delete phones[id];
+                save();
+            }
+        }
+
+        function render() {
+            const grid = document.getElementById('mainGrid');
+            const logTable = document.getElementById('downLogTable');
+            grid.innerHTML = "";
+            logTable.innerHTML = "";
+
+            let cAct = 0, cDown = 0, cWk = 0, sumVPH = 0;
+
+            Object.values(phones).forEach(p => {
+                if(p.isDown) cDown++; else cAct++;
+                if(p.inWatiket) cWk++;
+                sumVPH += p.vph;
+
+                // CARD RENDERING
+                const statusCls = p.isDown ? 'status-caido' : `status-${p.flow}`;
+                const card = document.createElement('div');
+                card.className = 'phone-card';
+                card.innerHTML = `
+                    <div class="pc-top">
+                        <div class="pc-info">
+                            <span class="flow-status ${statusCls}"></span>
+                            <h4>${p.name}</h4>
+                            <p>${p.digits}</p>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-end;">
+                            <span class="badge ${p.type === 'principal' ? 'badge-princi' : 'badge-sop'}">${p.type}</span>
+                            ${p.inWatiket ? '<span class="badge badge-wk">Watiket</span>' : ''}
+                        </div>
+                    </div>
+                    <div class="pc-vph">
+                        <span class="pc-vph-label">Vistas / Hora</span>
+                        <span class="pc-vph-val">${p.isDown ? '0' : p.vph}</span>
+                    </div>
+                    <div style="font-size:11px; color:var(--text-muted); display:flex; justify-content:space-between;">
+                        <span>Vistas Totales: <b>${p.views}</b></span>
+                        <span>Flujo: <b style="text-transform:uppercase; color:var(--text-main)">${p.isDown ? 'CAÍDO' : p.flow}</b></span>
+                    </div>
+                    <div class="pc-actions">
+                        <button class="btn-pc edit" onclick="startEdit('${p.id}')">✏ Editar</button>
+                        <button class="btn-pc ${p.isDown ? '' : 'danger'}" onclick="toggleDown('${p.id}')">
+                            ${p.isDown ? '↑ Levantar' : '↓ Caído'}
+                        </button>
+                        <button class="btn-pc danger" onclick="deletePhone('${p.id}')" style="grid-column: span 2; font-size:9px;">Eliminar</button>
+                    </div>
+                `;
+                grid.appendChild(card);
+
+                // LOG TABLE RENDERING
+                p.logs.forEach(l => {
+                    logTable.innerHTML += `
+                        <tr>
+                            <td><b>${p.name}</b></td>
+                            <td>${new Date(l.downAt).toLocaleTimeString()}</td>
+                            <td>${new Date(l.upAt).toLocaleTimeString()}</td>
+                            <td>${l.duration} min</td>
+                            <td><b style="color:var(--accent)">${l.msgs}</b></td>
+                        </tr>
+                    `;
+                });
+            });
+
+            // Summary bar
+            document.getElementById('stAct').textContent = cAct;
+            document.getElementById('stDown').textContent = cDown;
+            document.getElementById('stWk').textContent = cWk;
+            document.getElementById('stAvg').textContent = cAct > 0 ? Math.round(sumVPH / cAct) : 0;
+        }
+
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(phones));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "reporte_metriwapp_" + new Date().toLocaleDateString() + ".json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        function clearAll() {
+            if(confirm("¿Estás seguro de borrar todo? Se perderá el historial de caídas de hoy.")) {
+                phones = {};
+                localStorage.removeItem('metriwapp_v3');
+                render();
+            }
+        }
+
+        function cancelEdit() { resetForm(); }
+
+        render();
+    </script>
 </body>
 </html>
