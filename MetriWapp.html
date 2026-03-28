@@ -3,405 +3,1026 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MetriWapp | Dashboard Oscuro</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>MetriWapp - Dashboard Casino Online</title>
     <style>
-        /* Fondo oscuro base */
-        body { background-color: #111827; color: #f3f4f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        /* Scrollbar oscura para que quede pro */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #1f2937; }
-        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0e1a;
+            color: #e5e7eb;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 16px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        /* HEADER */
+        header {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            padding: 20px 25px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.25);
+        }
+
+        h1 {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .subtitle {
+            opacity: 0.9;
+            font-size: 13px;
+        }
+
+        /* RESUMEN SUPERIOR */
+        .summary-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .summary-card {
+            background: #1a1f2e;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #2d3748;
+            text-align: center;
+        }
+
+        .summary-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .summary-value.green { color: #10b981; }
+        .summary-value.red { color: #ef4444; }
+        .summary-value.blue { color: #3b82f6; }
+        .summary-value.yellow { color: #f59e0b; }
+
+        .summary-label {
+            font-size: 11px;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* FORMULARIO */
+        .controls {
+            background: #1a1f2e;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            border: 1px solid #2d3748;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #9ca3af;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        input, select {
+            background: #0a0e1a;
+            border: 1.5px solid #374151;
+            color: #e5e7eb;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-top: 20px;
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+            text-transform: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            margin-left: 8px;
+        }
+
+        /* DASHBOARD */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .phone-card {
+            background: #1a1f2e;
+            border-radius: 10px;
+            padding: 16px;
+            border: 2px solid #2d3748;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .phone-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--status-color);
+        }
+
+        .phone-card.active { --status-color: #10b981; border-color: rgba(16, 185, 129, 0.3); }
+        .phone-card.moderate { --status-color: #f59e0b; border-color: rgba(245, 158, 11, 0.3); }
+        .phone-card.inactive { --status-color: #ef4444; border-color: rgba(239, 68, 68, 0.3); }
+        .phone-card.soporte { --status-color: #6b7280; border-color: rgba(107, 114, 128, 0.3); }
+
+        .phone-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            gap: 8px;
+        }
+
+        .phone-info {
+            flex: 1;
+        }
+
+        .phone-name {
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 3px;
+        }
+
+        .phone-digits {
+            font-size: 12px;
+            color: #9ca3af;
+            font-family: 'Courier New', monospace;
+        }
+
+        .badges {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            align-items: flex-end;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+
+        .badge.principal {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        .badge.soporte {
+            background: rgba(107, 114, 128, 0.2);
+            color: #9ca3af;
+        }
+
+        .badge.watiket {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .badge.no-watiket {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-top: 4px;
+        }
+
+        .status-badge.active {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .status-badge.moderate {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+
+        .status-badge.inactive {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .status-badge.soporte-status {
+            background: rgba(107, 114, 128, 0.2);
+            color: #9ca3af;
+        }
+
+        .metrics-compact {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .metric-compact {
+            background: #0a0e1a;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #374151;
+        }
+
+        .metric-compact-label {
+            font-size: 10px;
+            color: #9ca3af;
+            margin-bottom: 3px;
+            text-transform: uppercase;
+        }
+
+        .metric-compact-value {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .metric-unit {
+            font-size: 11px;
+            color: #6b7280;
+            margin-left: 3px;
+        }
+
+        .flow-bar {
+            height: 6px;
+            background: #374151;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+
+        .flow-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--status-color), var(--status-color));
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .down-info {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 8px;
+            font-size: 12px;
+        }
+
+        .down-info-title {
+            font-weight: 600;
+            color: #ef4444;
+            margin-bottom: 4px;
+        }
+
+        .down-stat {
+            color: #9ca3af;
+            font-size: 11px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .btn-small {
+            flex: 1;
+            padding: 7px 10px;
+            font-size: 11px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-down {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-up {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-delete {
+            background: #6b7280;
+            color: white;
+            flex: 0;
+            padding: 7px 12px;
+        }
+
+        .btn-small:hover {
+            transform: translateY(-1px);
+            opacity: 0.9;
+        }
+
+        /* RANKING */
+        .ranking-section {
+            background: #1a1f2e;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #2d3748;
+        }
+
+        .ranking-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ranking-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 10px;
+        }
+
+        .ranking-item {
+            background: #0a0e1a;
+            padding: 12px 14px;
+            border-radius: 8px;
+            border: 1px solid #374151;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .rank-number {
+            font-size: 22px;
+            font-weight: 700;
+            color: #6b7280;
+            min-width: 35px;
+            text-align: center;
+        }
+
+        .rank-number.gold { color: #fbbf24; }
+        .rank-number.silver { color: #9ca3af; }
+        .rank-number.bronze { color: #f97316; }
+
+        .rank-info {
+            flex: 1;
+        }
+
+        .rank-name {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+
+        .rank-stat {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .rank-watiket {
+            font-size: 10px;
+            color: #10b981;
+        }
+
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1a1f2e;
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 450px;
+            width: 100%;
+            border: 2px solid #2d3748;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .modal-form {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .btn-cancel {
+            background: #6b7280;
+            flex: 1;
+        }
+
+        .btn-confirm {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            flex: 1;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #6b7280;
+            grid-column: 1 / -1;
+        }
+
+        .empty-state-icon {
+            font-size: 56px;
+            margin-bottom: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .summary-bar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media print {
+            body {
+                background: white;
+                color: black;
+            }
+            
+            .controls {
+                display: none;
+            }
+        }
     </style>
 </head>
-<body class="p-4 md:p-6">
+<body>
+    <div class="container">
+        <header>
+            <h1>📱 MetriWapp Dashboard</h1>
+            <div class="subtitle">Sistema de Monitoreo - Casino Online</div>
+        </header>
 
-    <div class="max-w-7xl mx-auto space-y-6">
-        
-        <!-- Header -->
-        <div class="flex flex-col md:flex-row justify-between items-center bg-gray-800 p-5 rounded-xl shadow-lg border border-gray-700">
-            <div>
-                <h1 class="text-3xl font-bold text-white"><span class="text-emerald-500">Metri</span>Wapp 🚀</h1>
-                <p class="text-sm text-gray-400">Análisis de rendimiento de estados (Modo Oscuro)</p>
+        <!-- RESUMEN SUPERIOR -->
+        <div class="summary-bar">
+            <div class="summary-card">
+                <div class="summary-value green" id="summaryActive">0</div>
+                <div class="summary-label">Principales Activos</div>
             </div>
-            <div id="topCard" class="hidden text-right mt-4 md:mt-0">
-                <span class="text-xs uppercase font-bold text-emerald-900 bg-emerald-400 px-3 py-1 rounded-full">Top #1 Actual 🔥</span>
-                <p id="topPhoneLabel" class="text-xl font-bold text-white mt-2">-</p>
-                <p id="topPhonePace" class="text-sm text-emerald-400 font-semibold">-</p>
+            <div class="summary-card">
+                <div class="summary-value red" id="summaryDown">0</div>
+                <div class="summary-label">Principales Caídos</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-value blue" id="summaryWatiket">0</div>
+                <div class="summary-label">En Watiket</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-value yellow" id="summarySoporte">0</div>
+                <div class="summary-label">Soportes</div>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            <!-- COLUMNA IZQUIERDA: Formulario y Lista -->
-            <div class="lg:col-span-1 space-y-6">
-                
-                <!-- FORMULARIO DE CARGA -->
-                <div class="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 id="formTitle" class="text-lg font-bold text-white">Añadir Métrica</h2>
-                        <button id="cancelEditBtn" onclick="cancelarEdicion()" class="hidden text-xs text-red-400 hover:text-red-300 underline">Cancelar Edición</button>
-                    </div>
-
-                    <form id="addForm" class="space-y-4">
-                        <!-- Identificación -->
-                        <div class="grid grid-cols-2 gap-3">
-                            <div class="col-span-2 md:col-span-1">
-                                <label class="block text-xs font-semibold text-gray-400 uppercase">Nombre</label>
-                                <input type="text" id="phoneName" placeholder="Ej: Promo Zapas" required class="w-full mt-1 p-2 bg-gray-700 border border-gray-600 rounded text-white focus:ring-emerald-500 focus:border-emerald-500 outline-none">
-                            </div>
-                            <div class="col-span-2 md:col-span-1">
-                                <label class="block text-xs font-semibold text-gray-400 uppercase">4 Dígitos (Opc)</label>
-                                <input type="text" id="phoneDigits" placeholder="Ej: 5831" maxlength="4" class="w-full mt-1 p-2 bg-gray-700 border border-gray-600 rounded text-white focus:ring-emerald-500 focus:border-emerald-500 outline-none">
-                            </div>
-                        </div>
-
-                        <!-- Tiempo -->
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-400 uppercase">Día de subida</label>
-                                <select id="uploadDay" class="w-full mt-1 p-2 bg-gray-700 border border-gray-600 rounded text-white focus:ring-emerald-500 focus:border-emerald-500 outline-none">
-                                    <option value="hoy">Hoy</option>
-                                    <option value="ayer">Ayer</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-400 uppercase">Hora de subida</label>
-                                <input type="time" id="uploadTime" required class="w-full mt-1 p-2 bg-gray-700 border border-gray-600 rounded text-white focus:ring-emerald-500 focus:border-emerald-500 outline-none [color-scheme:dark]">
-                            </div>
-                        </div>
-
-                        <!-- Vistas -->
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-400 uppercase">Vistas Actuales</label>
-                            <input type="number" id="phoneViews" placeholder="Ej: 1400" required class="w-full mt-1 p-2 bg-gray-700 border border-gray-600 rounded text-white focus:ring-emerald-500 focus:border-emerald-500 outline-none">
-                        </div>
-
-                        <button type="submit" id="submitBtn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-lg transition shadow-lg">
-                            + Cargar Métrica
-                        </button>
-                    </form>
+        <!-- FORMULARIO -->
+        <div class="controls">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Nombre del Celular</label>
+                    <input type="text" id="phoneName" placeholder="Ej: Princi 1">
                 </div>
-
-                <!-- LISTA DE DISPOSITIVOS -->
-                <div class="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700 flex flex-col h-[400px]">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-lg font-bold text-white">Ranking Actual</h2>
-                        <button onclick="borrarTodos()" class="text-xs bg-red-900/50 text-red-400 hover:bg-red-800 hover:text-white px-2 py-1 rounded transition">Borrar Todos</button>
-                    </div>
-                    
-                    <ul id="deviceList" class="space-y-3 overflow-y-auto flex-1 pr-2">
-                        <!-- Dispositivos cargados -->
-                    </ul>
-                    <div id="emptyState" class="hidden text-center text-gray-500 mt-10">
-                        <p>No hay datos cargados.</p>
-                        <p class="text-sm">Agregá tu primer métrica arriba.</p>
-                    </div>
+                <div class="form-group">
+                    <label>Últimos 4 Dígitos</label>
+                    <input type="text" id="phoneDigits" placeholder="Ej: 5831" maxlength="4">
+                </div>
+                <div class="form-group">
+                    <label>Tipo</label>
+                    <select id="phoneType">
+                        <option value="principal">Principal</option>
+                        <option value="soporte">Soporte</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Vistas del Estado</label>
+                    <input type="number" id="views" placeholder="Ej: 1400">
+                </div>
+                <div class="form-group">
+                    <label>Hora Subida Estado</label>
+                    <input type="time" id="uploadTime">
+                </div>
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" id="inWatiket" checked>
+                    <label for="inWatiket">En Watiket</label>
                 </div>
             </div>
+            <button class="btn" onclick="addMetric()">+ Cargar Métrica</button>
+            <button class="btn btn-secondary" onclick="exportData()">📊 Exportar Datos</button>
+            <button class="btn btn-secondary" onclick="clearAllData()">🗑️ Limpiar Todo</button>
+        </div>
 
-            <!-- COLUMNA DERECHA: KPIs y Gráficos -->
-            <div class="lg:col-span-2 space-y-6">
-                
-                <!-- KPIs Universales -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div class="bg-gray-800 p-4 rounded-xl shadow-lg border-l-4 border-emerald-500">
-                        <span class="text-gray-400 text-xs font-bold uppercase">Impacto Total</span>
-                        <h3 id="totalViewsCard" class="text-3xl font-extrabold text-white mt-1">0 <span class="text-sm font-medium text-gray-500">Vistas</span></h3>
-                    </div>
-                    <div class="bg-gray-800 p-4 rounded-xl shadow-lg border-l-4 border-blue-500">
-                        <span class="text-gray-400 text-xs font-bold uppercase">Promedio General</span>
-                        <h3 id="avgVelocityCard" class="text-3xl font-extrabold text-white mt-1">0 <span class="text-sm font-medium text-gray-500">V / Hr</span></h3>
-                    </div>
-                    <div class="bg-gray-800 p-4 rounded-xl shadow-lg border-l-4 border-purple-500">
-                        <span class="text-gray-400 text-xs font-bold uppercase">Celulares Testeados</span>
-                        <h3 id="totalPhonesCard" class="text-3xl font-extrabold text-white mt-1">0</h3>
-                    </div>
+        <!-- DASHBOARD DE CELULARES -->
+        <div class="dashboard" id="dashboard">
+            <div class="empty-state">
+                <div class="empty-state-icon">📱</div>
+                <h3>No hay celulares registrados</h3>
+                <p>Comienza agregando métricas</p>
+            </div>
+        </div>
+
+        <!-- RANKING -->
+        <div class="ranking-section" id="rankingSection" style="display: none;">
+            <div class="ranking-title">🏆 Ranking por Flujo (Vistas/Hora)</div>
+            <div class="ranking-grid" id="rankingList"></div>
+        </div>
+    </div>
+
+    <!-- MODAL LEVANTAR CELULAR -->
+    <div class="modal" id="liftModal">
+        <div class="modal-content">
+            <div class="modal-title">🔺 Levantar Celular</div>
+            <div class="modal-form">
+                <div class="form-group">
+                    <label>Mensajes Acumulados (Obligatorio)</label>
+                    <input type="number" id="accumulatedMessages" placeholder="Ej: 200">
                 </div>
-
-                <!-- Gráficos -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Chart 1: Velocidad -->
-                    <div class="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
-                        <h2 class="text-center font-bold text-gray-200 mb-2">Rendimiento (Vistas x Hora)</h2>
-                        <canvas id="velocityBarChart"></canvas>
-                    </div>
-
-                    <!-- Chart 2: Torta -->
-                    <div class="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700 flex flex-col items-center">
-                        <h2 class="text-center font-bold text-gray-200 mb-2">Cuota de Vistas Totales</h2>
-                        <div class="w-full max-w-xs aspect-square flex items-center">
-                            <canvas id="viewsPieChart"></canvas>
-                        </div>
-                    </div>
+                <div class="form-group">
+                    <label>Hora Primer Mensaje (Opcional)</label>
+                    <input type="time" id="firstMessageTime">
                 </div>
-
+                <div class="form-group">
+                    <label>Hora Último Mensaje (Opcional)</label>
+                    <input type="time" id="lastMessageTime">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="closeLiftModal()">Cancelar</button>
+                <button class="btn btn-confirm" onclick="confirmLift()">Confirmar</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Configuración global para que Chart.js se vea bien en Modo Oscuro
-        Chart.defaults.color = '#9ca3af';
-        Chart.defaults.borderColor = '#374151';
+        let phones = {};
+        let currentLiftingPhone = null;
 
-        // Base de datos local (arranca vacía o carga lo que ya tenías guardado)
-        let metricsData = JSON.parse(localStorage.getItem('metriwapp_data')) ||[];
-        let editModeId = null;
-
-        let barChartInst = null;
-        let pieChartInst = null;
-
-        // --- LÓGICA DE TIEMPO AUTOMÁTICO --- //
-        function calcularHorasTranscurridas(diaUpload, horaUpload) {
-            let ahora = new Date();
-            let fechaUpload = new Date();
-            
-            let [horas, minutos] = horaUpload.split(':');
-            fechaUpload.setHours(horas, minutos, 0, 0);
-
-            if (diaUpload === 'ayer') {
-                fechaUpload.setDate(fechaUpload.getDate() - 1);
+        // Cargar datos del localStorage
+        function loadData() {
+            const saved = localStorage.getItem('metriwapp_dashboard_v2');
+            if (saved) {
+                phones = JSON.parse(saved);
+                renderAll();
             }
-
-            // Diferencia en milisegundos a horas
-            let diffMs = ahora - fechaUpload;
-            let diffHoras = diffMs / (1000 * 60 * 60);
-
-            // Si por error ponen una hora en el futuro, le ponemos 0.1 para que no de error matemático
-            return diffHoras > 0 ? diffHoras : 0.1; 
         }
 
-        // ---- CORE: CALCULAR Y RENDERIZAR ---- //
-        function actualizarSistema() {
-            // Guardar en LocalStorage
-            localStorage.setItem('metriwapp_data', JSON.stringify(metricsData));
-
-            // Calcular VPH (Vistas por hora)
-            metricsData.forEach(item => {
-                let horas = calcularHorasTranscurridas(item.uploadDay, item.uploadTime);
-                item.vph = Math.round(item.views / horas);
-                item.horasTranscurridas = horas.toFixed(1); // Para mostrar en la UI
-            });
-
-            // Ordenar de mejor a peor
-            metricsData.sort((a, b) => b.vph - a.vph);
-
-            renderCards();
-            renderLista();
-            renderCharts();
+        // Guardar datos en localStorage
+        function saveData() {
+            localStorage.setItem('metriwapp_dashboard_v2', JSON.stringify(phones));
         }
 
-        function renderCards() {
-            if(metricsData.length === 0){
-                document.getElementById('topCard').classList.add('hidden');
-                document.getElementById('totalViewsCard').innerHTML = `0 <span class="text-sm font-medium text-gray-500">Vistas</span>`;
-                document.getElementById('avgVelocityCard').innerHTML = `0 <span class="text-sm font-medium text-gray-500">V / Hr</span>`;
-                document.getElementById('totalPhonesCard').innerText = `0`;
+        function addMetric() {
+            const name = document.getElementById('phoneName').value.trim();
+            const digits = document.getElementById('phoneDigits').value.trim();
+            const type = document.getElementById('phoneType').value;
+            const views = parseInt(document.getElementById('views').value);
+            const uploadTime = document.getElementById('uploadTime').value;
+            const inWatiket = document.getElementById('inWatiket').checked;
+
+            if (!name || !digits || !views || !uploadTime) {
+                alert('Por favor completa: Nombre, Dígitos, Vistas y Hora');
                 return;
             }
 
-            let sumaViews = 0, sumaVph = 0;
-            metricsData.forEach(d => { sumaViews += parseInt(d.views); sumaVph += d.vph });
-            let generalVelocity = Math.round(sumaVph / metricsData.length);
+            const phoneKey = `${name}_${digits}`;
+            const now = new Date();
+            const uploadDate = new Date();
+            const [hours, minutes] = uploadTime.split(':');
+            uploadDate.setHours(hours, minutes, 0, 0);
 
-            document.getElementById('totalViewsCard').innerHTML = `${sumaViews} <span class="text-sm font-medium text-gray-500">Vistas</span>`;
-            document.getElementById('avgVelocityCard').innerHTML = `${generalVelocity} <span class="text-sm font-medium text-gray-500">V / Hr</span>`;
-            document.getElementById('totalPhonesCard').innerText = `${metricsData.length}`;
+            if (!phones[phoneKey]) {
+                phones[phoneKey] = {
+                    name: name,
+                    digits: digits,
+                    type: type,
+                    inWatiket: inWatiket,
+                    metrics: [],
+                    downtime: [],
+                    currentlyDown: false,
+                    downSince: null
+                };
+            }
 
-            document.getElementById('topCard').classList.remove('hidden');
-            document.getElementById('topPhoneLabel').innerText = metricsData[0].fullName;
-            document.getElementById('topPhonePace').innerText = `${metricsData[0].vph} Vistas/Hr`;
+            // Actualizar configuración
+            phones[phoneKey].type = type;
+            phones[phoneKey].inWatiket = inWatiket;
+
+            const viewsPerHour = calculateViewsPerHour(views, uploadDate, now);
+
+            phones[phoneKey].metrics.push({
+                views: views,
+                uploadTime: uploadDate.toISOString(),
+                recordedAt: now.toISOString(),
+                viewsPerHour: viewsPerHour
+            });
+
+            // Mantener últimas 20 métricas
+            if (phones[phoneKey].metrics.length > 20) {
+                phones[phoneKey].metrics = phones[phoneKey].metrics.slice(-20);
+            }
+
+            saveData();
+            renderAll();
+
+            // Limpiar formulario
+            document.getElementById('views').value = '';
+            document.getElementById('phoneName').focus();
         }
 
-        function renderLista() {
-            const ul = document.getElementById('deviceList');
-            const emptyState = document.getElementById('emptyState');
-            ul.innerHTML = '';
-            
-            if(metricsData.length === 0) {
-                emptyState.classList.remove('hidden');
-            } else {
-                emptyState.classList.add('hidden');
-            }
-            
-            metricsData.forEach((device, index) => {
-                let medalla = (index === 0) ? "🏆" : (index === 1 ? "🥈" : "🥉");
-                if (index > 2) medalla = `<span class="text-gray-500">${index + 1}.</span>`;
+        function calculateViewsPerHour(views, uploadTime, recordedTime) {
+            const hoursDiff = (recordedTime - new Date(uploadTime)) / (1000 * 60 * 60);
+            if (hoursDiff < 0.1) return Math.round(views * 10);
+            return Math.round(views / hoursDiff);
+        }
 
-                const li = document.createElement('li');
-                li.className = "flex justify-between items-center bg-gray-700 p-3 rounded-lg border border-gray-600 hover:border-gray-500 transition";
-                li.innerHTML = `
-                    <div class="flex items-center space-x-3 w-2/3">
-                        <div class="w-6 text-center text-lg">${medalla}</div>
-                        <div class="truncate">
-                            <p class="font-bold text-gray-200 text-sm truncate">${device.fullName}</p>
-                            <p class="text-xs text-gray-400">${device.views} vis | Hace ${device.horasTranscurridas} hs</p>
-                        </div>
+        function getPhoneStatus(phone) {
+            if (phone.currentlyDown) return 'inactive';
+            if (phone.type === 'soporte') return 'soporte-status';
+            if (!phone.metrics || phone.metrics.length === 0) return 'inactive';
+            
+            const latest = phone.metrics[phone.metrics.length - 1];
+            const viewsPerHour = latest.viewsPerHour;
+
+            if (viewsPerHour >= 80) return 'active';
+            if (viewsPerHour >= 30) return 'moderate';
+            return 'inactive';
+        }
+
+        function markPhoneDown(phoneKey) {
+            phones[phoneKey].currentlyDown = true;
+            phones[phoneKey].downSince = new Date().toISOString();
+            saveData();
+            renderAll();
+        }
+
+        function openLiftModal(phoneKey) {
+            currentLiftingPhone = phoneKey;
+            document.getElementById('liftModal').classList.add('active');
+            document.getElementById('accumulatedMessages').focus();
+        }
+
+        function closeLiftModal() {
+            currentLiftingPhone = null;
+            document.getElementById('liftModal').classList.remove('active');
+            document.getElementById('accumulatedMessages').value = '';
+            document.getElementById('firstMessageTime').value = '';
+            document.getElementById('lastMessageTime').value = '';
+        }
+
+        function confirmLift() {
+            const messages = parseInt(document.getElementById('accumulatedMessages').value);
+            const firstMsg = document.getElementById('firstMessageTime').value;
+            const lastMsg = document.getElementById('lastMessageTime').value;
+
+            if (!messages || messages <= 0) {
+                alert('Debes ingresar la cantidad de mensajes acumulados');
+                return;
+            }
+
+            const phone = phones[currentLiftingPhone];
+            const liftedAt = new Date();
+            const downSince = new Date(phone.downSince);
+            const hoursDown = ((liftedAt - downSince) / (1000 * 60 * 60)).toFixed(1);
+
+            phone.downtime.push({
+                downSince: phone.downSince,
+                liftedAt: liftedAt.toISOString(),
+                hoursDown: parseFloat(hoursDown),
+                accumulatedMessages: messages,
+                firstMessageTime: firstMsg || null,
+                lastMessageTime: lastMsg || null
+            });
+
+            phone.currentlyDown = false;
+            phone.downSince = null;
+
+            saveData();
+            renderAll();
+            closeLiftModal();
+        }
+
+        function deletePhone(phoneKey) {
+            if (confirm(`¿Eliminar ${phones[phoneKey].name}?`)) {
+                delete phones[phoneKey];
+                saveData();
+                renderAll();
+            }
+        }
+
+        function renderAll() {
+            renderSummary();
+            renderDashboard();
+            renderRanking();
+        }
+
+        function renderSummary() {
+            let activeCount = 0;
+            let downCount = 0;
+            let watiketCount = 0;
+            let soporteCount = 0;
+
+            Object.values(phones).forEach(phone => {
+                if (phone.type === 'soporte') {
+                    soporteCount++;
+                } else {
+                    if (phone.currentlyDown) {
+                        downCount++;
+                    } else if (phone.metrics.length > 0) {
+                        activeCount++;
+                    }
+                }
+                
+                if (phone.inWatiket) {
+                    watiketCount++;
+                }
+            });
+
+            document.getElementById('summaryActive').textContent = activeCount;
+            document.getElementById('summaryDown').textContent = downCount;
+            document.getElementById('summaryWatiket').textContent = watiketCount;
+            document.getElementById('summarySoporte').textContent = soporteCount;
+        }
+
+        function renderDashboard() {
+            const dashboard = document.getElementById('dashboard');
+
+            if (Object.keys(phones).length === 0) {
+                dashboard.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📱</div>
+                        <h3>No hay celulares registrados</h3>
+                        <p>Comienza agregando métricas</p>
                     </div>
-                    <div class="flex flex-col items-end w-1/3">
-                        <span class="block font-bold text-emerald-400 text-sm">${device.vph} v/h</span>
-                        <div class="flex space-x-2 mt-1">
-                            <button onclick="editarMétrica(${device.id})" class="text-[11px] text-blue-400 hover:text-blue-300">✏️ Editar</button>
-                            <button onclick="borrarMétrica(${device.id})" class="text-[11px] text-red-400 hover:text-red-300">🗑️ Borrar</button>
+                `;
+                return;
+            }
+
+            dashboard.innerHTML = Object.entries(phones)
+                .sort((a, b) => {
+                    // Principales primero, luego soportes
+                    if (a[1].type !== b[1].type) {
+                        return a[1].type === 'principal' ? -1 : 1;
+                    }
+                    // Por vistas/hora descendente
+                    const aViews = a[1].metrics.length > 0 ? a[1].metrics[a[1].metrics.length - 1].viewsPerHour : 0;
+                    const bViews = b[1].metrics.length > 0 ? b[1].metrics[b[1].metrics.length - 1].viewsPerHour : 0;
+                    return bViews - aViews;
+                })
+                .map(([key, phone]) => {
+                const latest = phone.metrics[phone.metrics.length - 1] || {};
+                const status = getPhoneStatus(phone);
+                const viewsPerHour = latest.viewsPerHour || 0;
+                const maxViewsPerHour = 200;
+                const flowPercent = Math.min((viewsPerHour / maxViewsPerHour) * 100, 100);
+
+                const totalDowntimes = phone.downtime.length;
+                const avgMessages = totalDowntimes > 0 
+                    ? Math.round(phone.downtime.reduce((sum, d) => sum + d.accumulatedMessages, 0) / totalDowntimes)
+                    : 0;
+
+                let downInfo = '';
+                if (phone.currentlyDown) {
+                    const downSince = new Date(phone.downSince);
+                    const hoursDown = ((new Date() - downSince) / (1000 * 60 * 60)).toFixed(1);
+                    downInfo = `
+                        <div class="down-info">
+                            <div class="down-info-title">⚠️ CELULAR CAÍDO</div>
+                            <div class="down-stat">Caído hace ${hoursDown} horas</div>
+                            <div class="down-stat">Desde: ${downSince.toLocaleString('es-AR', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'})}</div>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="phone-card ${status}">
+                        <div class="phone-header">
+                            <div class="phone-info">
+                                <div class="phone-name">${phone.name}</div>
+                                <div class="phone-digits">${phone.digits}</div>
+                            </div>
+                            <div class="badges">
+                                <div class="badge ${phone.type}">${phone.type === 'principal' ? '🎯 Principal' : '🛟 Soporte'}</div>
+                                <div class="badge ${phone.inWatiket ? 'watiket' : 'no-watiket'}">
+                                    ${phone.inWatiket ? '✓ Watiket' : '✗ Sin Watiket'}
+                                </div>
+                                <div class="status-badge ${status}">
+                                    ${status === 'active' ? '🟢 Activo' : 
+                                      status === 'moderate' ? '🟡 Leve' : 
+                                      status === 'soporte-status' ? '⚪ Soporte' : '🔴 Inactivo'}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="metrics-compact">
+                            <div class="metric-compact">
+                                <div class="metric-compact-label">Vistas/Hora</div>
+                                <div class="metric-compact-value">${viewsPerHour}<span class="metric-unit">v/h</span></div>
+                            </div>
+                            <div class="metric-compact">
+                                <div class="metric-compact-label">Vistas Actual</div>
+                                <div class="metric-compact-value">${latest.views || 0}</div>
+                            </div>
+                            <div class="metric-compact">
+                                <div class="metric-compact-label">Total Caídas</div>
+                                <div class="metric-compact-value">${totalDowntimes}</div>
+                            </div>
+                            <div class="metric-compact">
+                                <div class="metric-compact-label">Prom. Mensajes</div>
+                                <div class="metric-compact-value">${avgMessages}<span class="metric-unit">msgs</span></div>
+                            </div>
+                        </div>
+
+                        <div class="flow-bar">
+                            <div class="flow-fill" style="width: ${flowPercent}%"></div>
+                        </div>
+
+                        ${downInfo}
+
+                        <div class="actions">
+                            ${!phone.currentlyDown ? 
+                                `<button class="btn-small btn-down" onclick="markPhoneDown('${key}')">🔻 Marcar Caído</button>` :
+                                `<button class="btn-small btn-up" onclick="openLiftModal('${key}')">🔺 Levantar</button>`
+                            }
+                            <button class="btn-small btn-delete" onclick="deletePhone('${key}')">🗑️</button>
                         </div>
                     </div>
                 `;
-                ul.appendChild(li);
-            });
+            }).join('');
         }
 
-        // --- MANEJO DEL FORMULARIO --- //
-        document.getElementById('addForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const nameInput = document.getElementById('phoneName').value.trim();
-            const digitsInput = document.getElementById('phoneDigits').value.trim();
-            const dayInput = document.getElementById('uploadDay').value;
-            const timeInput = document.getElementById('uploadTime').value;
-            const viewsInput = document.getElementById('phoneViews').value;
+        function renderRanking() {
+            const rankingSection = document.getElementById('rankingSection');
+            const rankingList = document.getElementById('rankingList');
 
-            // Armar nombre final (Si puso dígitos se los agrega, sino solo el nombre)
-            let finalName = nameInput;
-            if(digitsInput.length > 0) {
-                finalName += ` - ${digitsInput}`;
+            const principales = Object.entries(phones)
+                .filter(([_, phone]) => phone.type === 'principal' && phone.metrics.length > 0)
+                .map(([key, phone]) => ({
+                    key,
+                    name: phone.name,
+                    digits: phone.digits,
+                    inWatiket: phone.inWatiket,
+                    viewsPerHour: phone.metrics[phone.metrics.length - 1].viewsPerHour
+                }))
+                .sort((a, b) => b.viewsPerHour - a.viewsPerHour);
+
+            if (principales.length === 0) {
+                rankingSection.style.display = 'none';
+                return;
             }
 
-            if(editModeId) {
-                // Actualizar existente
-                let index = metricsData.findIndex(d => d.id === editModeId);
-                if(index !== -1) {
-                    metricsData[index].name = nameInput;
-                    metricsData[index].digits = digitsInput;
-                    metricsData[index].fullName = finalName;
-                    metricsData[index].uploadDay = dayInput;
-                    metricsData[index].uploadTime = timeInput;
-                    metricsData[index].views = Number(viewsInput);
-                }
-                cancelarEdicion();
-            } else {
-                // Crear nuevo
-                metricsData.push({
-                    id: Date.now(),
-                    name: nameInput,
-                    digits: digitsInput,
-                    fullName: finalName,
-                    uploadDay: dayInput,
-                    uploadTime: timeInput,
-                    views: Number(viewsInput)
-                });
-            }
+            rankingSection.style.display = 'block';
 
-            document.getElementById('addForm').reset();
-            actualizarSistema();
-        });
+            rankingList.innerHTML = principales.map((phone, index) => {
+                let medalClass = '';
+                if (index === 0) medalClass = 'gold';
+                else if (index === 1) medalClass = 'silver';
+                else if (index === 2) medalClass = 'bronze';
 
-        // --- ACCIONES RÁPIDAS (Borrar y Editar) --- //
-        function borrarMétrica(idValue) {
-            if(confirm('¿Seguro que querés borrar este celular?')){
-                metricsData = metricsData.filter(d => d.id !== idValue);
-                if(editModeId === idValue) cancelarEdicion();
-                actualizarSistema();
-            }
+                return `
+                    <div class="ranking-item">
+                        <div class="rank-number ${medalClass}">
+                            ${index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
+                        </div>
+                        <div class="rank-info">
+                            <div class="rank-name">${phone.name} (${phone.digits})</div>
+                            <div class="rank-stat">${phone.viewsPerHour} vistas/hora</div>
+                            ${phone.inWatiket ? '<div class="rank-watiket">✓ En Watiket</div>' : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
-        function borrarTodos() {
-            if(metricsData.length === 0) return;
-            if(confirm('⚠️ ¿Estás seguro que querés limpiar TODO el tablero? Esto no se puede deshacer.')){
-                metricsData =[];
-                cancelarEdicion();
-                actualizarSistema();
+        function exportData() {
+            const dataStr = JSON.stringify(phones, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `metriwapp_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+        }
+
+        function clearAllData() {
+            if (confirm('¿Estás seguro de borrar TODOS los datos? Esta acción no se puede deshacer.')) {
+                phones = {};
+                saveData();
+                renderAll();
             }
         }
 
-        function editarMétrica(idValue) {
-            let item = metricsData.find(d => d.id === idValue);
-            if(!item) return;
+        // Cargar datos al iniciar
+        loadData();
 
-            editModeId = item.id;
-            
-            // Llenar form
-            document.getElementById('phoneName').value = item.name;
-            document.getElementById('phoneDigits').value = item.digits;
-            document.getElementById('uploadDay').value = item.uploadDay;
-            document.getElementById('uploadTime').value = item.uploadTime;
-            document.getElementById('phoneViews').value = item.views;
-
-            // Cambiar UI del form
-            document.getElementById('formTitle').innerText = "Editando Métrica...";
-            document.getElementById('submitBtn').innerText = "✓ Actualizar Métrica";
-            document.getElementById('submitBtn').classList.replace('bg-emerald-600', 'bg-blue-600');
-            document.getElementById('submitBtn').classList.replace('hover:bg-emerald-500', 'hover:bg-blue-500');
-            document.getElementById('cancelEditBtn').classList.remove('hidden');
-        }
-
-        function cancelarEdicion() {
-            editModeId = null;
-            document.getElementById('addForm').reset();
-            document.getElementById('formTitle').innerText = "Añadir Métrica";
-            document.getElementById('submitBtn').innerText = "+ Cargar Métrica";
-            document.getElementById('submitBtn').classList.replace('bg-blue-600', 'bg-emerald-600');
-            document.getElementById('submitBtn').classList.replace('hover:bg-blue-500', 'hover:bg-emerald-500');
-            document.getElementById('cancelEditBtn').classList.add('hidden');
-        }
-
-        // --- GRÁFICOS --- //
-        function renderCharts() {
-            let nombresArr = metricsData.map(d => d.fullName);
-            let vistasTotalesArr = metricsData.map(d => d.views);
-            let velocidadArr = metricsData.map(d => d.vph);
-
-            let coloresDark = metricsData.map((d, i) => {
-                if(i === 0) return '#10b981'; // Emerald 500
-                if(i === 1) return '#3b82f6'; // Blue 500
-                if(i === 2) return '#a855f7'; // Purple 500
-                return '#4b5563'; // Gray 600
-            });
-
-            // CHART BARRAS
-            if (barChartInst) barChartInst.destroy();
-            if(metricsData.length > 0) {
-                let ctxBar = document.getElementById('velocityBarChart').getContext('2d');
-                barChartInst = new Chart(ctxBar, {
-                    type: 'bar',
-                    data: {
-                        labels: nombresArr,
-                        datasets:[{
-                            label: 'Vistas por Hora',
-                            data: velocidadArr,
-                            backgroundColor: coloresDark,
-                            borderRadius: 4,
-                        }]
-                    },
-                    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-                });
-            }
-
-            // CHART TORTA
-            if (pieChartInst) pieChartInst.destroy();
-            if(metricsData.length > 0) {
-                let ctxPie = document.getElementById('viewsPieChart').getContext('2d');
-                pieChartInst = new Chart(ctxPie, {
-                    type: 'doughnut',
-                    data: {
-                        labels: nombresArr,
-                        datasets:[{
-                            data: vistasTotalesArr,
-                            backgroundColor: coloresDark,
-                            borderWidth: 2,
-                            borderColor: '#1f2937', // Color de fondo para separar
-                        }]
-                    },
-                    options: { plugins: { legend: { position: 'bottom' } }, cutout: '60%' }
-                });
-            }
-        }
-
-        // --- INICIALIZAR --- //
-        window.onload = () => { actualizarSistema(); };
-
+        // Auto-guardar cada 30 segundos
+        setInterval(saveData, 30000);
     </script>
 </body>
 </html>
