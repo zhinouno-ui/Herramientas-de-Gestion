@@ -3,375 +3,431 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MetriWapp Intelligence — v5 Final</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <title>MetriWapp PRO | Operational Intelligence</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #f0f2f5; --side: #0f172a; --card: #ffffff;
+            --bg: #f0f2f5; --side: #0f172a; --card: #ffffff; --border: #e2e8f0;
             --accent: #2563eb; --success: #10b981; --warning: #f59e0b;
-            --danger: #ef4444; --text: #1e293b; --muted: #64748b;
+            --danger: #ef4444; --text: #1e293b; --muted: #64748b; --purple: #8b5cf6;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
 
-        /* Sidebar - Cargador */
-        .sidebar { width: 330px; background: var(--side); color: white; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; border-right: 1px solid rgba(255,255,255,0.1); }
-        .logo { font-size: 22px; font-weight: 800; margin-bottom: 25px; border-bottom: 1px solid #1e293b; padding-bottom: 15px; color: #fff; }
+        /* --- SIDEBAR --- */
+        .sidebar { width: 340px; background: var(--side); color: white; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; border-right: 1px solid #1e293b; }
+        .logo { font-size: 22px; font-weight: 800; margin-bottom: 25px; border-bottom: 1px solid #1e293b; padding-bottom: 15px; text-align: center; }
         .logo span { color: var(--accent); }
 
         .f-label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #94a3b8; margin-bottom: 5px; display: block; letter-spacing: 0.5px; }
-        .f-input { width: 100%; background: #1e293b; border: 1px solid #334155; color: white; padding: 10px; border-radius: 6px; font-size: 13px; margin-bottom: 15px; }
-        
-        .btn-add { background: var(--accent); color: white; border: none; padding: 14px; border-radius: 8px; font-weight: 700; width: 100%; cursor: pointer; transition: 0.2s; font-size: 14px; }
-        .btn-add:hover { filter: brightness(1.2); }
+        .f-input { width: 100%; background: #1e293b; border: 1px solid #334155; color: white; padding: 10px; border-radius: 6px; font-size: 13px; margin-bottom: 15px; font-family: inherit; }
+        .f-input:focus { outline: none; border-color: var(--accent); }
 
-        /* Main Content */
+        .btn-add { background: var(--accent); color: white; border: none; padding: 14px; border-radius: 8px; font-weight: 800; width: 100%; cursor: pointer; transition: 0.2s; font-size: 14px; text-transform: uppercase; }
+        .btn-add:hover { filter: brightness(1.2); transform: translateY(-1px); }
+
+        /* --- MAIN CONTENT --- */
         .content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        .topbar { background: #fff; padding: 15px 25px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
-        .tabs { display: flex; gap: 10px; }
-        .tab { padding: 8px 20px; border: none; background: transparent; cursor: pointer; font-weight: 700; color: var(--muted); border-radius: 6px; }
-        .tab.active { background: #eff6ff; color: var(--accent); }
+        .topbar { background: #fff; padding: 0 25px; height: 60px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .tabs { display: flex; gap: 5px; }
+        .tab-btn { padding: 10px 20px; border: none; background: transparent; cursor: pointer; font-weight: 700; color: var(--muted); border-radius: 8px; font-size: 13px; }
+        .tab-btn.active { background: #eff6ff; color: var(--accent); }
 
-        .container { flex: 1; padding: 20px; overflow-y: auto; }
+        .container { flex: 1; padding: 25px; overflow-y: auto; display: block; }
         
-        /* Stats Report Area */
-        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
-        .s-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; }
-        .s-card small { font-size: 10px; text-transform: uppercase; font-weight: 800; color: var(--muted); display: block; }
-        .s-card b { font-size: 28px; font-weight: 800; }
+        /* --- KPI SUMMARY --- */
+        .stats-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: white; padding: 18px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); border-left: 4px solid var(--border); }
+        .stat-card small { font-size: 10px; text-transform: uppercase; font-weight: 800; color: var(--muted); display: block; margin-bottom: 4px; }
+        .stat-card b { font-size: 24px; font-weight: 800; line-height: 1; color: var(--text); }
+        .sc-act { border-left-color: var(--success); }
+        .sc-down { border-left-color: var(--danger); }
+        .sc-wk { border-left-color: var(--purple); }
 
-        /* Tarjetas de Celular */
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 15px; }
-        .p-card { background: white; border-radius: 12px; padding: 18px; border: 1px solid #e2e8f0; position: relative; }
-        .p-card.down { border-color: var(--danger); background: #fffcfc; }
-        .p-card.warn { border-color: var(--warning); border-width: 2px; }
+        /* --- CARDS GRID --- */
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; }
+        .phone-card { background: white; border-radius: 14px; border: 1px solid var(--border); padding: 18px; position: relative; transition: transform 0.2s; }
+        .phone-card:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.05); }
+        .phone-card.down { border-left: 6px solid var(--danger); background: #fff9f9; }
+        .phone-card.silent { border: 2px solid var(--danger); animation: glow-red 1.5s infinite; }
 
-        .p-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
-        .p-title h4 { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
-        .p-title small { font-family: 'JetBrains Mono'; font-weight: 700; color: var(--muted); font-size: 12px; }
+        @keyframes glow-red { 0% { box-shadow: 0 0 5px #fee2e2; } 50% { box-shadow: 0 0 15px #fecaca; } 100% { box-shadow: 0 0 5px #fee2e2; } }
 
-        .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
-        .m-box { background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #f1f5f9; }
-        .m-lbl { font-size: 9px; font-weight: 800; text-transform: uppercase; color: var(--muted); }
-        .m-val { font-size: 18px; font-weight: 800; color: var(--accent); }
+        .pc-head { display: flex; justify-content: space-between; margin-bottom: 12px; align-items: flex-start; }
+        .pc-title h4 { font-size: 18px; font-weight: 800; }
+        .pc-title code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; color: var(--muted); }
 
-        .alert-gap { background: #fef2f2; border: 1px solid #fee2e2; color: #991b1b; padding: 8px; border-radius: 6px; font-size: 11px; font-weight: 800; text-align: center; margin-top: 10px; }
+        .pc-main-met { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .pc-box { background: #f8fafc; padding: 12px; border-radius: 10px; border: 1px solid #f1f5f9; text-align: center; }
+        .pc-label { font-size: 9px; text-transform: uppercase; font-weight: 800; color: var(--muted); margin-bottom: 3px; }
+        .pc-val { font-size: 19px; font-weight: 800; color: var(--accent); }
 
-        .badge { font-size: 9px; padding: 3px 8px; border-radius: 5px; font-weight: 800; text-transform: uppercase; }
+        .gap-alert { background: var(--danger); color: white; padding: 6px; border-radius: 6px; font-size: 11px; font-weight: 800; text-align: center; margin-top: 10px; }
+
+        .badge { font-size: 9px; padding: 3px 8px; border-radius: 5px; font-weight: 800; text-transform: uppercase; display: inline-block; }
         .b-wk { background: #ede9fe; color: #5b21b6; }
         .b-pr { background: #e0f2fe; color: #0369a1; }
+        .b-flow { background: #f1f5f9; color: var(--text); }
 
-        .btn-group { display: flex; gap: 8px; margin-top: 15px; border-top: 1px solid #f1f5f9; padding-top: 15px; }
-        .btn-opt { flex: 1; padding: 8px; font-size: 11px; font-weight: 700; border: 1px solid #e2e8f0; border-radius: 6px; background: white; cursor: pointer; transition: 0.2s; }
-        .btn-opt:hover { background: #f8fafc; }
+        .actions { display: flex; gap: 8px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #f1f5f9; }
+        .btn-act { flex: 1; padding: 8px; font-size: 11px; font-weight: 700; border: 1px solid var(--border); border-radius: 6px; background: white; cursor: pointer; color: var(--text); }
+        .btn-act:hover { background: #f8fafc; border-color: var(--muted); }
 
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 999; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        /* --- MODAL --- */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.8); backdrop-filter: blur(4px); align-items: center; justify-content: center; z-index: 1000; }
+        .modal-box { background: white; padding: 30px; border-radius: 16px; width: 400px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+
+        /* --- HISTORY --- */
+        .history-list { display: flex; flex-direction: column; gap: 10px; }
+        .history-card { background: white; padding: 15px; border-radius: 10px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        
+        .timer-info { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--muted); font-weight: 700; }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <div class="logo">Metri<span>Wapp 5.0</span></div>
+        <div class="logo">Metri<span>Wapp PRO</span></div>
 
-        <label class="f-label">Identificación</label>
-        <input type="text" id="fName" class="f-input" placeholder="Nombre (Ej: Princi 1)">
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-            <div>
-                <label class="f-label">Dígitos</label>
-                <input type="text" id="fDigs" class="f-input" maxlength="4" placeholder="0000">
+        <div class="form-body">
+            <label class="f-label">Identificación</label>
+            <input type="text" id="fName" class="f-input" placeholder="Nombre Celular">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div>
+                    <label class="f-label">Dígitos</label>
+                    <input type="text" id="fDigs" class="f-input" maxlength="4" placeholder="Ej: 5831">
+                </div>
+                <div>
+                    <label class="f-label">Tipo</label>
+                    <select id="fType" class="f-input">
+                        <option value="principal">🎯 Principal</option>
+                        <option value="soporte">🛟 Soporte</option>
+                    </select>
+                </div>
             </div>
-            <div>
-                <label class="f-label">Tipo</label>
-                <select id="fType" class="f-input">
-                    <option value="principal">🎯 Principal</option>
-                    <option value="soporte">🛟 Soporte</option>
-                </select>
+
+            <label class="f-label">Data Operativa (Actual)</label>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div>
+                    <label class="f-label">Vistas Totales</label>
+                    <input type="number" id="fViews" class="f-input" placeholder="Vistas">
+                </div>
+                <div>
+                    <label class="f-label">Hora Status</label>
+                    <input type="time" id="fTime" class="f-input">
+                </div>
             </div>
+
+            <label class="f-label">Control de Tráfico</label>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div>
+                    <label class="f-label">Flujo Manual</label>
+                    <select id="fFlow" class="f-input">
+                        <option value="Alto">Alto 🔥</option>
+                        <option value="Medio" selected>Medio 🆗</option>
+                        <option value="Bajo">Bajo 📉</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="f-label">Último Mensaje</label>
+                    <input type="time" id="fLast" class="f-input">
+                </div>
+            </div>
+
+            <div class="f-input" style="display:flex; align-items:center; gap:10px; background: #0f172a; border-color: #334155;">
+                <input type="checkbox" id="fWk" checked style="width:18px; height:18px;">
+                <label for="fWk" style="cursor:pointer; font-weight: 700;">Activo en Watiket</label>
+            </div>
+
+            <button class="btn-add" onclick="saveEntry()">Actualizar Monitor</button>
         </div>
 
-        <label class="f-label">Operativa Mensajes</label>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-            <div>
-                <label class="f-label">Flujo Manual</label>
-                <select id="fFlow" class="f-input">
-                    <option value="alto">Alto 🔥</option>
-                    <option value="medio" selected>Estable</option>
-                    <option value="bajo">Bajo</option>
-                </select>
+        <div style="margin-top:auto; padding-top: 20px;">
+            <div id="refreshIndicator" style="font-size:10px; color:#64748b; margin-bottom:10px; display:flex; align-items:center; gap:5px;">
+                <span style="width:6px; height:6px; background:var(--success); border-radius:50%"></span> Sistema Activo y Sincronizado
             </div>
-            <div>
-                <label class="f-label">Último Msg</label>
-                <input type="time" id="fLastMsg" class="f-input">
+            <div style="display:flex; gap:8px;">
+                <button onclick="exportData()" class="btn-act" style="background:#1e293b; color:white; border:none; padding:10px;">Exportar</button>
+                <button onclick="resetData()" class="btn-act" style="border-color:rgba(239, 68, 68, 0.3); color:var(--danger)">Reset Total</button>
             </div>
-        </div>
-
-        <label class="f-label">Estado de Vistas</label>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-            <input type="number" id="fViews" class="f-input" placeholder="Cantidad">
-            <input type="time" id="fTime" class="f-input">
-        </div>
-
-        <div class="f-input" style="display:flex; gap:10px; align-items:center; background: #0f172a; border-color:#334155; margin-bottom:10px;">
-            <input type="checkbox" id="fWk" checked style="width:20px; height:20px;">
-            <label for="fWk" style="font-weight:700; font-size:12px; color:#fff; cursor:pointer;">¿Está en Watiket?</label>
-        </div>
-
-        <button class="btn-add" onclick="submitPhone()">Cargar / Actualizar</button>
-
-        <div style="margin-top:auto; display:flex; gap:10px;">
-            <button class="btn-opt" style="background:#1e293b; color:#fff; border:none;" onclick="exportData()">Exportar</button>
-            <button class="btn-opt" style="background:transparent; color:var(--danger); border-color:rgba(239, 68, 68, 0.3);" onclick="clearAll()">Reset</button>
         </div>
     </div>
 
     <div class="content">
         <div class="topbar">
             <div class="tabs">
-                <button class="tab active">Monitor Intelligence</button>
-                <button class="tab" onclick="switchTab('history')">Historial Caídas</button>
+                <button class="tab-btn active" id="btnLive" onclick="navigate('live')">Real-Time Monitor</button>
+                <button class="tab-btn" id="btnHist" onclick="navigate('history')">Incidentes y Reportes</button>
             </div>
-            <div id="reloj" style="font-family:'JetBrains Mono'; font-weight:800; font-size:18px; color:var(--muted)">00:00:00</div>
+            <div id="reloj" style="font-family:'JetBrains Mono'; font-weight:800; font-size:18px; color:var(--side)">00:00:00</div>
         </div>
 
-        <div class="container" id="monitorView">
-            <div class="stats">
-                <div class="s-card" style="border-top: 4px solid var(--accent);">
-                    <small>Celulares Operando</small>
-                    <b id="countAct">0</b>
-                </div>
-                <div class="s-card" style="border-top: 4px solid var(--danger);">
-                    <small>Bajas / Caídos</small>
-                    <b id="countDown">0</b>
-                </div>
-                <div class="s-card" style="border-top: 4px solid #8b5cf6;">
-                    <small>En Watiket</small>
-                    <b id="countWk">0</b>
-                </div>
-                <div class="s-card" style="border-top: 4px solid var(--success);">
-                    <small>Promedio VPH</small>
-                    <b id="avgVph">0</b>
-                </div>
+        <!-- --- VISTA MONITOR --- -->
+        <div id="viewLive" class="container">
+            <div class="stats-row">
+                <div class="stat-card sc-act"><small>Celulares Online</small><b id="kpiAct">0</b></div>
+                <div class="stat-card sc-down"><small>Caídos / Off</small><b id="kpiDown">0</b></div>
+                <div class="stat-card sc-wk"><small>En Watiket</small><b id="kpiWk">0</b></div>
+                <div class="stat-card"><small>Promedio VPH</small><b id="kpiAvg">0</b></div>
+                <div class="stat-card"><small>Vistas Totales</small><b id="kpiTotalV">0</b></div>
             </div>
 
-            <div class="grid" id="mainGrid">
+            <div class="cards-grid" id="mainGrid">
                 <!-- Tarjetas Dinámicas -->
             </div>
         </div>
 
-        <div class="container" id="historyView" style="display:none;">
-            <div class="s-card">
-                <h3>Incidentes y Levantadas</h3>
-                <div id="histTable" style="margin-top:15px;"></div>
+        <!-- --- VISTA HISTORIAL --- -->
+        <div id="viewHist" class="container" style="display:none">
+            <div style="max-width: 800px; margin: 0 auto;">
+                <h2 style="margin-bottom:20px;">Log de Actividad Operativa</h2>
+                <div id="historyLog" class="history-list">
+                    <!-- Logs Dinámicos -->
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- MODAL DOWN -->
     <div class="modal" id="modalDown">
-        <div class="s-card" style="width:380px;">
-            <h3>Subida de Celular</h3>
-            <div style="margin:15px 0;">
-                <label class="f-label" style="color:#000">¿Cuántos mensajes acumuló?</label>
-                <input type="number" id="mLiftMsgs" class="f-input" style="background:#fff; border:1px solid #ddd; color:#000;">
+        <div class="modal-box">
+            <h2 style="margin-bottom:10px;">Recuperar Celular</h2>
+            <p style="font-size:14px; color:var(--muted); margin-bottom:20px;">Ingrese la cantidad de mensajes acumulados durante la caída para cerrar el incidente.</p>
+            <div style="margin-bottom:20px;">
+                <label class="f-label" style="color:var(--text)">Mensajes Acumulados</label>
+                <input type="number" id="mLift" class="f-input" style="color:black; background:white; border-color:#cbd5e1;" placeholder="Ej: 145">
             </div>
             <div style="display:flex; gap:10px;">
-                <button class="btn-opt" onclick="closeModal()">Cancelar</button>
-                <button class="btn-add" onclick="confirmLift()">Confirmar Up</button>
+                <button class="btn-act" style="flex:1" onclick="closeModal()">Cancelar</button>
+                <button class="btn-add" style="flex:1" onclick="confirmLift()">Subir (UP)</button>
             </div>
         </div>
     </div>
 
     <script>
-        const PRIMARY_KEY = 'mw_final_storage';
-        const LEGACY_KEYS = ['metriwapp_v3', 'mw_v4', 'metriwapp_v4', 'metriwapp_v2'];
+        const KEY = 'MW_RESCUE_PRO_2024'; // Nueva llave maestra
+        const OLD_KEYS = ['mw_rescue_key', 'mw_final_storage', 'metriwapp_v3', 'metriwapp_v4', 'metriwapp_v5', 'mw_v4', 'metriwapp_v2'];
         
-        let db = JSON.parse(localStorage.getItem(PRIMARY_KEY)) || {};
-        let liftId = null;
+        let db = {};
+        let activeDownId = null;
 
-        // MODAL DE RECUPERACIÓN AUTOMÁTICA
-        function recover() {
-            let found = 0;
-            LEGACY_KEYS.forEach(key => {
-                let data = localStorage.getItem(key);
+        // 1. MIGRACIÓN TOTAL: Busca tus 15 teléfonos en todas las bases anteriores
+        function migrateData() {
+            let backup = localStorage.getItem(KEY);
+            if(backup) db = JSON.parse(backup);
+
+            OLD_KEYS.forEach(k => {
+                let data = localStorage.getItem(k);
                 if(data) {
-                    let oldData = JSON.parse(data);
-                    Object.values(oldData).forEach(p => {
-                        const newId = p.id || ('p' + Date.now() + Math.random());
-                        if(!db[newId]) { db[newId] = p; found++; }
-                    });
+                    try {
+                        let parsed = JSON.parse(data);
+                        Object.values(parsed).forEach(p => {
+                            if(!p.digits) return;
+                            if(!db[p.digits]) {
+                                db[p.digits] = p; // Solo trae si no existe en la nueva
+                            }
+                        });
+                    } catch(e) { console.warn("Falla llave " + k); }
                 }
             });
-            if(found > 0) { 
-                console.log("Recuperación completada:", found, " teléfonos rescatados.");
-                save();
-            }
+            saveData();
         }
-        recover();
 
-        function save() {
-            localStorage.setItem(PRIMARY_KEY, JSON.stringify(db));
+        function saveData() {
+            localStorage.setItem(KEY, JSON.stringify(db));
             render();
         }
 
-        setInterval(() => {
-            document.getElementById('reloj').textContent = new Date().toLocaleTimeString('es-AR');
-        }, 1000);
-
-        function calcVph(views, uploadT) {
-            if(!uploadT) return 0;
-            const [h, m] = uploadT.split(':').map(Number);
-            const upload = new Date(); upload.setHours(h,m,0,0);
-            const now = new Date();
-            if(upload > now) upload.setDate(upload.getDate() - 1);
-            const diffHours = (now - upload) / (1000 * 60 * 60);
-            return diffHours < 0.25 ? views : Math.round(views / diffHours);
+        // 2. NAVEGACIÓN (Fix del problema de trabado)
+        function navigate(to) {
+            document.getElementById('viewLive').style.display = (to === 'live' ? 'block' : 'none');
+            document.getElementById('viewHist').style.display = (to === 'history' ? 'block' : 'none');
+            document.getElementById('btnLive').classList.toggle('active', to === 'live');
+            document.getElementById('btnHist').classList.toggle('active', to === 'history');
         }
 
-        function submitPhone() {
+        // 3. RELOJ Y ACTUALIZACIÓN EN VIVO (Métrica de silencio cada 1 min)
+        setInterval(() => {
+            document.getElementById('reloj').textContent = new Date().toLocaleTimeString('es-AR');
+            render(); // Re-render para actualizar el índice de silencio automáticamente
+        }, 1000 * 60);
+        document.getElementById('reloj').textContent = new Date().toLocaleTimeString('es-AR');
+
+        function calculateVph(v, time) {
+            if(!v || !time) return 0;
+            const [h, m] = time.split(':').map(Number);
+            const now = new Date();
+            const upload = new Date(); upload.setHours(h, m, 0, 0);
+            if(upload > now) upload.setDate(upload.getDate() - 1);
+            const hours = (now - upload) / (1000 * 60 * 60);
+            return hours < 0.25 ? v : Math.round(v / hours);
+        }
+
+        function saveEntry() {
             const name = document.getElementById('fName').value.trim();
             const digs = document.getElementById('fDigs').value.trim();
             const time = document.getElementById('fTime').value;
             const views = parseInt(document.getElementById('fViews').value) || 0;
 
-            if(!name || !digs || !time) return alert("Ponele Nombre, Digitos y Hora de subida.");
+            if(!name || !digs || !time) return alert("Faltan Nombre, Dígitos o Hora!");
 
-            // ACTUALIZAR SI YA EXISTE (POR DIGITOS)
-            let existingId = Object.keys(db).find(id => db[id].digits === digs);
-            let id = existingId || 'p' + Date.now();
-
-            db[id] = {
-                ...db[id],
-                id, name, digits: digs,
+            db[digs] = {
+                ...db[digs], // Mantiene historial
+                name, digits: digs,
                 type: document.getElementById('fType').value,
-                flow: document.getElementById('fFlow').value,
-                vph: calcVph(views, time),
+                vph: calculateVph(views, time),
                 views: views,
-                time: time,
-                lastMsgTime: document.getElementById('fLastMsg').value || time,
+                statusTime: time,
+                lastMsgTime: document.getElementById('fLast').value || time,
+                flow: document.getElementById('fFlow').value,
                 inWatiket: document.getElementById('fWk').checked,
-                isDown: db[id]?.isDown || false,
-                logs: db[id]?.logs || []
+                isDown: db[digs]?.isDown || false,
+                downTimeStart: db[digs]?.downTimeStart || null,
+                logs: db[digs]?.logs || []
             };
 
-            resetForm();
-            save();
+            saveData();
+            document.getElementById('fViews').value = "";
+            document.getElementById('fTime').value = "";
+            document.getElementById('fLast').value = "";
         }
 
         function render() {
             const grid = document.getElementById('mainGrid');
-            const hist = document.getElementById('histTable');
-            grid.innerHTML = ""; hist.innerHTML = "";
+            const hLog = document.getElementById('historyLog');
+            grid.innerHTML = "";
+            hLog.innerHTML = "";
 
-            let cAct = 0, cDown = 0, cWk = 0, sumVph = 0;
+            let stats = { act: 0, down: 0, wk: 0, vphSum: 0, viewsSum: 0 };
+            const now = new Date();
 
             Object.values(db).forEach(p => {
-                if(p.isDown) cDown++; else { cAct++; sumVph += p.vph; }
-                if(p.inWatiket) cWk++;
-
-                // LÓGICA DE ALERTA DE SILENCIO (GAP)
-                let gapAlert = "";
-                if(!p.isDown && p.lastMsgTime) {
-                    const [h,m] = p.lastMsgTime.split(':').map(Number);
-                    const lDate = new Date(); lDate.setHours(h,m,0,0);
-                    if(lDate > new Date()) lDate.setDate(lDate.getDate() - 1);
-                    const diffMins = Math.round((new Date() - lDate) / (1000 * 60));
-                    if(diffMins > 50) gapAlert = `<div class="alert-gap">⚠️ NO RECIBE HACE ${diffMins} MIN</div>`;
+                // Cálculo de Silencio (Minutos desde el último mensaje)
+                let silenceMins = 0;
+                let isSilentAlert = false;
+                if(p.lastMsgTime && !p.isDown) {
+                    const [lh, lm] = p.lastMsgTime.split(':').map(Number);
+                    const lDate = new Date(); lDate.setHours(lh, lm, 0, 0);
+                    if(lDate > now) lDate.setDate(lDate.getDate() - 1);
+                    silenceMins = Math.round((now - lDate) / (1000 * 60));
+                    if(silenceMins > 60) isSilentAlert = true;
                 }
 
+                if(p.isDown) stats.down++; else { stats.act++; stats.vphSum += p.vph; stats.viewsSum += p.views; }
+                if(p.inWatiket) stats.wk++;
+
+                // Share del total de carga (Data Inteligente para Superiores)
+                let share = stats.viewsSum > 0 ? ((p.views / stats.viewsSum) * 100).toFixed(1) : 0;
+
                 grid.innerHTML += `
-                    <div class="p-card ${p.isDown ? 'down' : (gapAlert ? 'warn' : '')}">
-                        <div class="p-head">
-                            <div class="p-title">
-                                <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${p.isDown?'#ef4444':'#10b981'};"></span>
+                    <div class="phone-card ${p.isDown ? 'down' : ''} ${isSilentAlert ? 'silent' : ''}">
+                        <div class="pc-head">
+                            <div class="pc-title">
                                 <h4>${p.name}</h4>
-                                <small>${p.digits}</small>
+                                <code>${p.digits}</code>
                             </div>
                             <div style="text-align:right">
-                                <span class="badge b-pr">${p.type}</span><br>
+                                <span class="badge ${p.type === 'principal' ? 'b-pr' : ''}">${p.type}</span><br>
                                 ${p.inWatiket ? '<span class="badge b-wk">Watiket</span>' : ''}
                             </div>
                         </div>
-                        <div class="metrics">
-                            <div class="m-box">
-                                <div class="m-lbl">Vistas / Hora</div>
-                                <div class="m-val">${p.isDown ? '---' : p.vph}</div>
+                        <div class="pc-main-met">
+                            <div class="pc-box">
+                                <div class="pc-label">Vistas / Hora</div>
+                                <div class="pc-val">${p.isDown ? '--' : p.vph}</div>
                             </div>
-                            <div class="m-box">
-                                <div class="m-lbl">Manual</div>
-                                <div class="m-val" style="text-transform:uppercase; font-size:12px;">${p.flow}</div>
+                            <div class="pc-box">
+                                <div class="pc-label">Flujo Manual</div>
+                                <div class="pc-val" style="font-size:12px; text-transform:uppercase">${p.isDown ? 'Offline' : p.flow}</div>
                             </div>
                         </div>
-                        <div style="font-size:10px; font-weight:700; color:var(--muted); display:flex; justify-content:space-between; padding:0 5px;">
-                            <span>Views: ${p.views}</span>
-                            <span>Último Msg: ${p.lastMsgTime}</span>
+                        <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700; color:var(--muted)">
+                            <span>TOTAL: ${p.views}</span>
+                            <span>Share: ${share}%</span>
                         </div>
-                        ${gapAlert}
-                        <div class="btn-group">
-                            <button class="btn-opt" style="border-color:var(--danger); color:var(--danger)" onclick="setDown('${p.id}')">
-                                ${p.isDown ? '↑ Levantar' : '↓ Caído'}
+                        ${!p.isDown ? `
+                            <div class="timer-info" style="margin-top:10px; font-size:11px; text-align:center; color:${isSilentAlert?'var(--danger)':'var(--muted)'}">
+                                RECIBE HACE: ${silenceMins} min
+                            </div>
+                        ` : ''}
+                        ${isSilentAlert ? `<div class="gap-alert">SIN ACTIVIDAD RECIENTE</div>` : ''}
+                        <div class="actions">
+                            <button class="btn-act" onclick="toggleStatus('${p.digits}')" style="${p.isDown?'color:var(--success); border-color:var(--success)':''}">
+                                ${p.isDown ? 'UP (Subir)' : 'DOWN (Caer)'}
                             </button>
-                            <button class="btn-opt" onclick="deleteP('${p.id}')">Borrar</button>
+                            <button class="btn-act" onclick="remove('${p.digits}')">X</button>
                         </div>
                     </div>
                 `;
 
-                p.logs.forEach(l => {
-                    hist.innerHTML += `<div style="border-bottom:1px solid #eee; padding:10px; font-size:12px;">
-                        Cel: <b>${p.name}</b> estuvo fuera. Recuperó: <b style="color:var(--accent)">${l.msgs} mensajes</b> el ${l.date}
-                    </div>`;
+                (p.logs || []).forEach(l => {
+                    hLog.innerHTML += `
+                        <div class="history-card">
+                            <div>
+                                <b style="font-size:16px;">${p.name}</b> <br>
+                                <span style="font-size:11px; color:var(--muted)">Fecha Incidente: ${l.date}</span>
+                            </div>
+                            <div style="text-align:right">
+                                <span class="badge b-wk">${l.msgs} Mensajes Recup.</span>
+                                <div class="timer-info">Flujo Recuperado</div>
+                            </div>
+                        </div>
+                    `;
                 });
             });
 
-            document.getElementById('countAct').textContent = cAct;
-            document.getElementById('countDown').textContent = cDown;
-            document.getElementById('countWk').textContent = cWk;
-            document.getElementById('avgVph').textContent = cAct > 0 ? Math.round(sumVph / cAct) : 0;
+            document.getElementById('kpiAct').textContent = stats.act;
+            document.getElementById('kpiDown').textContent = stats.down;
+            document.getElementById('kpiWk').textContent = stats.wk;
+            document.getElementById('kpiAvg').textContent = stats.act > 0 ? Math.round(stats.vphSum / stats.act) : 0;
+            document.getElementById('kpiTotalV').textContent = stats.viewsSum;
         }
 
-        function setDown(id) {
+        function toggleStatus(id) {
             if(!db[id].isDown) {
                 db[id].isDown = true;
-                save();
+                db[id].downTimeStart = new Date().toISOString();
+                saveData();
             } else {
-                liftId = id;
+                activeDownId = id;
                 document.getElementById('modalDown').style.display = 'flex';
+                setTimeout(() => document.getElementById('mLift').focus(), 100);
             }
         }
 
         function confirmLift() {
-            const m = document.getElementById('mLiftMsgs').value;
-            if(!m) return alert("Cargá los mensajes!");
-            db[liftId].isDown = false;
-            db[liftId].logs.unshift({ date: new Date().toLocaleTimeString(), msgs: m });
-            save(); closeModal();
+            const m = document.getElementById('mLift').value;
+            if(!m) return alert("Ponele cuántos mensajes rescataste!");
+            
+            db[activeDownId].isDown = false;
+            db[activeDownId].logs.unshift({
+                date: new Date().toLocaleDateString('es-AR') + ' ' + new Date().toLocaleTimeString('es-AR'),
+                msgs: m
+            });
+            closeModal();
+            saveData();
         }
 
         function closeModal() {
             document.getElementById('modalDown').style.display = 'none';
-            document.getElementById('mLiftMsgs').value = "";
-            liftId = null;
+            document.getElementById('mLift').value = "";
+            activeDownId = null;
         }
 
-        function deleteP(id) { if(confirm("¿Eliminar?")) { delete db[id]; save(); } }
-        function clearAll() { if(confirm("Borrando todo...")) { db = {}; save(); } }
-
-        function resetForm() {
-            document.getElementById('fViews').value = "";
-            document.getElementById('fTime').value = "";
-        }
-
-        function switchTab(t) {
-            document.getElementById('monitorView').style.display = t === 'monitor' ? 'block' : 'none';
-            document.getElementById('historyView').style.display = t === 'history' ? 'block' : 'none';
-        }
+        function remove(id) { if(confirm("¿Eliminar de la lista operativa?")) { delete db[id]; saveData(); } }
+        function resetData() { if(confirm("¿RESET TOTAL? Borra celulares e historial.")) { db = {}; saveData(); } }
 
         function exportData() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
-            const dl = document.createElement('a'); dl.setAttribute("href", dataStr);
-            dl.setAttribute("download", "reporte.json"); dl.click();
+            const blob = new Blob([JSON.stringify(db, null, 2)], {type:'application/json'});
+            const dl = document.createElement('a');
+            dl.href = URL.createObjectURL(blob);
+            dl.download = `reporte_metriwapp_${new Date().toLocaleDateString()}.json`;
+            dl.click();
         }
 
-        render();
+        // INICIALIZACIÓN
+        migrateData();
     </script>
 </body>
 </html>
