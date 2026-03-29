@@ -3,355 +3,404 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MetriWapp Intelligence | FINAL RECOVERY V11</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <title>MetriWapp Intelligence | AUDITORIA TOTAL</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #f1f5f9; --side: #0f172a; --accent: #2563eb; 
-            --success: #10b981; --warning: #f59e0b; --danger: #ef4444; 
-            --text: #1e293b; --muted: #64748b; --white: #ffffff;
+            --bg: #f1f5f9; --side: #0f172a; --card: #ffffff; --border: #cbd5e1;
+            --accent: #2563eb; --success: #10b981; --warning: #f59e0b;
+            --danger: #ef4444; --text: #0f172a; --muted: #64748b; --purple: #8b5cf6;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
 
-        /* --- SIDEBAR OPERATIVO --- */
-        .sidebar { width: 350px; background: var(--side); color: white; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; border-right: 1px solid #1e293b; }
-        .logo { font-size: 24px; font-weight: 900; margin-bottom: 25px; border-bottom: 3px solid var(--accent); padding-bottom: 10px; }
+        /* --- SIDEBAR --- */
+        .sidebar { width: 350px; background: var(--side); color: white; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; }
+        .logo { font-size: 24px; font-weight: 900; color: #fff; margin-bottom: 20px; border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
         .logo span { color: var(--accent); }
 
-        .f-box { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1); }
-        .f-label { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #94a3b8; margin-bottom: 5px; display: block; }
-        .f-input { width: 100%; background: #1e293b; border: 1px solid #334155; color: white; padding: 10px; border-radius: 6px; font-size: 14px; margin-bottom: 12px; font-family: inherit; }
+        .f-label { font-size: 11px; font-weight: 800; text-transform: uppercase; color: #94a3b8; margin-bottom: 4px; display: block; letter-spacing: 0.5px; }
+        .f-input { width: 100%; background: #1e293b; border: 1px solid #334155; color: white; padding: 10px; border-radius: 6px; font-size: 13px; margin-bottom: 12px; }
+        
+        .section-box { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 15px; }
+        .section-title { font-size: 10px; color: var(--accent); font-weight: 800; margin-bottom: 8px; border-bottom: 1px solid #1e293b; padding-bottom: 4px; }
 
-        .btn-submit { background: var(--accent); color: white; border: none; padding: 15px; border-radius: 8px; font-weight: 900; width: 100%; cursor: pointer; text-transform: uppercase; box-shadow: 0 4px 0 #1d4ed8; transition: 0.1s; }
-        .btn-submit:active { transform: translateY(3px); box-shadow: 0 1px 0 #1d4ed8; }
+        .btn-add { background: var(--accent); color: white; border: none; padding: 15px; border-radius: 8px; font-weight: 800; width: 100%; cursor: pointer; text-transform: uppercase; box-shadow: 0 4px 0 #1d4ed8; }
+        .btn-add:active { transform: translateY(2px); box-shadow: 0 2px 0 #1d4ed8; }
 
-        /* --- CONTENIDO --- */
+        /* --- MAIN --- */
         .content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        .topbar { background: #fff; padding: 0 30px; height: 70px; border-bottom: 2px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
-        .clock { font-family: 'JetBrains Mono'; font-weight: 900; font-size: 20px; color: var(--side); }
+        .topbar { background: #fff; padding: 0 25px; height: 60px; border-bottom: 2px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .tab-btn { padding: 10px 20px; border: none; background: transparent; cursor: pointer; font-weight: 800; color: var(--muted); }
+        .tab-btn.active { background: #e0f2fe; color: var(--accent); border-radius: 8px; }
 
-        .container { flex: 1; padding: 25px; overflow-y: auto; }
+        .view-container { flex: 1; padding: 25px; overflow-y: auto; }
 
-        /* --- CARDS DE AUDITORÍA --- */
-        .stats-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
-        .stat-card { background: white; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; }
-        .stat-card small { font-size: 9px; font-weight: 900; color: var(--muted); text-transform: uppercase; }
-        .stat-card div { font-size: 24px; font-weight: 900; }
+        /* --- KPI SUMMARY --- */
+        .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 25px; }
+        .stat-card { background: #fff; padding: 15px; border-radius: 10px; border: 2px solid var(--border); }
+        .stat-card small { font-size: 9px; text-transform: uppercase; font-weight: 800; color: var(--muted); }
+        .stat-card div { font-size: 22px; font-weight: 900; }
 
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 15px; }
-        .p-card { background: white; border: 2px solid #e2e8f0; border-radius: 16px; padding: 18px; position: relative; }
-        .p-card.is-down { border-color: var(--danger); background: #fff8f8; }
-        .p-card.is-warning { border-color: var(--warning); border-width: 3px; }
+        /* --- PHONE CARDS --- */
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 15px; }
+        .p-card { background: white; border: 2px solid var(--border); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; position: relative; }
+        .p-card.is-silent { border-color: var(--danger); animation: glow 2s infinite; }
+        @keyframes glow { 0%,100% { border-color: var(--danger); } 50% { border-color: #fee2e2; } }
 
-        .p-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
-        .p-title h3 { font-size: 20px; font-weight: 900; line-height: 1.1; }
-        .p-title code { font-family: 'JetBrains Mono'; color: var(--muted); font-weight: 700; font-size: 13px; background: #f1f5f9; padding: 2px 5px; border-radius: 4px; }
+        .p-header { display: flex; justify-content: space-between; margin-bottom: 12px; }
+        .p-name h4 { font-size: 19px; font-weight: 900; letter-spacing: -0.5px; }
+        .p-name code { background: #f1f5f9; padding: 2px 5px; font-weight: 700; border-radius: 4px; font-size: 11px; }
 
-        /* --- TABLA DE CARGAS (BITACORA POR TARJETA) --- */
-        .p-history { background: #f8fafc; border-radius: 10px; margin-top: 15px; border: 1px solid #e2e8f0; overflow: hidden; }
-        .p-history-header { background: #f1f5f9; padding: 6px 12px; font-size: 10px; font-weight: 900; color: #475569; }
-        .log-row { display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid #edf2f7; font-size: 12px; font-weight: 600; }
-        .log-row:last-child { border-bottom: none; }
-        .log-vph { color: var(--accent); font-weight: 800; }
+        /* LAS METRICAS REALES EN LA CARDA */
+        .p-metrics-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; display: grid; grid-template-columns: 1fr 1fr; margin: 10px 0; overflow: hidden; }
+        .p-met-item { padding: 10px; border: 0.5px solid #e2e8f0; text-align: center; }
+        .m-lbl { font-size: 9px; text-transform: uppercase; font-weight: 800; color: var(--muted); }
+        .m-val { font-size: 18px; font-weight: 900; color: var(--text); }
+        .m-sub { font-size: 10px; color: var(--accent); font-family: 'JetBrains Mono'; font-weight: 700; }
 
-        .gap-info { background: #0f172a; color: white; border-radius: 10px; padding: 12px; margin-top: 15px; }
-        .gap-time { color: var(--warning); font-family: 'JetBrains Mono'; font-weight: 900; font-size: 16px; }
+        .last-msg-badge { background: #0f172a; color: #fff; padding: 8px; border-radius: 6px; margin-top: 10px; text-align: center; font-size: 12px; }
+        .last-msg-badge span { color: var(--warning); font-weight: 800; }
 
-        .btn-footer { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-top: 15px; }
-        .btn-sub { padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 800; font-size: 12px; background: white; cursor: pointer; cursor: pointer; }
-        .btn-sub:hover { background: #f1f5f9; }
+        .badge { font-size: 10px; padding: 3px 8px; border-radius: 99px; font-weight: 800; text-transform: uppercase; }
+        .btn-grp { display: grid; grid-template-columns: 2fr 1fr; gap: 8px; margin-top: 15px; }
+        .btn-st { padding: 10px; border-radius: 6px; font-weight: 800; font-size: 11px; cursor: pointer; border: 2px solid var(--border); background: #fff; }
 
-        .tab-btn { padding: 10px 20px; font-weight: 800; border: none; background: transparent; cursor: pointer; color: var(--muted); border-radius: 8px; }
-        .tab-btn.active { background: #e0f2fe; color: var(--accent); }
+        /* --- TABLA DE LOGS --- */
+        .log-table { width: 100%; border-collapse: collapse; background: #fff; font-size: 12px; border-radius: 8px; overflow: hidden; }
+        .log-table th { background: #0f172a; color: white; padding: 12px; text-align: left; }
+        .log-table td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
+        .log-table tr:hover { background: #f8fafc; }
+
     </style>
 </head>
 <body>
 
-    <!-- --- LADO IZQUIERDO: FORMULARIO --- -->
+    <!-- --- FORMULARIO IZQUIERDO --- -->
     <div class="sidebar">
-        <div class="logo">Metri<span>Wapp V11</span></div>
+        <div class="logo">Metri<span>Wapp AI</span></div>
 
-        <div class="f-box">
-            <label class="f-label">Identificación</label>
+        <div class="section-box">
+            <div class="section-title">◈ Identificación</div>
+            <label class="f-label">Celular</label>
             <input type="text" id="fName" class="f-input" placeholder="Nombre (Ej: Princi 1)">
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
-                <div><label class="f-label">4 Dígitos</label><input type="text" id="fDigs" class="f-input" maxlength="4" placeholder="0000"></div>
-                <div><label class="f-label">Tipo</label><select id="fType" class="f-input"><option value="Principal">Principal</option><option value="Soporte">Soporte</option></select></div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div>
+                    <label class="f-label">Dígitos</label>
+                    <input type="text" id="fDigs" class="f-input" maxlength="4" placeholder="5584">
+                </div>
+                <div>
+                    <label class="f-label">Tipo</label>
+                    <select id="fType" class="f-input">
+                        <option value="Principal">🎯 Principal</option>
+                        <option value="Soporte">🛟 Soporte</option>
+                    </select>
+                </div>
             </div>
         </div>
 
-        <div class="f-box">
-            <label class="f-label">Estado de Vistas</label>
-            <div style="display:grid; grid-template-columns:1fr 1.2fr; gap:10px">
-                <input type="number" id="fViews" class="f-input" placeholder="Cantidad">
-                <input type="time" id="fTime" class="f-input">
+        <div class="section-box">
+            <div class="section-title">◈ Estado de WhatsApp (Vistas)</div>
+            <div style="display:grid; grid-template-columns: 1.2fr 1fr; gap:10px;">
+                <div>
+                    <label class="f-label">Total Vistas</label>
+                    <input type="number" id="fViews" class="f-input" placeholder="Cantidad">
+                </div>
+                <div>
+                    <label class="f-label">Hora Status</label>
+                    <input type="time" id="fStatusTime" class="f-input">
+                </div>
             </div>
         </div>
 
-        <div class="f-box">
-            <label class="f-label">Hora del Último Mensaje</label>
-            <div style="display:grid; grid-template-columns:1fr 1.5fr; gap:10px">
-                <select id="fMsgDay" class="f-input"><option value="Hoy">HOY</option><option value="Ayer">AYER</option></select>
-                <input type="time" id="fMsgTime" class="f-input">
+        <div class="section-box">
+            <div class="section-title">◈ Tráfico (Flujo Mensajes)</div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom: 10px;">
+                <div>
+                    <label class="f-label">Día del Mensaje</label>
+                    <select id="fMsgDay" class="f-input">
+                        <option value="hoy">Hoy</option>
+                        <option value="ayer">Ayer</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="f-label">Hora Úitimo</label>
+                    <input type="time" id="fLastMsg" class="f-input">
+                </div>
             </div>
-            <label class="f-label">Flujo Operativo</label>
-            <select id="fFlow" class="f-input"><option value="Alto">🔥 ALTO</option><option value="Medio" selected>Medio</option><option value="Bajo">Bajo</option></select>
+            <label class="f-label">Sensación del Flujo</label>
+            <select id="fFlowManual" class="f-input">
+                <option value="Alto">ALTO 🔥</option>
+                <option value="Medio" selected>MEDIO 🆗</option>
+                <option value="Bajo">BAJO 📉</option>
+            </select>
         </div>
 
-        <div class="f-input" style="background:#1e293b; padding:12px; border-radius:10px; display:flex; gap:10px; align-items:center;">
-            <input type="checkbox" id="fWk" checked style="width:20px; height:20px; accent-color:var(--accent)">
-            <label for="fWk" style="font-weight:900; cursor:pointer;">Operando en Watiket</label>
+        <div style="background:#1e293b; padding:12px; border-radius:8px; margin-bottom: 15px; display:flex; gap:10px; align-items:center;">
+            <input type="checkbox" id="fWk" checked style="width:20px; height:20px;">
+            <label for="fWk" style="font-weight:800; color:#fff; cursor:pointer;">¿Está en Watiket?</label>
         </div>
 
-        <button class="btn-submit" onclick="submitUpdate()">Subir Informe de Auditoría</button>
-
-        <div style="margin-top:auto; padding-top:20px; display:flex; gap:10px;">
-            <button class="btn-sub" onclick="exportJSON()" style="flex:1">Exportar</button>
-            <button class="btn-sub" onclick="systemReset()" style="flex:1; border-color:var(--danger); color:var(--danger)">Reset</button>
+        <button class="btn-add" onclick="processData()">Subir Informe de Auditoría</button>
+        
+        <div style="margin-top:auto; padding-top:20px;">
+            <button onclick="exportData()" class="btn-st" style="width:100%; margin-bottom:10px;">Exportar Reporte JSON</button>
+            <button onclick="dangerClear()" class="btn-st" style="width:100%; border-color:var(--danger); color:var(--danger)">Limpiar Todo</button>
         </div>
     </div>
 
-    <!-- --- LADO DERECHO: MONITOR --- -->
+    <!-- --- PANEL DERECHO --- -->
     <div class="content">
         <div class="topbar">
             <div class="tabs">
-                <button class="tab-btn active" id="tabLiveBtn" onclick="nav('mon')">Audit Live Monitor</button>
-                <button class="tab-btn" onclick="nav('hist')">Bitácora Global</button>
+                <button class="tab-btn active" id="tab1" onclick="nav('mon')">Monitor Live</button>
+                <button class="tab-btn" id="tab2" onclick="nav('log')">Bitácora de Métricas</button>
             </div>
-            <div class="clock" id="wallClock">00:00:00</div>
+            <div id="bigClock" style="font-family:'JetBrains Mono'; font-weight:900; font-size:18px;">00:00:00</div>
         </div>
 
-        <div class="container" id="viewMon">
-            <div class="stats-summary">
-                <div class="stat-card" style="border-bottom: 4px solid var(--success);"><small>Activos</small><div id="stAct">0</div></div>
-                <div class="stat-card" style="border-bottom: 4px solid var(--danger);"><small>Caídos</small><div id="stDown">0</div></div>
-                <div class="stat-card" style="border-bottom: 4px solid #8b5cf6;"><small>En Watiket</small><div id="stWk">0</div></div>
-                <div class="stat-card" style="border-bottom: 4px solid var(--accent);"><small>Carga Total (Vistas)</small><div id="stV">0</div></div>
+        <div class="view-container" id="vMon">
+            <div class="stats-grid" id="statsRow">
+                <div class="stat-card" style="border-left:5px solid var(--success)"><small>Celulares Activos</small><div id="stAct">0</div></div>
+                <div class="stat-card" style="border-left:5px solid var(--danger)"><small>Bajas / Caídos</small><div id="stDown">0</div></div>
+                <div class="stat-card" style="border-left:5px solid var(--purple)"><small>Total Watiket</small><div id="stWk">0</div></div>
+                <div class="stat-card"><small>Promedio V/H</small><div id="stAvg">0</div></div>
+                <div class="stat-card"><small>Carga Casino</small><div id="stTotalV">0</div></div>
             </div>
 
-            <div class="grid" id="mainGrid"></div>
+            <div class="cards-grid" id="mainGrid"></div>
         </div>
 
-        <div class="container" id="viewHist" style="display:none">
-            <h2 style="margin-bottom:20px">📜 Reporte Histórico de Cargas</h2>
-            <div style="background:white; border-radius:15px; border:2px solid #e2e8f0; overflow:hidden">
-                <table style="width:100%; border-collapse:collapse;" id="auditTable">
-                    <thead style="background:#0f172a; color:white; font-size:12px">
+        <div class="view-container" id="vLog" style="display:none">
+            <h2 style="margin-bottom:20px;">📜 Historial de métricas del día (Data Cruda)</h2>
+            <div style="background:#fff; border-radius:12px; padding:20px; border:1px solid var(--border)">
+                <table class="log-table">
+                    <thead>
                         <tr>
-                            <th style="padding:15px; text-align:left;">H. Registro</th>
+                            <th>Hora Auditoria</th>
                             <th>Celular</th>
-                            <th>Status Data</th>
-                            <th>Mensaje Data</th>
+                            <th>Status Subido a</th>
+                            <th>Vistas</th>
+                            <th>Calculado VPH</th>
+                            <th>Ult. Msg Info</th>
                         </tr>
                     </thead>
-                    <tbody id="auditBody" style="font-size:13px"></tbody>
+                    <tbody id="metricsBody"></tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <script>
-        const KEY_MASTER = 'METRIWAPP_ULTRALORD_V11';
-        let db = JSON.parse(localStorage.getItem(KEY_MASTER)) || {};
-        let auditLogs = JSON.parse(localStorage.getItem('LOGS_V11')) || [];
+    <!-- MODAL -->
+    <div class="modal" id="modalLift">
+        <div style="background:#fff; padding:30px; border-radius:15px; width:400px;">
+            <h3 style="margin-bottom:20px;">Finalizar Downtime</h3>
+            <label class="f-label" style="color:#000">Mensajes recuperados (Acumulados):</label>
+            <input type="number" id="mLift" class="f-input" style="background:#fff; border:1px solid #ccc; color:#000">
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="btn-st" style="flex:1" onclick="closeM()">Cerrar</button>
+                <button class="btn-add" style="flex:1" onclick="confirmLift()">Recuperar</button>
+            </div>
+        </div>
+    </div>
 
-        // --- MOTOR DE RECUPERACIÓN BRUTO ---
-        function bruteRescue() {
-            let foundCount = 0;
-            // Busca en todos los rincones del localStorage del navegador
-            for(let i=0; i < localStorage.length; i++) {
-                let key = localStorage.key(i);
-                try {
-                    let rawData = JSON.parse(localStorage.getItem(key));
-                    // Si el objeto tiene datos de celular, lo absorbemos
-                    if(typeof rawData === 'object') {
-                        let values = Array.isArray(rawData) ? rawData : Object.values(rawData);
-                        values.forEach(p => {
-                            if(p.digits || p.name) {
-                                const id = p.digits || 'p' + Math.random();
-                                if(!db[id]) { db[id] = p; foundCount++; }
-                            }
-                        });
-                    }
-                } catch(e) {}
+    <script>
+        const STORE = 'MetriWapp_Final_v300';
+        const OLD_KEYS = ['MetriWapp_Final_v200','MW_RESCUE_PRO_2024','mw_rescue_key','mw_final_storage'];
+        
+        let db = JSON.parse(localStorage.getItem(STORE)) || {};
+        let logs = JSON.parse(localStorage.getItem('MW_LOGS_DAILY')) || [];
+        let currentLiftId = null;
+
+        // Migrar siempre por seguridad
+        OLD_KEYS.forEach(k => {
+            let oldData = localStorage.getItem(k);
+            if(oldData){
+                try{
+                    let parsed = JSON.parse(oldData);
+                    Object.values(parsed).forEach(p => { if(!db[p.digits]) db[p.digits] = p; });
+                }catch(e){}
             }
-            if(foundCount > 0) {
-                console.log(`Rescue Engine: ${foundCount} dispositivos rescatados.`);
-                saveAll();
-            }
-        }
-        bruteRescue();
+        });
 
         function saveAll() {
-            localStorage.setItem(KEY_MASTER, JSON.stringify(db));
-            localStorage.setItem('LOGS_V11', JSON.stringify(auditLogs));
+            localStorage.setItem(STORE, JSON.stringify(db));
+            localStorage.setItem('MW_LOGS_DAILY', JSON.stringify(logs));
             render();
         }
 
         setInterval(() => {
-            document.getElementById('wallClock').textContent = new Date().toLocaleTimeString('es-AR');
+            document.getElementById('bigClock').textContent = new Date().toLocaleTimeString('es-AR');
+            // Autorefresco parcial de las cards cada 1 minuto
         }, 1000);
 
-        function nav(v) {
-            document.getElementById('viewMon').style.display = (v === 'mon' ? 'block' : 'none');
-            document.getElementById('viewHist').style.display = (v === 'hist' ? 'block' : 'none');
-            document.getElementById('tabLiveBtn').classList.toggle('active', v === 'mon');
+        function nav(target) {
+            document.getElementById('vMon').style.display = target === 'mon' ? 'block' : 'none';
+            document.getElementById('vLog').style.display = target === 'log' ? 'block' : 'none';
+            document.getElementById('tab1').classList.toggle('active', target === 'mon');
+            document.getElementById('tab2').classList.toggle('active', target === 'log');
         }
 
-        function calculateVPH(v, timeInput) {
-            if(!timeInput) return 0;
-            const [h, m] = timeInput.split(':').map(Number);
+        function calculateVph(v, t) {
+            if(!t) return 0;
+            const [h, m] = t.split(':').map(Number);
+            const upload = new Date(); upload.setHours(h, m, 0, 0);
             const now = new Date();
-            const upload = new Date(); upload.setHours(h,m,0,0);
             if (upload > now) upload.setDate(upload.getDate() - 1);
             const diffHours = (now - upload) / (1000 * 60 * 60);
-            return diffHours < 0.25 ? v : Math.round(v / diffHours);
+            return diffHours < 0.2 ? v : Math.round(v / diffHours);
         }
 
-        function formatGap(mins) {
-            if (mins < 60) return mins + " m";
-            let h = Math.floor(mins / 60);
-            let m = mins % 60;
-            return h + "h " + m + "m";
-        }
-
-        function submitUpdate() {
+        function processData() {
             const name = document.getElementById('fName').value.trim();
-            const dig = document.getElementById('fDigs').value.trim();
-            const v = parseInt(document.getElementById('fViews').value);
-            const statusTime = document.getElementById('fTime').value;
-            const mTime = document.getElementById('fMsgTime').value;
-            const mDay = document.getElementById('fMsgDay').value;
+            const digs = document.getElementById('fDigs').value.trim();
+            const views = parseInt(document.getElementById('fViews').value);
+            const statusT = document.getElementById('fStatusTime').value;
+            const msgT = document.getElementById('fLastMsg').value;
+            const msgDay = document.getElementById('fMsgDay').value;
 
-            if(!name || !dig || isNaN(v) || !statusTime || !mTime) return alert("Reporte imcompleto. Todos los datos son necesarios.");
+            if(!name || !digs || isNaN(views) || !statusT || !msgT) return alert("LLENÁ TODO. Si vas a reportar, reportá BIEN.");
 
-            const vph = calculateVPH(v, statusTime);
+            const calculatedVPH = calculateVph(views, statusT);
 
-            if(!db[dig]) db[dig] = { id: dig, name, digits: dig, trend: [], logs: [], isDown: false };
-            
-            // Historial por dispositivo (Bitacora interna)
-            db[dig].trend.unshift({ v, vph, t: statusTime, recorded: new Date().toLocaleTimeString() });
-            if(db[dig].trend.length > 5) db[dig].trend.pop();
+            // Registro histórico (Log)
+            logs.unshift({
+                timestamp: new Date().toLocaleTimeString(),
+                name, digits: digs, statusAt: statusT, views, vph: calculatedVPH, msgAt: msgT, day: msgDay
+            });
+            if(logs.length > 50) logs.pop();
 
-            // Actualización dispositivo
-            db[dig] = {
-                ...db[dig],
-                name, type: document.getElementById('fType').value,
-                curV: v, curVPH: vph, curTime: statusTime,
-                lastMsg: mTime, lastDay: mDay,
-                flow: document.getElementById('fFlow').value,
-                wk: document.getElementById('fWk').checked,
-                lastSync: new Date().toISOString(),
-                isDown: false
+            // Celular activo
+            db[digs] = {
+                ...db[digs],
+                name, digits: digs,
+                type: document.getElementById('fType').value,
+                v: views,
+                vph: calculatedVPH,
+                statusRawTime: statusT,
+                lastMsgRawTime: msgT,
+                lastMsgDay: msgDay,
+                manualFlow: document.getElementById('fFlowManual').value,
+                inWatiket: document.getElementById('fWk').checked,
+                isDown: false,
+                downSince: null
             };
 
-            // Auditoria global
-            auditLogs.unshift({
-                sys: new Date().toLocaleTimeString(),
-                name, dig, v, vph, statusT: statusTime, msgT: `${mTime} (${mDay})`
-            });
-            if(auditLogs.length > 100) auditLogs.pop();
-
-            // Limpieza y guardado
+            // Limpieza visual parcial
             document.getElementById('fViews').value = "";
-            document.getElementById('fTime').value = "";
+            document.getElementById('fStatusTime').value = "";
             saveAll();
         }
 
         function render() {
             const grid = document.getElementById('mainGrid');
-            const table = document.getElementById('auditBody');
-            grid.innerHTML = ""; table.innerHTML = "";
+            const metricsLog = document.getElementById('metricsBody');
+            grid.innerHTML = "";
+            metricsLog.innerHTML = "";
 
-            let stats = { act:0, down:0, wk:0, v:0 };
+            let kAct=0, kDown=0, kWk=0, kTotalV=0, kTotalVPH=0;
             const now = new Date();
 
             Object.values(db).forEach(p => {
-                if(p.isDown) stats.down++; else { stats.act++; stats.v += p.curV; }
-                if(p.wk) stats.wk++;
+                if(p.isDown) kDown++; else { kAct++; kTotalV += p.v; kTotalVPH += p.vph; }
+                if(p.inWatiket) kWk++;
 
-                // Lógica SILENCIO
-                const [mh, mm] = (p.lastMsg || '00:00').split(':').map(Number);
+                // Lógica de Silencio (Calcular minutos de atraso reales con fecha)
+                const [mh, mm] = p.lastMsgRawTime.split(':').map(Number);
                 let msgDate = new Date();
                 msgDate.setHours(mh, mm, 0, 0);
-                if(p.lastDay === 'Ayer') msgDate.setDate(msgDate.getDate() - 1);
-                const gap = Math.round((now - msgDate) / (1000 * 60));
-                const alertSilent = (gap > 45 && !p.isDown);
-
-                let trendsHtml = "";
-                (p.trend || []).forEach(tr => {
-                    trendsHtml += `<div class="log-row"><span>Status: <b>${tr.t}</b></span> <span>Vistas: ${tr.v} (<span class="log-vph">${tr.vph} vph</span>)</span></div>`;
-                });
+                if(p.lastMsgDay === 'ayer') msgDate.setDate(msgDate.getDate() - 1);
+                
+                const gapMins = Math.round((now - msgDate) / (1000 * 60));
+                const silentAlert = (gapMins > 45 && !p.isDown);
 
                 grid.innerHTML += `
-                    <div class="p-card ${alertSilent ? 'is-warning' : ''} ${p.isDown ? 'is-down' : ''}">
+                    <div class="p-card ${silentAlert ? 'is-silent' : ''}">
                         <div class="p-header">
                             <div class="p-name">
-                                <h3>${p.name}</h3>
+                                <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${p.isDown ? '#ef4444' : '#10b981'}"></span>
+                                <h4>${p.name}</h4>
                                 <code>${p.digits}</code>
                             </div>
-                            <span style="font-size:10px; font-weight:800; padding:4px 8px; background:#f1f5f9; border-radius:5px">${p.type.toUpperCase()}</span>
+                            <div style="text-align:right">
+                                <span class="badge" style="background:#e0f2fe; color:#0369a1">${p.type}</span><br>
+                                ${p.inWatiket ? '<span class="badge" style="background:#ede9fe; color:#5b21b6">Watiket</span>' : ''}
+                            </div>
                         </div>
 
-                        <div style="font-size:11px; font-weight:700; color:var(--text); margin-bottom:8px;">
-                            ${p.wk ? '<b style="color:#8b5cf6">✓ EN WATIKET</b>' : '<b style="color:var(--muted)">NO WATIKET</b>'}
-                            | FLOW: <b>${p.flow}</b>
+                        <div class="p-metrics-box">
+                            <div class="p-met-item">
+                                <div class="m-lbl">VPH Actual</div>
+                                <div class="m-val">${p.isDown ? '---' : p.vph}</div>
+                                <div class="m-sub">↑ Status ${p.statusRawTime}</div>
+                            </div>
+                            <div class="p-met-item">
+                                <div class="m-lbl">Views Total</div>
+                                <div class="m-val">${p.v}</div>
+                                <div class="m-sub">Flow ${p.manualFlow}</div>
+                            </div>
                         </div>
 
-                        <div class="gap-info">
-                            LLEGÓ EL ÚLTIMO MENSAJE: <b>${p.lastMsg} (${p.lastDay})</b>
-                            <div style="margin-top:5px">INACTIVO HACE: <span class="gap-time">${p.isDown ? '--' : formatGap(gap)}</span></div>
-                            ${alertSilent ? `<div style="color:var(--danger); font-size:10px; font-weight:900; margin-top:5px; text-transform:uppercase">⚠️ CELULAR EN SILENCIO CRÍTICO</div>` : ''}
+                        <div class="last-msg-badge">
+                            Últ. Actividad: <span>${p.lastMsgRawTime}</span> (${p.lastMsgDay})<br>
+                            <small>${p.isDown ? 'OFF' : 'Inactivo hace: ' + gapMins + ' min'}</small>
                         </div>
 
-                        <div class="p-history">
-                            <div class="p-history-header">ÚLTIMAS MÉTRICAS DE CARGA</div>
-                            ${trendsHtml}
-                        </div>
-
-                        <div class="btn-footer">
-                            <button class="btn-sub" onclick="setD('${p.digits}')" style="background:${p.isDown ? 'var(--success)' : '#fff'}; color:${p.isDown ? '#fff' : 'var(--danger)'}">
-                                ${p.isDown ? 'RECUPERADO ↑' : 'CAÍDO ↓'}
+                        <div class="btn-grp">
+                            <button class="btn-st" onclick="setDown('${p.digits}')" style="background:${p.isDown ? '#ef4444' : '#fff'}; color:${p.isDown ? '#fff' : '#ef4444'}">
+                                ${p.isDown ? 'LEVANVAR (Cargar Msgs)' : 'BAJAR (Crashed)'}
                             </button>
-                            <button class="btn-sub" onclick="removeP('${p.digits}')">Borrar</button>
+                            <button class="btn-st" onclick="del('${p.digits}')">🗑</button>
                         </div>
                     </div>
                 `;
             });
 
-            auditLogs.forEach(l => {
-                table.innerHTML += `<tr><td style="padding:10px">${l.sys}</td><td><b>${l.name}</b></td><td>${l.v} views @ ${l.statusT}</td><td>Ult: ${l.msgT}</td></tr>`;
+            logs.forEach(l => {
+                metricsLog.innerHTML += `<tr>
+                    <td>${l.timestamp}</td>
+                    <td><b>${l.name} (${l.digits})</b></td>
+                    <td>${l.statusAt} hs</td>
+                    <td>${l.views} vistas</td>
+                    <td style="color:var(--accent); font-weight:800">${l.vph} VPH</td>
+                    <td>Recibió ${l.day} a las ${l.msgAt}</td>
+                </tr>`;
             });
 
-            document.getElementById('stAct').textContent = stats.act;
-            document.getElementById('stDown').textContent = stats.down;
-            document.getElementById('stWk').textContent = stats.wk;
-            document.getElementById('stV').textContent = stats.v;
+            document.getElementById('stAct').textContent = kAct;
+            document.getElementById('stDown').textContent = kDown;
+            document.getElementById('stWk').textContent = kWk;
+            document.getElementById('stTotalV').textContent = kTotalV;
+            document.getElementById('stAvg').textContent = kAct > 0 ? Math.round(kTotalVPH / kAct) : 0;
         }
 
-        function setD(id) {
+        function setDown(id) {
             if(!db[id].isDown) { db[id].isDown = true; saveAll(); }
-            else {
-                let msgs = prompt("Cantidad de mensajes acumulados durante la caída:");
-                if(msgs) {
-                    db[id].isDown = false;
-                    saveAll();
-                }
-            }
+            else { currentLiftId = id; document.getElementById('modalLift').style.display = 'flex'; }
         }
 
-        function removeP(id) { if(confirm("¿Eliminar?")) { delete db[id]; saveAll(); } }
-        function systemReset() { if(confirm("¿RESET TOTAL? Borrarás incluso la bitácora histórica.")) { db={}; auditLogs=[]; saveAll(); } }
-
-        function exportJSON() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({phones:db, audit:auditLogs}, null, 2));
-            const dl = document.createElement('a'); dl.setAttribute("href", dataStr);
-            dl.setAttribute("download", `Reporte_Auditoria_${new Date().toLocaleDateString()}.json`); dl.click();
+        function confirmLift() {
+            const m = document.getElementById('mLift').value;
+            if(!m) return alert("Ponele cuántos mensajes!");
+            db[currentLiftId].isDown = false;
+            // Registrar también en el historial de eventos si queres, pero mantengamos simple por ahora
+            closeM(); saveAll();
         }
 
-        saveAll();
+        function closeM() { document.getElementById('modalLift').style.display = 'none'; }
+        function del(id) { if(confirm("¿Eliminar Celular de Auditoria?")) { delete db[id]; saveAll(); } }
+        function dangerClear() { if(confirm("¡ALERTA! Esto borra los datos de todos tus celulares y logs. ¿Confirmar?")) { db={}; logs=[]; saveAll(); } }
+
+        function exportData() {
+            const fullReport = { metrics: db, dailyLog: logs };
+            const dl = document.createElement('a');
+            dl.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(fullReport, null, 2));
+            dl.download = `MetriWapp_AUDIT_${new Date().toLocaleDateString()}.json`;
+            dl.click();
+        }
+
+        saveAll(); // Carga inicial
     </script>
 </body>
 </html>
