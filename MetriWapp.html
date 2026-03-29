@@ -3,403 +3,355 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MetriWapp V10 | OPERATIONAL AUDIT</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <title>MetriWapp Intelligence | FINAL RECOVERY V11</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #f8fafc; --side: #0f172a; --border: #cbd5e1;
-            --accent: #2563eb; --success: #10b981; --warning: #f59e0b;
-            --danger: #ef4444; --text: #1e293b; --muted: #64748b;
+            --bg: #f1f5f9; --side: #0f172a; --accent: #2563eb; 
+            --success: #10b981; --warning: #f59e0b; --danger: #ef4444; 
+            --text: #1e293b; --muted: #64748b; --white: #ffffff;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
 
-        /* --- SIDEBAR --- */
-        .sidebar { width: 360px; background: var(--side); color: white; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; border-right: 1px solid #1e293b; }
+        /* --- SIDEBAR OPERATIVO --- */
+        .sidebar { width: 350px; background: var(--side); color: white; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; border-right: 1px solid #1e293b; }
         .logo { font-size: 24px; font-weight: 900; margin-bottom: 25px; border-bottom: 3px solid var(--accent); padding-bottom: 10px; }
         .logo span { color: var(--accent); }
 
-        .f-label { font-size: 11px; font-weight: 800; text-transform: uppercase; color: #94a3b8; margin-bottom: 4px; display: block; }
-        .f-input { width: 100%; background: #1e293b; border: 1px solid #334155; color: white; padding: 12px; border-radius: 6px; font-size: 14px; margin-bottom: 12px; font-family: inherit; }
-        
-        .section-form { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 10px; border: 1px solid #334155; margin-bottom: 15px; }
-        .section-title { font-size: 10px; font-weight: 900; color: var(--accent); margin-bottom: 10px; text-transform: uppercase; }
+        .f-box { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1); }
+        .f-label { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #94a3b8; margin-bottom: 5px; display: block; }
+        .f-input { width: 100%; background: #1e293b; border: 1px solid #334155; color: white; padding: 10px; border-radius: 6px; font-size: 14px; margin-bottom: 12px; font-family: inherit; }
 
-        .btn-main { background: var(--accent); color: white; border: none; padding: 16px; border-radius: 8px; font-weight: 900; width: 100%; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-submit { background: var(--accent); color: white; border: none; padding: 15px; border-radius: 8px; font-weight: 900; width: 100%; cursor: pointer; text-transform: uppercase; box-shadow: 0 4px 0 #1d4ed8; transition: 0.1s; }
+        .btn-submit:active { transform: translateY(3px); box-shadow: 0 1px 0 #1d4ed8; }
 
-        /* --- CONTENT --- */
+        /* --- CONTENIDO --- */
         .content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        .topbar { background: #fff; padding: 0 30px; height: 70px; border-bottom: 2px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-        
-        .tab-btn { padding: 10px 20px; border: none; background: transparent; cursor: pointer; font-weight: 800; color: var(--muted); border-radius: 8px; }
-        .tab-btn.active { background: #e0f2fe; color: var(--accent); }
+        .topbar { background: #fff; padding: 0 30px; height: 70px; border-bottom: 2px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+        .clock { font-family: 'JetBrains Mono'; font-weight: 900; font-size: 20px; color: var(--side); }
 
-        .view-container { flex: 1; padding: 25px; overflow-y: auto; }
+        .container { flex: 1; padding: 25px; overflow-y: auto; }
 
-        /* --- KPIS --- */
-        .stats-bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 25px; }
-        .stat-card { background: white; padding: 15px; border-radius: 12px; border: 1px solid var(--border); border-bottom-width: 4px; }
-        .stat-card small { font-size: 9px; font-weight: 900; text-transform: uppercase; color: var(--muted); display: block; }
-        .stat-card b { font-size: 26px; font-weight: 900; display: block; margin-top: 5px; }
+        /* --- CARDS DE AUDITORÍA --- */
+        .stats-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: white; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; }
+        .stat-card small { font-size: 9px; font-weight: 900; color: var(--muted); text-transform: uppercase; }
+        .stat-card div { font-size: 24px; font-weight: 900; }
 
-        /* --- CARDS --- */
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 15px; }
-        .p-card { background: white; border: 2px solid var(--border); border-radius: 16px; padding: 20px; position: relative; }
-        .p-card.is-down { border-color: var(--danger); background: #fef2f2; }
+        .p-card { background: white; border: 2px solid #e2e8f0; border-radius: 16px; padding: 18px; position: relative; }
+        .p-card.is-down { border-color: var(--danger); background: #fff8f8; }
         .p-card.is-warning { border-color: var(--warning); border-width: 3px; }
 
-        .p-title { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
-        .p-name h3 { font-size: 22px; font-weight: 900; letter-spacing: -1px; line-height: 1; }
-        .p-name code { font-family: 'JetBrains Mono'; font-weight: 800; color: var(--muted); font-size: 13px; }
+        .p-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
+        .p-title h3 { font-size: 20px; font-weight: 900; line-height: 1.1; }
+        .p-title code { font-family: 'JetBrains Mono'; color: var(--muted); font-weight: 700; font-size: 13px; background: #f1f5f9; padding: 2px 5px; border-radius: 4px; }
 
-        .badge { font-size: 10px; padding: 4px 10px; border-radius: 6px; font-weight: 800; text-transform: uppercase; }
-        .b-pr { background: #dcfce7; color: #166534; }
-        .b-sop { background: #f1f5f9; color: #475569; }
+        /* --- TABLA DE CARGAS (BITACORA POR TARJETA) --- */
+        .p-history { background: #f8fafc; border-radius: 10px; margin-top: 15px; border: 1px solid #e2e8f0; overflow: hidden; }
+        .p-history-header { background: #f1f5f9; padding: 6px 12px; font-size: 10px; font-weight: 900; color: #475569; }
+        .log-row { display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid #edf2f7; font-size: 12px; font-weight: 600; }
+        .log-row:last-child { border-bottom: none; }
+        .log-vph { color: var(--accent); font-weight: 800; }
 
-        /* TREND - AUDITORIA DE CARGAS ANTERIORES */
-        .p-trend { margin-top: 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; }
-        .trend-header { background: #edf2f7; padding: 6px 12px; font-size: 9px; font-weight: 900; color: #64748b; border-bottom: 1px solid #e2e8f0; }
-        .trend-item { display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid #f1f5f9; font-size: 11px; font-weight: 600; }
-        .trend-item:last-child { border-bottom: none; }
-        .trend-item .v-time { color: var(--accent); }
+        .gap-info { background: #0f172a; color: white; border-radius: 10px; padding: 12px; margin-top: 15px; }
+        .gap-time { color: var(--warning); font-family: 'JetBrains Mono'; font-weight: 900; font-size: 16px; }
 
-        .last-msg-info { background: #0f172a; color: white; border-radius: 10px; padding: 12px; margin-top: 15px; }
-        .last-msg-info span { font-family: 'JetBrains Mono'; color: var(--warning); font-weight: 800; font-size: 15px; }
-        .silent-tag { font-size: 10px; font-weight: 900; color: #ef4444; background: #fee2e2; padding: 4px 8px; border-radius: 4px; display: inline-block; margin-top: 5px; }
+        .btn-footer { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-top: 15px; }
+        .btn-sub { padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 800; font-size: 12px; background: white; cursor: pointer; cursor: pointer; }
+        .btn-sub:hover { background: #f1f5f9; }
 
-        .card-footer { display: grid; grid-template-columns: 2fr 1fr; gap: 8px; margin-top: 20px; }
-        .btn-op { padding: 10px; border-radius: 8px; font-weight: 900; font-size: 12px; cursor: pointer; border: 2px solid var(--border); background: white; transition: 0.1s; }
-        .btn-op:hover { background: #f1f5f9; }
-
-        .modal { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.85); align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(5px); }
+        .tab-btn { padding: 10px 20px; font-weight: 800; border: none; background: transparent; cursor: pointer; color: var(--muted); border-radius: 8px; }
+        .tab-btn.active { background: #e0f2fe; color: var(--accent); }
     </style>
 </head>
 <body>
 
-    <!-- --- FORMULARIO IZQUIERDO --- -->
+    <!-- --- LADO IZQUIERDO: FORMULARIO --- -->
     <div class="sidebar">
-        <div class="logo">Metri<span>Wapp V10</span></div>
+        <div class="logo">Metri<span>Wapp V11</span></div>
 
-        <div class="section-form">
-            <div class="section-title">◈ Datos del Dispositivo</div>
-            <label class="f-label">Celular</label>
+        <div class="f-box">
+            <label class="f-label">Identificación</label>
             <input type="text" id="fName" class="f-input" placeholder="Nombre (Ej: Princi 1)">
-            <div style="display:grid; grid-template-columns:1fr 1.2fr; gap:10px">
-                <div>
-                    <label class="f-label">4 Dígitos</label>
-                    <input type="text" id="fDigs" class="f-input" maxlength="4" placeholder="0000">
-                </div>
-                <div>
-                    <label class="f-label">Ubicación</label>
-                    <select id="fType" class="f-input">
-                        <option value="Principal">🎯 Principal</option>
-                        <option value="Soporte">🛟 Soporte</option>
-                    </select>
-                </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+                <div><label class="f-label">4 Dígitos</label><input type="text" id="fDigs" class="f-input" maxlength="4" placeholder="0000"></div>
+                <div><label class="f-label">Tipo</label><select id="fType" class="f-input"><option value="Principal">Principal</option><option value="Soporte">Soporte</option></select></div>
             </div>
         </div>
 
-        <div class="section-form">
-            <div class="section-title">◈ Métrica Status (Views)</div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+        <div class="f-box">
+            <label class="f-label">Estado de Vistas</label>
+            <div style="display:grid; grid-template-columns:1fr 1.2fr; gap:10px">
                 <input type="number" id="fViews" class="f-input" placeholder="Cantidad">
                 <input type="time" id="fTime" class="f-input">
             </div>
         </div>
 
-        <div class="section-form">
-            <div class="section-title">◈ Auditoría Mensajes</div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
-                <select id="fMsgDay" class="f-input">
-                    <option value="Hoy">HOY</option>
-                    <option value="Ayer">AYER</option>
-                </select>
+        <div class="f-box">
+            <label class="f-label">Hora del Último Mensaje</label>
+            <div style="display:grid; grid-template-columns:1fr 1.5fr; gap:10px">
+                <select id="fMsgDay" class="f-input"><option value="Hoy">HOY</option><option value="Ayer">AYER</option></select>
                 <input type="time" id="fMsgTime" class="f-input">
             </div>
-            <label class="f-label">Carga de flujo percibida</label>
-            <select id="fFlow" class="f-input">
-                <option value="Alto">🔥 ALTO</option>
-                <option value="Medio">🆗 MEDIO</option>
-                <option value="Bajo">📉 BAJO</option>
-            </select>
+            <label class="f-label">Flujo Operativo</label>
+            <select id="fFlow" class="f-input"><option value="Alto">🔥 ALTO</option><option value="Medio" selected>Medio</option><option value="Bajo">Bajo</option></select>
         </div>
 
-        <div class="form-input" style="background:#1e293b; padding:12px; border-radius:10px; margin-bottom:15px; display:flex; gap:10px; align-items:center;">
-            <input type="checkbox" id="fWk" checked style="width:20px; height:20px; accent-color:var(--accent);">
+        <div class="f-input" style="background:#1e293b; padding:12px; border-radius:10px; display:flex; gap:10px; align-items:center;">
+            <input type="checkbox" id="fWk" checked style="width:20px; height:20px; accent-color:var(--accent)">
             <label for="fWk" style="font-weight:900; cursor:pointer;">Operando en Watiket</label>
         </div>
 
-        <button class="btn-main" onclick="pushUpdate()">Subir Informe Operativo</button>
-        
+        <button class="btn-submit" onclick="submitUpdate()">Subir Informe de Auditoría</button>
+
         <div style="margin-top:auto; padding-top:20px; display:flex; gap:10px;">
-            <button class="btn-op" style="flex:1" onclick="exportData()">Exportar</button>
-            <button class="btn-op" style="flex:1; border-color:var(--danger); color:var(--danger)" onclick="clearAll()">Reset</button>
+            <button class="btn-sub" onclick="exportJSON()" style="flex:1">Exportar</button>
+            <button class="btn-sub" onclick="systemReset()" style="flex:1; border-color:var(--danger); color:var(--danger)">Reset</button>
         </div>
     </div>
 
-    <!-- --- CONTENIDO PRINCIPAL --- -->
+    <!-- --- LADO DERECHO: MONITOR --- -->
     <div class="content">
         <div class="topbar">
-            <div class="tab-box">
-                <button class="tab-btn active" id="tabLive" onclick="nav('mon')">AUDITORÍA LIVE</button>
-                <button class="tab-btn" onclick="nav('audit')">BITÁCORA TOTAL</button>
+            <div class="tabs">
+                <button class="tab-btn active" id="tabLiveBtn" onclick="nav('mon')">Audit Live Monitor</button>
+                <button class="tab-btn" onclick="nav('hist')">Bitácora Global</button>
             </div>
-            <div id="relojBig" style="font-family:'JetBrains Mono'; font-weight:900; font-size:22px;">00:00:00</div>
+            <div class="clock" id="wallClock">00:00:00</div>
         </div>
 
-        <!-- MONITOR LIVE -->
-        <div class="view-container" id="viewLive">
-            <div class="stats-bar">
-                <div class="stat-card" style="border-bottom-color:var(--success)"><small>Online</small><b id="kAct">0</b></div>
-                <div class="stat-card" style="border-bottom-color:var(--danger)"><small>Offline</small><b id="kDown">0</b></div>
-                <div class="stat-card" style="border-bottom-color:var(--accent)"><small>Total Watiket</small><b id="kWk">0</b></div>
-                <div class="stat-card"><small>Promedio VPH</small><b id="kAvg">0</b></div>
-                <div class="stat-card"><small>Carga Casino</small><b id="kSumV">0</b></div>
+        <div class="container" id="viewMon">
+            <div class="stats-summary">
+                <div class="stat-card" style="border-bottom: 4px solid var(--success);"><small>Activos</small><div id="stAct">0</div></div>
+                <div class="stat-card" style="border-bottom: 4px solid var(--danger);"><small>Caídos</small><div id="stDown">0</div></div>
+                <div class="stat-card" style="border-bottom: 4px solid #8b5cf6;"><small>En Watiket</small><div id="stWk">0</div></div>
+                <div class="stat-card" style="border-bottom: 4px solid var(--accent);"><small>Carga Total (Vistas)</small><div id="stV">0</div></div>
             </div>
 
-            <div class="grid" id="mainGrid">
-                <!-- Cards dinámicas -->
-            </div>
+            <div class="grid" id="mainGrid"></div>
         </div>
 
-        <!-- BITÁCORA TOTAL (Data Cruda de cada carga) -->
-        <div class="view-container" id="viewAudit" style="display:none">
-            <div style="background:white; border-radius:12px; border:2px solid var(--border); overflow:hidden;">
-                <table style="width:100%; border-collapse:collapse; font-size:13px;" id="auditTable">
-                    <thead style="background:#0f172a; color:white;">
+        <div class="container" id="viewHist" style="display:none">
+            <h2 style="margin-bottom:20px">📜 Reporte Histórico de Cargas</h2>
+            <div style="background:white; border-radius:15px; border:2px solid #e2e8f0; overflow:hidden">
+                <table style="width:100%; border-collapse:collapse;" id="auditTable">
+                    <thead style="background:#0f172a; color:white; font-size:12px">
                         <tr>
-                            <th style="padding:15px; text-align:left;">Fecha/Hora Carga</th>
+                            <th style="padding:15px; text-align:left;">H. Registro</th>
                             <th>Celular</th>
-                            <th>Status Subido</th>
-                            <th>VPH Calculado</th>
-                            <th>Últ. Actividad Info</th>
+                            <th>Status Data</th>
+                            <th>Mensaje Data</th>
                         </tr>
                     </thead>
-                    <tbody id="auditBody"></tbody>
+                    <tbody id="auditBody" style="font-size:13px"></tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- MODAL -->
-    <div class="modal" id="modalLift">
-        <div style="background:white; padding:30px; border-radius:15px; width:400px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5)">
-            <h3 style="margin-bottom:20px; font-weight:900;">Levantar Dispositivo</h3>
-            <label class="f-label" style="color:#000">Mensajes rescatados (Contar al abrir WPP):</label>
-            <input type="number" id="mLiftMsgs" class="f-input" style="color:#000; background:#f1f5f9; border:2px solid #cbd5e1;">
-            <div style="display:flex; gap:10px; margin-top:20px;">
-                <button class="btn-op" style="flex:1" onclick="closeM()">Cerrar</button>
-                <button class="btn-main" style="flex:1; margin:0; padding:10px;" onclick="doLift()">Confirmar Up</button>
-            </div>
-        </div>
-    </div>
-
     <script>
-        // MASTER DATABASE: mw_audit_master
-        const DB = 'mw_audit_master_v10';
-        let phones = JSON.parse(localStorage.getItem(DB)) || {};
-        let auditLogs = JSON.parse(localStorage.getItem('mw_logs_v10')) || [];
-        let liftTargetId = null;
+        const KEY_MASTER = 'METRIWAPP_ULTRALORD_V11';
+        let db = JSON.parse(localStorage.getItem(KEY_MASTER)) || {};
+        let auditLogs = JSON.parse(localStorage.getItem('LOGS_V11')) || [];
 
-        // Migración automática de cualquier versión anterior que pilles en el caché
-        const LEGACY = ['MetriWapp_Final_v300','MetriWapp_Final_v200','MW_RESCUE_PRO_2024','mw_v4','metriwapp_v5'];
-        LEGACY.forEach(k => {
-            let data = localStorage.getItem(k);
-            if(data) {
-                let parsed = JSON.parse(data);
-                Object.values(parsed).forEach(p => { if(!phones[p.digits]) phones[p.digits] = p; });
+        // --- MOTOR DE RECUPERACIÓN BRUTO ---
+        function bruteRescue() {
+            let foundCount = 0;
+            // Busca en todos los rincones del localStorage del navegador
+            for(let i=0; i < localStorage.length; i++) {
+                let key = localStorage.key(i);
+                try {
+                    let rawData = JSON.parse(localStorage.getItem(key));
+                    // Si el objeto tiene datos de celular, lo absorbemos
+                    if(typeof rawData === 'object') {
+                        let values = Array.isArray(rawData) ? rawData : Object.values(rawData);
+                        values.forEach(p => {
+                            if(p.digits || p.name) {
+                                const id = p.digits || 'p' + Math.random();
+                                if(!db[id]) { db[id] = p; foundCount++; }
+                            }
+                        });
+                    }
+                } catch(e) {}
             }
-        });
+            if(foundCount > 0) {
+                console.log(`Rescue Engine: ${foundCount} dispositivos rescatados.`);
+                saveAll();
+            }
+        }
+        bruteRescue();
 
-        function sync() {
-            localStorage.setItem(DB, JSON.stringify(phones));
-            localStorage.setItem('mw_logs_v10', JSON.stringify(auditLogs));
+        function saveAll() {
+            localStorage.setItem(KEY_MASTER, JSON.stringify(db));
+            localStorage.setItem('LOGS_V11', JSON.stringify(auditLogs));
             render();
         }
 
         setInterval(() => {
-            document.getElementById('relojBig').textContent = new Date().toLocaleTimeString('es-AR');
+            document.getElementById('wallClock').textContent = new Date().toLocaleTimeString('es-AR');
         }, 1000);
 
         function nav(v) {
-            document.getElementById('viewLive').style.display = v === 'mon' ? 'block' : 'none';
-            document.getElementById('viewAudit').style.display = v === 'audit' ? 'block' : 'none';
-            document.getElementById('tabLive').classList.toggle('active', v === 'mon');
+            document.getElementById('viewMon').style.display = (v === 'mon' ? 'block' : 'none');
+            document.getElementById('viewHist').style.display = (v === 'hist' ? 'block' : 'none');
+            document.getElementById('tabLiveBtn').classList.toggle('active', v === 'mon');
         }
 
-        function calculateVph(views, timeStr, dayType) {
-            if(!timeStr) return 0;
-            const [h, m] = timeStr.split(':').map(Number);
-            const upload = new Date();
-            upload.setHours(h, m, 0, 0);
+        function calculateVPH(v, timeInput) {
+            if(!timeInput) return 0;
+            const [h, m] = timeInput.split(':').map(Number);
             const now = new Date();
+            const upload = new Date(); upload.setHours(h,m,0,0);
             if (upload > now) upload.setDate(upload.getDate() - 1);
-            
-            // Si cargás vistas de un estado de "Ayer" pero ponés la hora de las 21:00 y son las 06:00
-            // el calculo de 'now - upload' ya te dará las 9 horas automáticamente
-            
-            const hours = (now - upload) / (1000 * 60 * 60);
-            return hours < 0.2 ? views : Math.round(views / hours);
+            const diffHours = (now - upload) / (1000 * 60 * 60);
+            return diffHours < 0.25 ? v : Math.round(v / diffHours);
         }
 
-        function formatSilence(mins) {
-            if (mins < 60) return mins + " mins";
+        function formatGap(mins) {
+            if (mins < 60) return mins + " m";
             let h = Math.floor(mins / 60);
             let m = mins % 60;
             return h + "h " + m + "m";
         }
 
-        function pushUpdate() {
+        function submitUpdate() {
             const name = document.getElementById('fName').value.trim();
             const dig = document.getElementById('fDigs').value.trim();
-            const views = parseInt(document.getElementById('fViews').value);
-            const time = document.getElementById('fTime').value;
-            const msgTime = document.getElementById('fMsgTime').value;
-            const msgDay = document.getElementById('fMsgDay').value;
+            const v = parseInt(document.getElementById('fViews').value);
+            const statusTime = document.getElementById('fTime').value;
+            const mTime = document.getElementById('fMsgTime').value;
+            const mDay = document.getElementById('fMsgDay').value;
 
-            if(!name || !dig || isNaN(views) || !time || !msgTime) return alert("Reporte Incompleto. Rellená todos los campos.");
+            if(!name || !dig || isNaN(v) || !statusTime || !mTime) return alert("Reporte imcompleto. Todos los datos son necesarios.");
 
-            const calculatedVph = calculateVph(views, time, msgDay);
+            const vph = calculateVPH(v, statusTime);
 
-            // GUARDAR CARGA EN HISTORIAL TREND DEL CELULAR (LAS ÚLTIMAS 3)
-            if(!phones[dig]) {
-                phones[dig] = { id: dig, name, digits: dig, trend: [], logs: [], isDown: false };
-            }
+            if(!db[dig]) db[dig] = { id: dig, name, digits: dig, trend: [], logs: [], isDown: false };
+            
+            // Historial por dispositivo (Bitacora interna)
+            db[dig].trend.unshift({ v, vph, t: statusTime, recorded: new Date().toLocaleTimeString() });
+            if(db[dig].trend.length > 5) db[dig].trend.pop();
 
-            phones[dig].trend.unshift({ views, vph: calculatedVph, time });
-            if(phones[dig].trend.length > 3) phones[dig].trend.pop();
-
-            // ACTUALIZAR OBJETO CELULAR
-            phones[dig] = {
-                ...phones[dig],
+            // Actualización dispositivo
+            db[dig] = {
+                ...db[dig],
                 name, type: document.getElementById('fType').value,
-                v: views, vph: calculatedVph, t: time,
-                lastMsgTime: msgTime, lastMsgDay: msgDay,
-                manualFlow: document.getElementById('fFlow').value,
+                curV: v, curVPH: vph, curTime: statusTime,
+                lastMsg: mTime, lastDay: mDay,
+                flow: document.getElementById('fFlow').value,
                 wk: document.getElementById('fWk').checked,
-                lastSync: new Date().toISOString()
+                lastSync: new Date().toISOString(),
+                isDown: false
             };
 
-            // AUDITORIA GLOBAL (TABLA CRUDA)
+            // Auditoria global
             auditLogs.unshift({
-                sysTime: new Date().toLocaleTimeString(),
-                name, dig, v: views, vph: calculatedVph, timeStatus: time, timeMsg: msgTime + ' ('+msgDay+')'
+                sys: new Date().toLocaleTimeString(),
+                name, dig, v, vph, statusT: statusTime, msgT: `${mTime} (${mDay})`
             });
+            if(auditLogs.length > 100) auditLogs.pop();
 
-            sync();
-            alert(`Actualizado: ${name}`);
+            // Limpieza y guardado
+            document.getElementById('fViews').value = "";
+            document.getElementById('fTime').value = "";
+            saveAll();
         }
 
         function render() {
             const grid = document.getElementById('mainGrid');
-            const auditTable = document.getElementById('auditBody');
-            grid.innerHTML = ""; auditTable.innerHTML = "";
+            const table = document.getElementById('auditBody');
+            grid.innerHTML = ""; table.innerHTML = "";
 
-            let stats = { act:0, down:0, wk:0, vph:0, views:0 };
+            let stats = { act:0, down:0, wk:0, v:0 };
             const now = new Date();
 
-            Object.values(phones).forEach(p => {
-                if(p.isDown) stats.down++; else { stats.act++; stats.vph += p.vph; stats.views += p.v; }
+            Object.values(db).forEach(p => {
+                if(p.isDown) stats.down++; else { stats.act++; stats.v += p.curV; }
                 if(p.wk) stats.wk++;
 
-                // CÁLCULO DE SILENCIO (GAP REAL)
-                const [mh, mm] = p.lastMsgTime.split(':').map(Number);
+                // Lógica SILENCIO
+                const [mh, mm] = (p.lastMsg || '00:00').split(':').map(Number);
                 let msgDate = new Date();
                 msgDate.setHours(mh, mm, 0, 0);
-                if(p.lastMsgDay === 'Ayer') msgDate.setDate(msgDate.getDate() - 1);
-                
+                if(p.lastDay === 'Ayer') msgDate.setDate(msgDate.getDate() - 1);
                 const gap = Math.round((now - msgDate) / (1000 * 60));
-                const silentDanger = (gap > 45 && !p.isDown);
+                const alertSilent = (gap > 45 && !p.isDown);
 
-                let trendHtml = "";
+                let trendsHtml = "";
                 (p.trend || []).forEach(tr => {
-                    trendHtml += `
-                        <div class="trend-item">
-                            <span>Vistas: ${tr.views} (VPH: ${tr.vph})</span>
-                            <span class="v-time">Cargado: ${tr.time}</span>
-                        </div>`;
+                    trendsHtml += `<div class="log-row"><span>Status: <b>${tr.t}</b></span> <span>Vistas: ${tr.v} (<span class="log-vph">${tr.vph} vph</span>)</span></div>`;
                 });
 
                 grid.innerHTML += `
-                    <div class="p-card ${silentDanger ? 'is-warning' : ''} ${p.isDown ? 'is-down' : ''}">
-                        <div class="p-title">
+                    <div class="p-card ${alertSilent ? 'is-warning' : ''} ${p.isDown ? 'is-down' : ''}">
+                        <div class="p-header">
                             <div class="p-name">
                                 <h3>${p.name}</h3>
                                 <code>${p.digits}</code>
                             </div>
-                            <span class="badge ${p.type === 'Principal' ? 'b-pr' : 'b-sop'}">${p.type}</span>
+                            <span style="font-size:10px; font-weight:800; padding:4px 8px; background:#f1f5f9; border-radius:5px">${p.type.toUpperCase()}</span>
                         </div>
 
-                        <div style="font-size:11px; font-weight:700; color:var(--text); margin-bottom:5px;">
-                            ULT. MÉTRICA: <b>${p.v} Vistas</b> | HORA: <b>${p.t}</b> | FLOW: <b>${p.manualFlow}</b>
+                        <div style="font-size:11px; font-weight:700; color:var(--text); margin-bottom:8px;">
+                            ${p.wk ? '<b style="color:#8b5cf6">✓ EN WATIKET</b>' : '<b style="color:var(--muted)">NO WATIKET</b>'}
+                            | FLOW: <b>${p.flow}</b>
                         </div>
 
-                        <div class="last-msg-info">
-                            MENSAJE RECIBIDO: <span>${p.lastMsgTime}</span> (${p.lastMsgDay})
-                            <div style="margin-top:4px;">TIEMPO EN SILENCIO: <b style="color:white">${formatSilence(gap)}</b></div>
-                            ${silentDanger ? `<div class="silent-tag">⚠️ ATENCIÓN: SIN ACTIVIDAD DESDE ${p.lastMsgTime}</div>` : ''}
+                        <div class="gap-info">
+                            LLEGÓ EL ÚLTIMO MENSAJE: <b>${p.lastMsg} (${p.lastDay})</b>
+                            <div style="margin-top:5px">INACTIVO HACE: <span class="gap-time">${p.isDown ? '--' : formatGap(gap)}</span></div>
+                            ${alertSilent ? `<div style="color:var(--danger); font-size:10px; font-weight:900; margin-top:5px; text-transform:uppercase">⚠️ CELULAR EN SILENCIO CRÍTICO</div>` : ''}
                         </div>
 
-                        <div class="p-trend">
-                            <div class="trend-header">TENDENCIA ÚLTIMAS 3 CARGAS</div>
-                            ${trendHtml}
+                        <div class="p-history">
+                            <div class="p-history-header">ÚLTIMAS MÉTRICAS DE CARGA</div>
+                            ${trendsHtml}
                         </div>
 
-                        <div class="card-footer">
-                            <button class="btn-op" onclick="toggleDown('${p.digits}')" style="${p.isDown ? 'background:var(--success); color:white; border:none;' : 'color:var(--danger);'}">
-                                ${p.isDown ? '↑ RECUPERADO' : '↓ CAÍDO'}
+                        <div class="btn-footer">
+                            <button class="btn-sub" onclick="setD('${p.digits}')" style="background:${p.isDown ? 'var(--success)' : '#fff'}; color:${p.isDown ? '#fff' : 'var(--danger)'}">
+                                ${p.isDown ? 'RECUPERADO ↑' : 'CAÍDO ↓'}
                             </button>
-                            <button class="btn-op" onclick="removeP('${p.digits}')">X</button>
+                            <button class="btn-sub" onclick="removeP('${p.digits}')">Borrar</button>
                         </div>
                     </div>
                 `;
             });
 
-            auditLogs.slice(0, 30).forEach(a => {
-                auditTable.innerHTML += `
-                    <tr>
-                        <td style="padding:10px;">${a.sysTime} hs</td>
-                        <td><b>${a.name}</b> (${a.dig})</td>
-                        <td>${a.v} v @ ${a.timeStatus}</td>
-                        <td style="color:var(--accent); font-weight:900;">${a.vph}</td>
-                        <td style="color:var(--muted);">${a.timeMsg}</td>
-                    </tr>`;
+            auditLogs.forEach(l => {
+                table.innerHTML += `<tr><td style="padding:10px">${l.sys}</td><td><b>${l.name}</b></td><td>${l.v} views @ ${l.statusT}</td><td>Ult: ${l.msgT}</td></tr>`;
             });
 
-            document.getElementById('kAct').textContent = stats.act;
-            document.getElementById('kDown').textContent = stats.down;
-            document.getElementById('kWk').textContent = stats.wk;
-            document.getElementById('kSumV').textContent = stats.views;
-            document.getElementById('kAvg').textContent = stats.act > 0 ? Math.round(stats.vph / stats.act) : 0;
+            document.getElementById('stAct').textContent = stats.act;
+            document.getElementById('stDown').textContent = stats.down;
+            document.getElementById('stWk').textContent = stats.wk;
+            document.getElementById('stV').textContent = stats.v;
         }
 
-        function toggleDown(id) {
-            if(!phones[id].isDown) { phones[id].isDown = true; sync(); }
-            else { liftTargetId = id; document.getElementById('modalLift').style.display = 'flex'; }
+        function setD(id) {
+            if(!db[id].isDown) { db[id].isDown = true; saveAll(); }
+            else {
+                let msgs = prompt("Cantidad de mensajes acumulados durante la caída:");
+                if(msgs) {
+                    db[id].isDown = false;
+                    saveAll();
+                }
+            }
         }
 
-        function doLift() {
-            const m = document.getElementById('mLiftMsgs').value;
-            if(!m) return alert("Poné cuántos mensajes acumulaste!");
-            phones[liftTargetId].isDown = false;
-            phones[liftTargetId].logs.unshift({ msgs: m, time: new Date().toLocaleTimeString() });
-            document.getElementById('modalLift').style.display = 'none';
-            document.getElementById('mLiftMsgs').value = "";
-            sync();
+        function removeP(id) { if(confirm("¿Eliminar?")) { delete db[id]; saveAll(); } }
+        function systemReset() { if(confirm("¿RESET TOTAL? Borrarás incluso la bitácora histórica.")) { db={}; auditLogs=[]; saveAll(); } }
+
+        function exportJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({phones:db, audit:auditLogs}, null, 2));
+            const dl = document.createElement('a'); dl.setAttribute("href", dataStr);
+            dl.setAttribute("download", `Reporte_Auditoria_${new Date().toLocaleDateString()}.json`); dl.click();
         }
 
-        function closeM() { document.getElementById('modalLift').style.display = 'none'; }
-        function removeP(id) { if(confirm("¿Eliminar?")) { delete phones[id]; sync(); } }
-        function clearAll() { if(confirm("RESET TOTAL? Borra los logs históricos y todo.")) { phones = {}; auditLogs = []; sync(); } }
-
-        function exportData() {
-            const dl = document.createElement('a');
-            dl.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({phones, logs: auditLogs}, null, 2));
-            dl.download = `Auditoria_Wpp_V10.json`; dl.click();
-        }
-
-        sync(); // Start
+        saveAll();
     </script>
 </body>
 </html>
